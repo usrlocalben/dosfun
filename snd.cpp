@@ -13,12 +13,17 @@ using std::uint8_t;
 using std::uint16_t;
 using std::int16_t;
 
+#define nullptr (0)
+
+namespace {
+
+const int kBufferSizeInSamples = 512;
+const int kSampleSizeInWords = 1;
+
+
+}  // namespace
+
 namespace rqdq {
-
-const int TRANSFER_SIZE_IN_SAMPLES = 2048;
-
-const int SAMPLE_SIZE_IN_WORDS = 1;
-
 
 Ports make_ports(int baseAddr) {
 	Ports out;
@@ -45,9 +50,8 @@ Blaster::Blaster(int ioAddr, int irqNum, int dmaNum, int rate)
 	sampleRateInHz_(rate),
 	userBuffer_(1),
 	playBuffer_(0),
-	dmaMem_(AllocDMABuffer(TRANSFER_SIZE_IN_SAMPLES*SAMPLE_SIZE_IN_WORDS*2)),
+	dmaMem_(AllocDMABuffer(kBufferSizeInSamples*kSampleSizeInWords*2)),
 	audioProcPtr_(0),
-	irqCount_(0),
 	good_(false)
 {
 	theBlaster = this;
@@ -83,8 +87,8 @@ Blaster::Blaster(int ioAddr, int irqNum, int dmaNum, int rate)
 
 	// DMA mode: 16-bit signed mono
 	TX(0x10);
-	TX(lo(TRANSFER_SIZE_IN_SAMPLES*SAMPLE_SIZE_IN_WORDS-1));
-	TX(hi(TRANSFER_SIZE_IN_SAMPLES*SAMPLE_SIZE_IN_WORDS-1)); }
+	TX(lo(kBufferSizeInSamples*kSampleSizeInWords-1));
+	TX(hi(kBufferSizeInSamples*kSampleSizeInWords-1)); }
 
 
 Blaster::~Blaster() {
@@ -94,18 +98,17 @@ Blaster::~Blaster() {
 	StopDMA(dma_);
 	_dos_setvect(pic_.isrNum, oldBlasterISRPtr);
 	_enable();
-	// std::cout << "irqCount: " << irqCount_ << "\n";
 
 	RESET();
 	SpinUntilReset();
 	FreeDMABuffer(dmaMem_); }
 
 
-void Blaster::SpinUntilReadyForWrite() {
+inline void Blaster::SpinUntilReadyForWrite() {
 	while (inp(port_.write) & 0x80); }
 
 
-void Blaster::SpinUntilReadyForRead() {
+inline void Blaster::SpinUntilReadyForRead() {
 	while (!(inp(port_.poll) & 0x80)); }
 
 
@@ -134,21 +137,27 @@ static void __interrupt Blaster::isrJmp() {
 	theBlaster->isr(); }
 
 
+inline int16_t* Blaster::GetUserBuffer() const {
+	int16_t* dst = (int16_t*)dmaMem_.Ptr16();
+	dst += userBuffer_*kBufferSizeInSamples*kSampleSizeInWords;
+	return dst; }
+
+
 void Blaster::isr() {
 	// if (!IsRealIRQ(pic_)) { return; }
-	irqCount_++;
-	
+	SignalEOI(pic_);
+	_enable();
+
 	std::swap(userBuffer_, playBuffer_);
-	int16_t* dst = (int16_t*)dmaMem_.Ptr16();
-	dst += userBuffer_*TRANSFER_SIZE_IN_SAMPLES*SAMPLE_SIZE_IN_WORDS;
-	if (audioProcPtr_ != 0) {
-		audioProcPtr_(dst, TRANSFER_SIZE_IN_SAMPLES); }
+	int16_t* dst = GetUserBuffer();
+	if (audioProcPtr_ != nullptr) {
+		audioProcPtr_(dst, kBufferSizeInSamples); }
 	else {
-		for (int i=0; i<TRANSFER_SIZE_IN_SAMPLES; i++) {
+		for (int i=0; i<kBufferSizeInSamples; i++) {
 			dst[i] = 0; }}
 
-	ACK();
-	SignalEOI(pic_); }
+	ACK(); }
+	//SignalEOI(pic_); }
 
 
 inline void Blaster::ACK() {

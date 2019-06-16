@@ -21,6 +21,7 @@ public:
 	Blaster(int ioAddr, int irqNum, int dmaNum, int rate);
 
 private:
+	std::int16_t* GetUserBuffer() const;
 	void SpinUntilReadyForWrite();
 	void SpinUntilReadyForRead();
 	void TX(std::uint8_t value);
@@ -43,11 +44,10 @@ private:
 	const PICInfo pic_;
 	const DMAInfo dma_;
 	const int sampleRateInHz_;
-	volatile int userBuffer_;
-	volatile int playBuffer_;
+	int userBuffer_;
+	int playBuffer_;
 	const DMAPtr dmaMem_;
 	bool good_;
-	int irqCount_;
 	volatile audioproc audioProcPtr_; };
 
 
