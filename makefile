@@ -16,6 +16,9 @@ run: app.exe
 app.exe: app.lnk
 	$(LD) @app.lnk
 
+bin2cpp.exe: bin2cpp.cpp
+	wcl386 -xs bin2cpp.cpp
+
 app.lnk: app.obj
 	echo N app.exe > app.lnk
 	echo F app.obj >> app.lnk
@@ -27,8 +30,9 @@ app.lnk: app.obj
 	echo F dma.obj >> app.lnk
 	echo F pic.obj >> app.lnk
 	echo F mem.obj >> app.lnk
+	echo F ost.obj >> app.lnk
 
-app.obj: app.cpp kbd.obj vga.obj snd.obj mod.obj
+app.obj: app.cpp kbd.obj vga.obj snd.obj mod.obj ost.obj
 	$(CPP) app.cpp
 
 kbd.obj: kbd.cpp kbd.hpp 
@@ -54,6 +58,12 @@ pic.obj: pic.cpp pic.hpp
 
 mem.obj: mem.cpp mem.hpp
 	$(CPP) mem.cpp
+
+ost.obj: ost.cpp ost.hpp
+	$(CPP) ost.cpp
+
+ost.cpp: bin2cpp.exe urea.mod
+	bin2cpp urea.mod ost rqdq ostData
 
 clean:
 	del *.obj

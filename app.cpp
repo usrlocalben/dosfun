@@ -9,6 +9,7 @@
 #include "vga.hpp"
 #include "snd.hpp"
 #include "mod.hpp"
+#include "ost.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -52,20 +53,23 @@ void audiostream(int16_t* buf, int len) {
 		int16_t val = audioBuf[i] * 32767.0;
 		buf[i] = val; }}
 
-uint8_t modBits[4*1024*1024];
+// uint8_t modBits[4*1024*1024];
 
 DemoStats Demo() {
 	DemoStats stats;
 	Keyboard kbd;
 
+	/*
 	std::ifstream fd("urea.mod", std::ios::in|std::ios::binary);
 	fd.seekg(0, std::ios::end);
 	std::streampos len(fd.tellg());
 	fd.seekg(0, std::ios::beg);
 	fd.read(modBits, len);
+	thePlayer = new ModPlayer(&paula, modBits);
+	*/
 
 	Paula paula;
-	thePlayer = new ModPlayer(&paula, modBits);
+	thePlayer = new ModPlayer(&paula, (uint8_t*)ostData);
 
 	Blaster blaster(0x220, 7, 5, 22050);
 	blaster.AttachProc(&audiostream);
