@@ -15,7 +15,7 @@ using std::int16_t;
 
 namespace rqdq {
 
-const int TRANSFER_SIZE_IN_SAMPLES = 256;
+const int TRANSFER_SIZE_IN_SAMPLES = 2048;
 
 const int SAMPLE_SIZE_IN_WORDS = 1;
 
@@ -136,7 +136,6 @@ static void __interrupt Blaster::isrJmp() {
 
 void Blaster::isr() {
 	// if (!IsRealIRQ(pic_)) { return; }
-
 	irqCount_++;
 	
 	std::swap(userBuffer_, playBuffer_);

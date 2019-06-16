@@ -2,10 +2,13 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <fstream>
+#include <vector>
 
 #include "kbd.hpp"
 #include "vga.hpp"
 #include "snd.hpp"
+#include "mod.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -39,33 +42,38 @@ void vbi() {
 struct DemoStats {
 	float measuredRefreshRateInHz; };
 
-volatile int st=0;
+float audioBuf[4096];
 
-int16_t saw[50];
+ModPlayer* thePlayer;
 
 void audiostream(int16_t* buf, int len) {
+	thePlayer->Render(audioBuf, len);
 	for (int i=0; i<len; i++) {
-		st++;
-		int16_t val = saw[st%50];
+		int16_t val = audioBuf[i] * 32767.0;
 		buf[i] = val; }}
 
+uint8_t modBits[4*1024*1024];
+
 DemoStats Demo() {
-
-	// generate a sawtooth test tone
-	// 22050 / 440hz = ~50.11
-	for (int i=0; i<50; i++) {
-		saw[i] = (i/50.0) * 60000 - 32767; }
-
 	DemoStats stats;
 	Keyboard kbd;
+
+	std::ifstream fd("urea.mod", std::ios::in|std::ios::binary);
+	fd.seekg(0, std::ios::end);
+	std::streampos len(fd.tellg());
+	fd.seekg(0, std::ios::beg);
+	fd.read(modBits, len);
+
+	Paula paula;
+	thePlayer = new ModPlayer(&paula, modBits);
+
+	Blaster blaster(0x220, 7, 5, 22050);
+	blaster.AttachProc(&audiostream);
 
 	SetModeX();
 	
 	SoftVBI softVBI(&vbi);
 	stats.measuredRefreshRateInHz = softVBI.GetFrequency();
-
-	Blaster blaster(0x220, 7, 5, 22050);
-	blaster.AttachProc(&audiostream);
 
 	uint8_t act = 0;
 	while (!kbd.IsDataAvailable()) {
@@ -83,7 +91,6 @@ DemoStats Demo() {
 			for (int by=120; by<=140; by++) {
 				for (int bx=pos; bx<=pos+20; bx++) {
 					PutPixelSlow(bx, by, color, vgaBack); }}
-			// vgaBack[pos + (80*120)] = color;
 
 			backbufferReady = true; }}
 
