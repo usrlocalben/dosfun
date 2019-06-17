@@ -12,6 +12,7 @@ const int VP_CRTC = 0x3d4;  // CRT controller
 const int VP_MISC = 0x3c2;
 const int VP_PALETTE_INDEX = 0x3c8;
 const int VP_PALETTE_DATA = 0x3c9;
+const int VP_GFXC = 0x3ce;  // graphics controller
 const int VP_STA1 = 0x3da;  // Input Status #1 (color mode)
 const int VF_VRETRACE = 0x08;
 const int VF_DD = 0x01;
@@ -31,22 +32,30 @@ void SetBIOSMode(int num);
 const uint8_t CRT_HIGH_ADDR = 0x0c;
 const uint8_t CRT_LOW_ADDR = 0x0d;
 
+const uint8_t SC_MAP_MASK = 0x02;
 
 
 inline void SetStartAddress(uint16_t addr) {
 	outpw(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
 	outpw(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
 
+
+inline void SetBitMask(uint8_t mask) {
+	outpw(VP_GFXC, mask<<8|0x08); }
+
+
+inline void SelectPlanes(uint8_t mask) {
+	outpw(VP_SEQC, mask<<8|SC_MAP_MASK); }
+
+
 inline void PutPixelSlow(int x, int y, uint8_t c, uint8_t* baseAddr) {
-	outp(VP_SEQC, 0x02);
-	outp(VP_SEQC+1, (1<<(x&3)));
-	//outp(VP_SEQC, MAP_MASK);
-	//outp(VP_SEQDATA, 1 << (x&3));
+	SelectPlanes(1<<(x&3));
 	baseAddr[y*80+(x>>2)] = c; }
 
+
 inline void SelectAllPlanes() {
-	outp(VP_SEQC, 0x02);
-	outp(VP_SEQC+1, 0x0f);}
+	SelectPlanes(0xf); }
+
 
 void SetModeX();
 

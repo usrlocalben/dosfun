@@ -3,6 +3,8 @@
 #include <i86.h>  // int386
 #include "pit.hpp"
 
+#define nullptr (0)
+
 namespace rqdq {
 
 inline void SpinUntilRetracing() {
@@ -76,14 +78,14 @@ const int TIMER_ISR_NUM = 0x08;
 
 volatile uint16_t fpx = 0;
 
-volatile vbifunc userVBIProc = 0;
+volatile vbifunc userVBIProc = nullptr;
 
 void __interrupt vblank_isr() {
 	// SetRGB(0, 0x3f,0x3f,0x3f);
 	SpinUntilRetracing();
 	// SetRGB(0, 0x0, 0x0, 0x0);
 	PIT::StartCountdown(fpx);
-	if (userVBIProc != 0) {
+	if (userVBIProc != nullptr) {
 		userVBIProc(); }
 	outp(0x20, 0x20); }
 
@@ -100,7 +102,7 @@ void InstallVBI(vbifunc proc) {
 	SpinUntilNextRetraceBegins();
 	approximateFrameDurationInTicks = PIT::EndMeasuring();
 
-	const float bufferPct = 0.02;
+	const float bufferPct = 0.05;
 	fpx = approximateFrameDurationInTicks * (1.0 - bufferPct);
 
 	SpinWhileRetracing();
