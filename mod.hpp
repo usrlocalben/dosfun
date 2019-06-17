@@ -47,14 +47,12 @@ class ModPlayer {
 		void Prepare();};
 #pragma pack()
 	struct Pattern {
-#pragma pack(1)
 		struct Event {
 			int sampleNum;
 			int note;
 			int fx;
 			int fxParam; };
 		Event events_[64][4];
-#pragma pack()
 		Pattern();
 		void Load(std::uint8_t* ptr); };
 

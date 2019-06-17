@@ -281,7 +281,7 @@ void ModPlayer::Tick() {
 				c.period = std::max(113, c.period - c.fxBuf[1]);
 				break;
 			case 2:  // slide down
-				c.period = std::min(856, c.period - c.fxBuf[2]);
+				c.period = std::min(856, c.period + c.fxBuf[2]);
 				break;
 			case 5:  // slide plus volslide
 				if (c.fxBuf[5] & 0xf0) {
