@@ -1,10 +1,14 @@
 #include "kbd.hpp"
+#include <cstdint>
 #include <i86.h>  // int386
 #include <dos.h>  // _dos_getvect, _dos_setvect
 #include <conio.h>  // inp/outp
 
+using std::uint8_t;
+
 namespace rqdq {
 
+/*
 keyinfo WaitForKey() {
 	union REGS r;
 	r.x.eax = 0;
@@ -13,6 +17,7 @@ keyinfo WaitForKey() {
 	ki.scanCode = r.h.ah;
 	ki.ascii = r.h.al;
 	return ki; }
+*/
 
 const int KBD_B_DATA = 0x60;
 const int KBD_B_CONTROL = 0x61;
@@ -49,5 +54,14 @@ void UninstallKeyboard() {
 
 bool IsKeyboardDataAvailable() {
 	return !(bufHead == bufTail); }
+
+
+KeyEvent GetKeyboardMessage() {
+	uint8_t sc = inputBuffer[bufHead++];
+	KeyEvent ke;
+	ke.down = (sc&0x80) == 0;
+	ke.scanCode = sc&0x7f;
+	return ke; }
+
 
 }  // namespace rqdq

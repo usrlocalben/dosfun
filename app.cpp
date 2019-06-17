@@ -14,6 +14,9 @@
 using std::uint8_t;
 using std::uint16_t;
 using std::int16_t;
+using std::cout;
+using std::hex;
+using std::dec;
 using namespace rqdq;
 
 volatile int Tf = 0;
@@ -60,6 +63,14 @@ DemoStats Demo() {
 	Keyboard kbd;
 
 	/*
+	bool done = false;
+	while (!done) {
+		while (!kbd.IsDataAvailable()) {}
+		KeyEvent ke = kbd.GetMessage();
+		cout << "key: " << (ke.down?"DOWN":" UP ") << " " << hex << int(ke.scanCode) << dec << "\n";  }
+	*/
+
+	/*
 	std::ifstream fd("urea.mod", std::ios::in|std::ios::binary);
 	fd.seekg(0, std::ios::end);
 	std::streampos len(fd.tellg());
@@ -80,23 +91,31 @@ DemoStats Demo() {
 	stats.measuredRefreshRateInHz = softVBI.GetFrequency();
 
 	uint8_t act = 0;
-	while (!kbd.IsDataAvailable()) {
-		if (backbufferReady == false) {
-			DrawBorder();
+	while (1) {
 
-			float T = Tf * (1.0/stats.measuredRefreshRateInHz);
-			T /= 2;
-			int whole = T;
-			float frac = T - whole;
-			int pos = std::sin(frac*3.14159*2.0)*40 + 160;
+		if (kbd.IsDataAvailable()) {
+			KeyEvent ke = kbd.GetMessage();
+			if (ke.down && ke.scanCode == SC_ESC) {
+				break; }}
 
-			uint8_t color = whole;
+		if (backbufferReady == true) {
+			continue; } // spin until buffer flip
 
-			for (int by=120; by<=140; by++) {
-				for (int bx=pos; bx<=pos+20; bx++) {
-					PutPixelSlow(bx, by, color, vgaBack); }}
+		DrawBorder();
 
-			backbufferReady = true; }}
+		float T = Tf * (1.0/stats.measuredRefreshRateInHz);
+		T /= 2;
+		int whole = T;
+		float frac = T - whole;
+		int pos = std::sin(frac*3.14159*2.0)*40 + 160;
+
+		uint8_t color = whole;
+
+		for (int by=120; by<=140; by++) {
+			for (int bx=pos; bx<=pos+20; bx++) {
+				PutPixelSlow(bx, by, color, vgaBack); }}
+
+		backbufferReady = true; }
 
 	return stats; }
 

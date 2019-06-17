@@ -1,21 +1,20 @@
 #pragma once
 #include <cstdint>
 
-using std::uint8_t;
-using std::uint16_t;
-
 namespace rqdq {
 
-struct keyinfo {
+struct KeyEvent {
 	int scanCode;
-	int ascii; };
+	bool down; };
 
+// keyinfo WaitForKey();
 
-keyinfo WaitForKey();
+const int SC_ESC = 1;
 
 void InstallKeyboard();
 void UninstallKeyboard();
 bool IsKeyboardDataAvailable();
+KeyEvent GetKeyboardMessage();
 
 
 class Keyboard {
@@ -25,7 +24,9 @@ public:
 	~Keyboard() {
 		UninstallKeyboard(); }
 	bool IsDataAvailable() {
-		return IsKeyboardDataAvailable(); }};
+		return IsKeyboardDataAvailable(); }
+	KeyEvent GetMessage() {
+		return GetKeyboardMessage(); }};
 
 
 }  // namespace rqdq
