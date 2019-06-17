@@ -75,6 +75,8 @@ Blaster::Blaster(int ioAddr, int irqNum, int dmaNum, int rate)
 	outp(pic_.maskPort, (inp(pic_.maskPort)&pic_.startMask));
 	_enable();
 
+	std::memset(dmaMem_.Ptr(), 0, dmaMem_.sizeInWords*2);
+
 	ConfigureTransfer(dma_, dmaMem_);
 
 	// set output sample rate
