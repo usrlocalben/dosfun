@@ -4,7 +4,7 @@ CPPFLAGS = -q -bt=dos -mf -3r -fp5 -s -oilrt -dNDEBUG
 
 CPP = wpp386.exe $(CPPFLAGS)
 
-LFLAGS = SYSTEM dos4g
+LFLAGS = SYSTEM pmodew
 
 LD = wlink.exe $(LFLAGS)
 
