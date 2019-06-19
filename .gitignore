@@ -3,4 +3,4 @@ ost.hpp
 ost.cpp
 bin2cpp.exe
 app.exe
-*.lnk
+*.lib
