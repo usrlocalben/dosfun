@@ -52,7 +52,9 @@ float audioBuf[4096];
 ModPlayer* thePlayer;
 
 void audiostream(int16_t* buf, int len) {
+SetRGB(0, 0x20, 0x3f, 0x10);
 	thePlayer->Render(audioBuf, len);
+SetRGB(0, 0,0,0);
 	for (int i=0; i<len; i++) {
 		int16_t val = audioBuf[i] * 32767.0;
 		buf[i] = val; }}
@@ -100,7 +102,9 @@ DemoStats Demo() {
 		float T = Tf * (1.0/stats.measuredRefreshRateInHz);
 		int patternNum = thePlayer->GetCurrentPos();
 
+		SetRGB(0, 0x30, 0x30, 0x30);
 		DrawKefrensBars(T, patternNum);
+		SetRGB(0, 0,0,0);
 
 		backbufferReady = true;
 
