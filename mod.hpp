@@ -114,6 +114,8 @@ public:
 
 	ModPlayer(Paula* paula, std::uint8_t* moddata);
 	void Render(float* buf, int numSamples);
+	int GetCurrentPos() const {
+		return curPos_; }
 	static void RenderJmp(void* param, float* buf, int len); };
 
 

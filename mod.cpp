@@ -147,6 +147,11 @@ void ModPlayer::CalcTickRate(int bpm) {
 	tickRate_ = (125*kOutputFreqInHz)/(bpm*kFPS); }
 
 
+// float ModPlayer::GetTickDurationInSeconds() {
+//	// bpm*fps/125
+//	return kOutputFreqInHz / tickRate_; }
+
+
 void ModPlayer::TrigNote(int ch, const Pattern::Event& e) {
 	Chan& c = chans_[ch];
 	Paula::Voice& v = paula_->voice_[ch];
