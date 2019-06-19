@@ -1,71 +1,86 @@
-#CPPFLAGS = -q -bt=dos -mf -3r -fp5 -od -d3 -xs
-CPPFLAGS = -q -bt=dos -mf -3r -fp5 -s -oilrt -dNDEBUG
-# -fo main.obj
+COMMON_FLAGS = -q -bt=dos -mf -3r -fp5
+RELEASE_FLAGS = -s -oilrt -dNDEBUG
+DEBUG_FLAGS = -od -d3 -xs
+CPPFLAGS = $(COMMON_FLAGS) $(RELEASE_FLAGS)
 
-CPP = wpp386.exe $(CPPFLAGS)
+CPP = wpp386.exe -q $(CPPFLAGS)
 
-LFLAGS = SYSTEM pmodew
+HOST_CPP = wcl386 -q -xs
+
+LFLAGS = SYSTEM pmodew OPTION quiet
 
 LD = wlink.exe $(LFLAGS)
+
+LIB = wlib -n -q
 
 DOSBOX = c:\bin\dosbox-x\dosbox-x.exe
 
 run: app.exe
 	$(DOSBOX) -conf dosbox.conf
 
-app.exe: app.lnk
-	$(LD) @app.lnk
+app.exe: app.lib
+	$(LD) N $@ F $<
 
-bin2cpp.exe: bin2cpp.cpp
-	wcl386 -xs bin2cpp.cpp
-
-app.lnk: app.obj
-	echo N app.exe > app.lnk
-	echo F app.obj >> app.lnk
-	echo F kbd.obj >> app.lnk
-	echo F vga.obj >> app.lnk
-	echo F snd.obj >> app.lnk
-	echo F mod.obj >> app.lnk
-	echo F pit.obj >> app.lnk
-	echo F dma.obj >> app.lnk
-	echo F pic.obj >> app.lnk
-	echo F mem.obj >> app.lnk
-	echo F ost.obj >> app.lnk
-
-app.obj: app.cpp kbd.obj vga.obj snd.obj mod.obj ost.obj
-	$(CPP) app.cpp
+app.obj: app.cpp kbd.hpp vga.hpp snd.hpp mod.hpp ost.hpp
+	$(CPP) $[@
+app.lib: app.obj kbd.lib vga.lib snd.lib mod.lib ost.lib
+	$(LIB) $@ $<
 
 kbd.obj: kbd.cpp kbd.hpp 
-	$(CPP) kbd.cpp
+	$(CPP) $[@
+kbd.lib: kbd.obj
+	$(LIB) $@ $<
 
-vga.obj: vga.cpp vga.hpp pit.obj
-	$(CPP) vga.cpp
+vga.obj: vga.cpp vga.hpp pit.hpp
+	$(CPP) $[@
+vga.lib: vga.obj         pit.lib
+	$(LIB) $@ $<
 
-snd.obj: snd.cpp snd.hpp dma.obj pic.obj
-	$(CPP) snd.cpp
+snd.obj: snd.cpp snd.hpp dma.hpp pic.hpp
+	$(CPP) $[@
+snd.lib: snd.obj         dma.lib pic.lib
+	$(LIB) $@ $<
 
 mod.obj: mod.cpp mod.hpp
-	$(CPP) mod.cpp
+	$(CPP) $[@
+mod.lib: mod.obj
+	$(LIB) $@ $<
 
 pit.obj: pit.cpp pit.hpp
-	$(CPP) pit.cpp
+	$(CPP) $[@
+pit.lib: pit.obj
+	$(LIB) $@ $<
 
-dma.obj: dma.cpp dma.hpp mem.obj
-	$(CPP) dma.cpp
+dma.obj: dma.cpp dma.hpp mem.hpp
+	$(CPP) $[@
+dma.lib: dma.obj         mem.lib
+	$(LIB) $@ $<
 
 pic.obj: pic.cpp pic.hpp
-	$(CPP) pic.cpp
+	$(CPP) $[@
+pic.lib: pic.obj
+	$(LIB) $@ $<
 
 mem.obj: mem.cpp mem.hpp
-	$(CPP) mem.cpp
+	$(CPP) $[@
+mem.lib: mem.obj
+	$(LIB) $@ $<
 
 ost.obj: ost.cpp ost.hpp
-	$(CPP) ost.cpp
+	$(CPP) $[@
+ost.lib: ost.obj
+	$(LIB) $@ $<
 
-ost.cpp: bin2cpp.exe urea.mod
-	bin2cpp urea.mod ost rqdq ostData
+ost.cpp ost.hpp: urea.mod bin2cpp.exe
+	bin2cpp $[@ ost rqdq ostData
+
+bin2cpp.exe: bin2cpp.cpp
+	$(HOST_CPP) $[@
 
 clean:
 	del *.obj
-	del *.lnk
+	del *.lib
 	del app.exe
+	del bin2cpp.exe
+	del ost.cpp
+	del ost.hpp
