@@ -22,6 +22,7 @@ using namespace rqdq;
 volatile int Tf = 0;
 
 void DrawBorder();
+void DrawKefrensBars(float T, int patternNum);
 
 uint8_t* const vgaA = VGAPTR;
 uint8_t* const vgaB = VGAPTR + (320*240/4);
@@ -82,51 +83,24 @@ DemoStats Demo() {
 	Paula paula;
 	thePlayer = new ModPlayer(&paula, (uint8_t*)ostData);
 
-
 	SetModeX();
 	
 	SoftVBI softVBI(&vbi);
 	stats.measuredRefreshRateInHz = softVBI.GetFrequency();
 
-
 	Blaster blaster(0x220, 7, 5, 22050);
 	blaster.AttachProc(&audiostream);
 
-	uint8_t act = 0;
+	uint8_t colorpos = 40;
+	int lastSongPos = -1;
 	while (1) {
 		if (backbufferReady == true) {
 			continue; } // spin until buffer flip
 
-		// DrawBorder();
-
 		float T = Tf * (1.0/stats.measuredRefreshRateInHz);
-		//T /= 2;
-		int whole = T;
-		float frac = T - whole;
+		int patternNum = thePlayer->GetCurrentPos();
 
-		bool first = true;
-		uint8_t* rowPtr = vgaBack;
-		uint8_t* prevPtr = vgaBack-80;
-		for (int yyy=0; yyy<240; yyy++) {
-			if (first) {
-				first = false;
-				SelectPlanes(0xf);
-				for (int xxx=0; xxx<80; xxx++) {
-					rowPtr[xxx] = 0; }}
-			else {
-				SelectPlanes(0xf);
-				SetBitMask(0x00);  // latches will write
-				for (int xxx=0; xxx<80; xxx++) {
-					volatile char latchload = prevPtr[xxx];
-					rowPtr[xxx] = 0; }
-				SetBitMask(0xff); }  // normal write
-
-			int pos = std::sin((T*2.19343) + yyy*(std::sin(T/4.0f)*0.05) * 3.14159 * 2.0) * (std::sin(T*1.781234)*150) + 160;
-			for (int wx=-3; wx<=3; wx++) {
-				PutPixelSlow(pos+wx, yyy, 40+wx, vgaBack); }
-
-			prevPtr = rowPtr;
-			rowPtr += 80; }
+		DrawKefrensBars(T, patternNum);
 
 		backbufferReady = true;
 
@@ -156,3 +130,34 @@ void DrawBorder() {
 			else {
 				*dst = 0; }
 			dst++; }}}
+
+
+void DrawKefrensBars(float T, int patternNum) {
+	int whole = T;
+	float frac = T - whole;
+
+	uint8_t colorpos = patternNum * 17;
+
+	bool first = true;
+	uint8_t* rowPtr = vgaBack;
+	uint8_t* prevPtr = vgaBack-80;
+	for (int yyy=0; yyy<240; yyy++) {
+		if (first) {
+			first = false;
+			SelectPlanes(0xf);
+			for (int xxx=0; xxx<80; xxx++) {
+				rowPtr[xxx] = 0; }}
+		else {
+			SelectPlanes(0xf);
+			SetBitMask(0x00);  // latches will write
+			for (int xxx=0; xxx<80; xxx++) {
+				volatile char latchload = prevPtr[xxx];
+				rowPtr[xxx] = 0; }
+			SetBitMask(0xff); }  // normal write
+
+		int pos = std::sin((T*2.19343) + yyy*(std::sin(T/4.0f)*0.05) * 3.14159 * 2.0) * (std::sin(T*1.781234)*150) + 160;
+		for (int wx=-4; wx<=4; wx++) {
+			PutPixelSlow(pos+wx, yyy, colorpos+wx, vgaBack); }
+
+		prevPtr = rowPtr;
+		rowPtr += 80; }}
