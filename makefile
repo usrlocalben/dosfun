@@ -7,7 +7,7 @@ CPP = wpp386.exe -q $(CPPFLAGS)
 
 HOST_CPP = wcl386 -q -xs
 
-LFLAGS = SYSTEM pmodew OPTION quiet
+LFLAGS = SYSTEM pmodewi OPTION quiet
 
 LD = wlink.exe $(LFLAGS)
 
