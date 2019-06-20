@@ -11,6 +11,7 @@
 #include "mod.hpp"
 #include "ost.hpp"
 
+using std::int8_t;
 using std::uint8_t;
 using std::uint16_t;
 using std::int16_t;
@@ -19,33 +20,46 @@ using std::hex;
 using std::dec;
 using namespace rqdq;
 
-volatile int Tf = 0;
+struct VRAMPage {
+	uint8_t* addr;
+	uint16_t vgaAddr; };
 
-void DrawBorder();
-void DrawKefrensBars(float T, int patternNum, int rowNum);
+const VRAMPage pages[2] = {
+	{ vga::VGAPTR, 0 },
+	{ vga::VGAPTR + (320*240/4), 320*240/4 } };
 
-uint8_t* const vgaA = vga::VGAPTR;
-uint8_t* const vgaB = vga::VGAPTR + (320*240/4);
-uint8_t* vgaBack = vgaB;
-uint8_t* vgaFront = vgaA;
-
-volatile bool backbufferReady = false;
-
+volatile int timeInFrames = 0;
+volatile int8_t backPage = 1;
+volatile bool backLocked = true;
 
 void vbi() {
-	Tf++;
-	if (backbufferReady) {
-		if (vgaBack == vgaB) {
-			vga::SetStartAddress(320*240/4); }
-		else {
-			vga::SetStartAddress(0); }
+	++timeInFrames;
+	if (!backLocked) {
+		vga::SetStartAddress(pages[backPage].vgaAddr);
+		backPage ^= 1;
+		backLocked = true; }}
 
-		std::swap(vgaBack, vgaFront);
-		backbufferReady = false; }}
+class VRAMLock {
+public:
+	VRAMLock() {
+		locked_ = backLocked; }
+	~VRAMLock() {
+		if (locked_) {
+			backLocked = false; }}
+	const VRAMPage& Page() {
+		return pages[backPage]; }
+	bool IsLocked() {
+		return locked_; }
+private:
+	bool locked_; };
+
+
+void DrawKefrensBars(const VRAMPage dst, float T, int patternNum, int rowNum);
 
 
 struct DemoStats {
 	float measuredRefreshRateInHz; };
+
 
 float audioBuf[4096];
 
@@ -63,28 +77,10 @@ vga::SetRGB(0, 0,0,0);
 		int16_t val = audioBuf[i] * 32767.0;
 		buf[i] = val; }}
 
-// uint8_t modBits[4*1024*1024];
 
 DemoStats Demo() {
 	DemoStats stats;
 	kbd::Keyboard kbd;
-
-	/*
-	bool done = false;
-	while (!done) {
-		while (!kbd.IsDataAvailable()) {}
-		kbd::Event ke = kbd.GetMessage();
-		cout << "key: " << (ke.down?"DOWN":" UP ") << " " << hex << int(ke.scanCode) << dec << "\n";  }
-	*/
-
-	/*
-	std::ifstream fd("urea.mod", std::ios::in|std::ios::binary);
-	fd.seekg(0, std::ios::end);
-	std::streampos len(fd.tellg());
-	fd.seekg(0, std::ios::beg);
-	fd.read(modBits, len);
-	thePlayer = new mod::Player(&paula, modBits);
-	*/
 
 	mod::Paula paula;
 	thePlayer = new mod::Player(&paula, (uint8_t*)ostData);
@@ -100,27 +96,29 @@ DemoStats Demo() {
 	uint8_t colorpos = 40;
 	int lastSongPos = -1;
 	while (1) {
-		if (backbufferReady == true) {
-			continue; } // spin until buffer flip
+		if (kbd.IsDataAvailable()) {
+			kbd::Event ke = kbd.GetMessage();
+			if (ke.down && ke.scanCode == kbd::SC_ESC) {
+				break; }}
 
-		float T = Tf * (1.0/stats.measuredRefreshRateInHz);
+		VRAMLock vramLock;
+		if (!vramLock.IsLocked()) {
+			continue; } // spin until back-buffer is locked
+
+		float T = timeInFrames / stats.measuredRefreshRateInHz;
 		int patternNum = thePlayer->GetCurrentPos();
 		int rowNum = thePlayer->GetCurrentRow();
 
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);
 #endif
-		DrawKefrensBars(T, patternNum, rowNum);
+		// const int workFactor = 80;
+		// for (int i=0; i<workFactor; i++)
+		DrawKefrensBars(vramLock.Page(), T, patternNum, rowNum);
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0,0,0);
 #endif
-
-		backbufferReady = true;
-
-		if (kbd.IsDataAvailable()) {
-			kbd::Event ke = kbd.GetMessage();
-			if (ke.down && ke.scanCode == kbd::SC_ESC) {
-				break; }}}
+		}
 
 	return stats; }
 
@@ -128,24 +126,12 @@ DemoStats Demo() {
 int main(int argc, char *argv[]) {
 	DemoStats stats = Demo();
 	vga::SetBIOSMode(0x3);
-	std::cout << "        elapsedTime: " << Tf << " frames\n";
+	std::cout << "        elapsedTime: " << timeInFrames << " frames\n";
 	std::cout << "measuredRefreshRate:   " << stats.measuredRefreshRateInHz << " hz\n";
 	return 0; }
 
 
-void DrawBorder() {
-	uint8_t* dst = vgaBack;
-	vga::SelectAllPlanes();
-	for (int y=0; y<240; y++) {
-		for (int x=0; x<80; x++) {
-			if (y==0 || y==239 || x==0 || x==79) {
-				*dst = 2; }
-			else {
-				*dst = 0; }
-			dst++; }}}
-
-
-void DrawKefrensBars(float T, int patternNum, int rowNum) {
+void DrawKefrensBars(const VRAMPage dst, float T, int patternNum, int rowNum) {
 	int whole = T;
 	float frac = T - whole;
 
@@ -160,8 +146,8 @@ void DrawKefrensBars(float T, int patternNum, int rowNum) {
 	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
 
 	bool first = true;
-	uint8_t* rowPtr = vgaBack;
-	uint8_t* prevPtr = vgaBack-80;
+	uint8_t* rowPtr = dst.addr;
+	uint8_t* prevPtr = dst.addr - 80;
 	for (int yyy=0; yyy<240; yyy++) {
 		if (first) {
 			first = false;
@@ -185,15 +171,15 @@ void DrawKefrensBars(float T, int patternNum, int rowNum) {
 			pos = std::sin((T) + yyy*0.005 * 3.14159 * 2.0) * (std::sin(T*3.781234)*150) + 160;
 			break;
 		case 2:
-			pos = std::sin((T*5.666) + yyy*0.008 * 3.14159 * 2.0) * (std::sin(T*1.781234+(yyy*0.010))*50+100) + std::sin((yyy+Tf)*0.00898)*100+160;
+			pos = std::sin((T*5.666) + yyy*0.008 * 3.14159 * 2.0) * (std::sin(T*1.781234+(yyy*0.010))*50+100) + std::sin((yyy+(T*60))*0.00898)*100+160;
 			break;
 		case 3:
-			pos = std::sin((T*2.45) + yyy*0.012 * 3.14159 * 2.0) * (std::sin(T*1.781234+(yyy*0.010))*66+33) + std::sin((yyy+Tf)*0.01111)*100+50;
+			pos = std::sin((T*2.45) + yyy*0.012 * 3.14159 * 2.0) * (std::sin(T*1.781234+(yyy*0.010))*66+33) + std::sin((yyy+(T*60))*0.01111)*100+50;
 			break; }
 
 		// if (yyy%2==0)
 		for (int wx=-4; wx<=4; wx++) {
-			vga::PutPixelSlow(pos+wx, yyy, colorpos+wx, vgaBack); }
+			vga::PutPixelSlow(pos+wx, yyy, colorpos+wx, dst.addr); }
 
 		prevPtr = rowPtr;
 		rowPtr += 80; }}
