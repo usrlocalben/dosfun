@@ -8,8 +8,9 @@ using std::uint16_t;
 using std::uint32_t;
 
 namespace rqdq {
+namespace sys {
 
-RealPtr AllocReal(uint16_t sizeInBytes) {
+RealMem::RealMem(uint16_t sizeInBytes) {
 	union REGS regs;
 	regs.x.eax = 0x0100;  // DPMI: allocate DOS memory
 	regs.x.ebx = (sizeInBytes + 15) / 16;  // size in paragraphs
@@ -18,18 +19,19 @@ RealPtr AllocReal(uint16_t sizeInBytes) {
 		//throw std::runtime_error("no real mem"); }
 		std::exit(1); }
 
-	RealPtr out;
-	out.selector = regs.w.dx;
-	out.segment = regs.w.ax;
-	// std::cout << "AllocReal: " << sizeInBytes << " @ 0x" << std::hex << ((uint32_t)out.segment*16) << std::dec << "\n";
-	return out; }
+	selector_ = regs.w.dx;
+	segment_ = regs.w.ax; }
 
 
-void FreeReal(RealPtr ptr) {
-	union REGS regs;
-	regs.x.eax = 0x101;  // DPMI: free DOS memory
-	regs.x.ebx = ptr.selector;
-	int386(0x31, &regs, &regs); }
+RealMem::~RealMem() {
+	if (selector_ != 0) {
+		union REGS regs;
+		regs.x.eax = 0x101;  // DPMI: free DOS memory
+		regs.x.ebx = selector_;
+		selector_ = 0;
+		segment_ = 0;
+		int386(0x31, &regs, &regs); }}
 
 
+}  // namespace sys
 }  // namespace rqdq

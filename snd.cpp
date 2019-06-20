@@ -15,15 +15,16 @@ using std::int16_t;
 
 #define nullptr (0)
 
+namespace rqdq {
 namespace {
 
-const int kBufferSizeInSamples = 512;
+const int kBufferSizeInSamples = 128;
 const int kSampleSizeInWords = 1;
 
 
 }  // namespace
 
-namespace rqdq {
+namespace snd {
 
 Ports make_ports(int baseAddr) {
 	Ports out;
@@ -43,14 +44,14 @@ uint8_t lo(uint16_t value) { return value & 0x00ff; }
 uint8_t hi(uint16_t value) { return value >> 8; }
 
 
-Blaster::Blaster(int ioAddr, int irqNum, int dmaNum, int rate)
+Blaster::Blaster(int ioAddr, int irqNum, int dmaChannelNum, int rate)
 	:port_(make_ports(ioAddr)),
-	pic_(make_picinfo(irqNum)),
-	dma_(make_dmainfo(dmaNum)),
+	irqLine_(pic::make_irqline(irqNum)),
+	dma_(dma::make_channel(dmaChannelNum)),
 	sampleRateInHz_(rate),
 	userBuffer_(1),
 	playBuffer_(0),
-	dmaMem_(AllocDMABuffer(kBufferSizeInSamples*kSampleSizeInWords*2)),
+	dmaBuffer_(kBufferSizeInSamples*kSampleSizeInWords*2),
 	audioProcPtr_(0),
 	good_(false)
 {
@@ -69,15 +70,14 @@ Blaster::Blaster(int ioAddr, int irqNum, int dmaNum, int rate)
 	*/
 
 	_disable();
-	outp(pic_.maskPort, (inp(pic_.maskPort)|pic_.stopMask));
-	oldBlasterISRPtr = _dos_getvect(pic_.isrNum);
-	_dos_setvect(pic_.isrNum, &Blaster::isrJmp);
-	outp(pic_.maskPort, (inp(pic_.maskPort)&pic_.startMask));
+	pic::Stop(irqLine_);
+	oldBlasterISRPtr = _dos_getvect(irqLine_.isrNum);
+	_dos_setvect(irqLine_.isrNum, &Blaster::isrJmp);
+	pic::Start(irqLine_);
 	_enable();
 
-	std::memset(dmaMem_.Ptr(), 0, dmaMem_.sizeInWords*2);
-
-	ConfigureTransfer(dma_, dmaMem_);
+	dmaBuffer_.Zero();
+	dma::Configure(dma_, dmaBuffer_);
 
 	// set output sample rate
 	TX(0x41);
@@ -97,13 +97,12 @@ Blaster::~Blaster() {
 	TX(0xd5);  // pause output
 
 	_disable();
-	StopDMA(dma_);
-	_dos_setvect(pic_.isrNum, oldBlasterISRPtr);
+	dma::Stop(dma_);
+	_dos_setvect(irqLine_.isrNum, oldBlasterISRPtr);
 	_enable();
 
 	RESET();
-	SpinUntilReset();
-	FreeDMABuffer(dmaMem_); }
+	SpinUntilReset(); }
 
 
 inline void Blaster::SpinUntilReadyForWrite() {
@@ -140,14 +139,14 @@ static void __interrupt Blaster::isrJmp() {
 
 
 inline int16_t* Blaster::GetUserBuffer() const {
-	int16_t* dst = (int16_t*)dmaMem_.Ptr16();
+	int16_t* dst = (int16_t*)dmaBuffer_.Ptr16();
 	dst += userBuffer_*kBufferSizeInSamples*kSampleSizeInWords;
 	return dst; }
 
 
 void Blaster::isr() {
-	// if (!IsRealIRQ(pic_)) { return; }
-	SignalEOI(pic_);
+	// if (!IsRealIRQ(irqLine_)) { return; }
+	pic::SignalEOI(irqLine_);
 	_enable();
 
 	std::swap(userBuffer_, playBuffer_);
@@ -159,7 +158,7 @@ void Blaster::isr() {
 			dst[i] = 0; }}
 
 	ACK(); }
-	//SignalEOI(pic_); }
+	//pic::SignalEOI(irqLine_); }
 
 
 inline void Blaster::ACK() {
@@ -178,4 +177,5 @@ bool Blaster::IsGood() const {
 	return good_; }
 
 
+}  // namespace snd
 }  // namespace rqdq

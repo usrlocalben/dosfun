@@ -7,6 +7,7 @@
 using std::uint8_t;
 
 namespace rqdq {
+namespace kbd {
 
 /*
 keyinfo WaitForKey() {
@@ -56,12 +57,13 @@ bool IsKeyboardDataAvailable() {
 	return !(bufHead == bufTail); }
 
 
-KeyEvent GetKeyboardMessage() {
+Event GetKeyboardMessage() {
 	uint8_t sc = inputBuffer[bufHead++];
-	KeyEvent ke;
+	Event ke;
 	ke.down = (sc&0x80) == 0;
 	ke.scanCode = sc&0x7f;
 	return ke; }
 
 
+}  // namespace kbd
 }  // namespace rqdq

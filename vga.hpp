@@ -6,6 +6,7 @@ using std::uint8_t;
 using std::uint16_t;
 
 namespace rqdq {
+namespace vga {
 
 const int VP_SEQC = 0x3c4;  // sequence controller
 const int VP_CRTC = 0x3d4;  // CRT controller
@@ -49,6 +50,7 @@ inline void SelectPlanes(uint8_t mask) {
 
 
 inline void PutPixelSlow(int x, int y, uint8_t c, uint8_t* baseAddr) {
+	if (x<0 || x>=320) return;
 	SelectPlanes(1<<(x&3));
 	baseAddr[y*80+(x>>2)] = c; }
 
@@ -76,4 +78,5 @@ public:
 		return GetLastVBIFrequency(); }};
 
 
+}  // namespace vga
 }  // namespace rqdq

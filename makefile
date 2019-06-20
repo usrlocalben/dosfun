@@ -1,9 +1,8 @@
-COMMON_FLAGS = -q -bt=dos -mf -3r -fp5
-RELEASE_FLAGS = -s -oilrt -dNDEBUG
+COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 -dSHOW_TIMING
+RELEASE_FLAGS = -ox -d0 -dNDEBUG
 DEBUG_FLAGS = -od -d3 -xs
-CPPFLAGS = $(COMMON_FLAGS) $(RELEASE_FLAGS)
 
-CPP = wpp386.exe -q $(CPPFLAGS)
+CPP = wpp386.exe -q $(COMMON_FLAGS) $(RELEASE_FLAGS)
 
 HOST_CPP = wcl386 -q -xs
 

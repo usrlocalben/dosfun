@@ -13,6 +13,7 @@ using std::uint8_t;
 using std::uint16_t;
 using std::uint32_t;
 
+namespace rqdq {
 namespace {
 
 const float kPi = 3.1415926;
@@ -36,7 +37,7 @@ inline T Clamp(const T x, const T min, const T max) {
 
 }  // namespace
 
-namespace rqdq {
+namespace mod {
 
 Paula::Voice::Voice()
 	:pos_(0),
@@ -94,7 +95,7 @@ void Paula::Render(float *outBuf, int numSamples) {
 		*outBuf++ = out_[s] * masterGain_; }}
 
 
-void ModPlayer::Sample::Prepare() {
+void Player::Sample::Prepare() {
 	SwapEndian(length);
 	SwapEndian(loopStart);
 	SwapEndian(loopLen);
@@ -103,11 +104,11 @@ void ModPlayer::Sample::Prepare() {
 		fineTune -= 16; }}
 
 
-ModPlayer::Pattern::Pattern() {
+Player::Pattern::Pattern() {
 	std::memset(this, 0, sizeof(Pattern)); }
 
 
-void ModPlayer::Pattern::Load(uint8_t* ptr) {
+void Player::Pattern::Load(uint8_t* ptr) {
 	for (int row=0; row<64; row++) {
 		for (int ch=0; ch<kNumVoices; ch++) {
 			Event& e = events_[row][ch];
@@ -127,32 +128,32 @@ void ModPlayer::Pattern::Load(uint8_t* ptr) {
 			ptr += 4; }}}
 
 
-ModPlayer::Chan::Chan() {
+Player::Chan::Chan() {
 	std::memset(this, 0, sizeof(Chan)); }
 
 
-int ModPlayer::Chan::GetPeriod(int offs, int fineOffs) {
+int Player::Chan::GetPeriod(int offs, int fineOffs) {
 	int ft = fineTune + fineOffs;
 	while (ft >  7) { offs++; ft -= 16; }
 	while (ft < -8) { offs--; ft += 16; }
 	return note ? (pTable[ft&0x0f][Clamp(note+offs-1, 0, 59)]) : 0; }
 
 
-void ModPlayer::Chan::SetPeriod(int offs, int fineOffs) {
+void Player::Chan::SetPeriod(int offs, int fineOffs) {
 	if (note) {
 		period = GetPeriod(offs, fineOffs); }}
 
 
-void ModPlayer::CalcTickRate(int bpm) {
+void Player::CalcTickRate(int bpm) {
 	tickRate_ = (125*kOutputFreqInHz)/(bpm*kFPS); }
 
 
-// float ModPlayer::GetTickDurationInSeconds() {
+// float Player::GetTickDurationInSeconds() {
 //	// bpm*fps/125
 //	return kOutputFreqInHz / tickRate_; }
 
 
-void ModPlayer::TrigNote(int ch, const Pattern::Event& e) {
+void Player::TrigNote(int ch, const Pattern::Event& e) {
 	Chan& c = chans_[ch];
 	Paula::Voice& v = paula_->voice_[ch];
 	const Sample& s = sampleDB_[c.sampleNum];
@@ -172,7 +173,7 @@ void ModPlayer::TrigNote(int ch, const Pattern::Event& e) {
 			c.tremPos = 0; }}}
 
 
-void ModPlayer::Reset() {
+void Player::Reset() {
 	CalcTickRate(125);
 	speed_ = 6;
 	trCounter_ = 0;
@@ -182,7 +183,7 @@ void ModPlayer::Reset() {
 	delay_ = 0; }
 
 
-void ModPlayer::Tick() {
+void Player::Tick() {
 	const Pattern& p = patterns_[patternList_[curPos_]];
 	const Pattern::Event* re = p.events_[curRow_];
 	for (int ch=0; ch<kNumVoices; ch++) {
@@ -373,7 +374,7 @@ void ModPlayer::Tick() {
 		curPos_ = 0; }}
 
 
-ModPlayer::ModPlayer(Paula* p, uint8_t* moddata) :paula_(p) {
+Player::Player(Paula* p, uint8_t* moddata) :paula_(p) {
 	uint8_t * const xxx = moddata;
 
 	// calc ptable
@@ -440,7 +441,7 @@ ModPlayer::ModPlayer(Paula* p, uint8_t* moddata) :paula_(p) {
 	Reset(); }
 
 
-void ModPlayer::Render(float* buf, int numSamples) {
+void Player::Render(float* buf, int numSamples) {
 	while (numSamples) {
 		int todo = std::min(numSamples, trCounter_);
 		if (todo) {
@@ -453,20 +454,21 @@ void ModPlayer::Render(float* buf, int numSamples) {
 			trCounter_ = tickRate_; }}}
 
 
-void ModPlayer::RenderJmp(void* param, float* buf, int len) {
-	((ModPlayer*)param)->Render(buf, len); }
+void Player::RenderJmp(void* param, float* buf, int len) {
+	((Player*)param)->Render(buf, len); }
 
 
-int ModPlayer::basePTable[61] = { 0,
+int Player::basePTable[61] = { 0,
   1712,1616,1525,1440,1357,1281,1209,1141,1077,1017, 961, 907,    // c0-b0
    856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453,    // c1-b1
    428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226,    // c2-b2
    214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113,    // c3-b3
    107, 101,  95,  90,  85,  80,  76,  71,  67,  64,  60,  57, }; // c4-b4
 
-int ModPlayer::pTable[16][60];
+int Player::pTable[16][60];
 
-int ModPlayer::vibTable[3][15][64];
+int Player::vibTable[3][15][64];
 
 
+}  // namespace mod
 }  // namespace rqdq

@@ -1,9 +1,10 @@
 #include "pic.hpp"
 
 namespace rqdq {
+namespace pic {
 
-PICInfo make_picinfo(int irqNum) {
-	PICInfo out;
+IRQLine make_irqline(int irqNum) {
+	IRQLine out;
 	out.irqNum = irqNum;
 	if (irqNum < 8) {
 		out.controllerNum = 1;
@@ -20,4 +21,5 @@ PICInfo make_picinfo(int irqNum) {
 	return out; }
 
 
+}  // namespace pic
 }  // namespace rqdq

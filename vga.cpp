@@ -6,6 +6,7 @@
 #define nullptr (0)
 
 namespace rqdq {
+namespace vga {
 
 inline void SpinUntilRetracing() {
 	while (!(inp(VP_STA1) & VF_VRETRACE)) {}}
@@ -84,7 +85,7 @@ void __interrupt vblank_isr() {
 	// SetRGB(0, 0x3f,0x3f,0x3f);
 	SpinUntilRetracing();
 	// SetRGB(0, 0x0, 0x0, 0x0);
-	PIT::StartCountdown(fpx);
+	pit::StartCountdown(fpx);
 	if (userVBIProc != nullptr) {
 		userVBIProc(); }
 	outp(0x20, 0x20); }
@@ -98,26 +99,28 @@ void InstallVBI(vbifunc proc) {
 	userVBIProc = proc;
 
 	SpinUntilNextRetraceBegins();
-	PIT::BeginMeasuring();
+	pit::BeginMeasuring();
 	SpinUntilNextRetraceBegins();
-	approximateFrameDurationInTicks = PIT::EndMeasuring();
+	//SpinUntilNextRetraceBegins();
+	approximateFrameDurationInTicks = pit::EndMeasuring();
 
-	const float bufferPct = 0.05;
+	const float bufferPct = 0.02;
 	fpx = approximateFrameDurationInTicks * (1.0 - bufferPct);
 
 	SpinWhileRetracing();
 	_dos_setvect(TIMER_ISR_NUM, &vblank_isr);
 	SpinUntilRetracing();
-	PIT::StartCountdown(fpx); }
+	pit::StartCountdown(fpx); }
 
 
 void UninstallVBI() {
 	_dos_setvect(TIMER_ISR_NUM, oldTimerISRPtr);
-	PIT::StartSquareWave(0); }
+	pit::StartSquareWave(0); }
 
 
 float GetLastVBIFrequency() {
-	return PIT::ticksToHz(approximateFrameDurationInTicks); }
+	return pit::ticksToHz(approximateFrameDurationInTicks); }
 
 
+}  // namespace vga
 }  // namespace rqdq

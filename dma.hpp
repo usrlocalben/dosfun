@@ -1,29 +1,46 @@
 #pragma once
 #include <cstdint>
-#include <conio.h>  // inp/outp
+#include <cstring>  // memset
 #include "mem.hpp"
 
 namespace rqdq {
+namespace dma {
 
-struct DMAPtr {
-	RealPtr realPtr;
-	std::uint32_t addr;
-	int sizeInWords;
+class Buffer {
+public:
+	sys::RealMem realMem_;
+	std::uint32_t addr_;
+	int sizeInWords_;
+
+	Buffer() :realMem_(), addr_(0), sizeInWords_(0) {}
+	Buffer(std::uint16_t sizeInWords);
+private:
+	Buffer(const Buffer& other);             // not copyable
+	Buffer& operator=(const Buffer& other);  // not copyable
+
+public:
+	void Swap(Buffer& other) {
+		realMem_.Swap(other.realMem_);
+		std::swap(addr_, other.addr_);
+		std::swap(sizeInWords_, other.sizeInWords_); }
 
 	std::uint8_t* Ptr() const {
-		return (std::uint8_t*)addr; }
+		return (std::uint8_t*)addr_; }
 
 	std::uint16_t* Ptr16() const {
-		return (std::uint16_t*)addr; }
+		return (std::uint16_t*)addr_; }
 
 	std::uint16_t Page() const {
-		return addr >> 16; }
+		return addr_ >> 16; }
 
 	std::uint16_t Offset16() const {
-		return (addr >> 1) % 65536; } };
+		return (addr_ >> 1) % 65536; }
+
+	void Zero() const {
+		std::memset(Ptr(), 0, sizeInWords_*2); } };
 
 
-struct DMAInfo {
+struct Channel {
 	int maskPort;
 	int clearPtrPort;
 	int modePort;
@@ -35,11 +52,10 @@ struct DMAInfo {
 	int mode; };
 
 
-DMAPtr AllocDMABuffer(std::uint16_t sizeInBytes);
-void FreeDMABuffer(DMAPtr ptr);
-DMAInfo make_dmainfo(int dmaChannelNum);
-void ConfigureTransfer(DMAInfo di, DMAPtr mem);
-void StopDMA(DMAInfo di);
+Channel make_channel(int channelNum);
+void Configure(const Channel ch, const Buffer& buf);
+void Stop(Channel ch);
 
 
+}  // namespace dma
 }  // namespace rqdq

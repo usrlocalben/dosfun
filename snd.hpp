@@ -5,6 +5,7 @@
 #include "pic.hpp"
 
 namespace rqdq {
+namespace snd {
 
 typedef void (*audioproc)(std::int16_t* dest, int num);
 
@@ -21,6 +22,9 @@ public:
 	Blaster(int ioAddr, int irqNum, int dmaNum, int rate);
 
 private:
+	Blaster& operator=(const Blaster&);  // not copyable
+	Blaster(const Blaster&);             // not copyable
+
 	std::int16_t* GetUserBuffer() const;
 	void SpinUntilReadyForWrite();
 	void SpinUntilReadyForRead();
@@ -41,14 +45,15 @@ public:
 
 private:
 	const Ports port_;
-	const PICInfo pic_;
-	const DMAInfo dma_;
+	const pic::IRQLine irqLine_;
+	const dma::Channel dma_;
 	const int sampleRateInHz_;
 	int userBuffer_;
 	int playBuffer_;
-	const DMAPtr dmaMem_;
+	const dma::Buffer dmaBuffer_;
 	bool good_;
 	volatile audioproc audioProcPtr_; };
 
 
+}  // namespace snd
 }  // namespace rqdq

@@ -3,6 +3,7 @@
 #include <cstdint>
 
 namespace rqdq {
+namespace mod {
 
 class Paula {
 public:
@@ -30,7 +31,7 @@ public:
 	void Render(float *outBuf, int numSamples); };
 
 
-class ModPlayer {
+class Player {
 	Paula *paula_;
 	static int basePTable[5*12 + 1];
 	static int pTable[16][60];
@@ -112,11 +113,14 @@ class ModPlayer {
 public:
 	char name_[21];
 
-	ModPlayer(Paula* paula, std::uint8_t* moddata);
+	Player(Paula* paula, std::uint8_t* moddata);
 	void Render(float* buf, int numSamples);
 	int GetCurrentPos() const {
 		return curPos_; }
+	int GetCurrentRow() const {
+		return curRow_; }
 	static void RenderJmp(void* param, float* buf, int len); };
 
 
+}  // namespace mod
 }  // namespace rqdq

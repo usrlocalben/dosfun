@@ -3,8 +3,9 @@
 #include <conio.h>  // inp/outp
 
 namespace rqdq {
+namespace pic {
 
-struct PICInfo {
+struct IRQLine {
 	int controllerNum;
 	int rotatePort;
 	int maskPort;
@@ -14,22 +15,31 @@ struct PICInfo {
 	std::uint8_t startMask; };
 
 
-PICInfo make_picinfo(int irqNum);
+IRQLine make_irqline(int irqNum);
 
 
-inline void SignalEOI(PICInfo pi) {
+inline void SignalEOI(const IRQLine pi) {
 	if (pi.irqNum >= 8) {
 		outp(0xa0, 0x20); }
 	outp(0x20, 0x20); }
 
 
-inline bool IsRealIRQ(PICInfo pi) {
+inline bool IsRealIRQ(const IRQLine pi) {
 	if (pi.irqNum == 7) {
 		outp(0x20, 0x0b);  // read ISR
 		std::uint8_t isr = inp(0x20);
 		if (isr & 0x80 == 0) {
 			return false; }}
 	return true; }
-	
 
+
+inline void Stop(const IRQLine& irqLine) {
+	outp(irqLine.maskPort, (inp(irqLine.maskPort)|irqLine.stopMask)); }
+
+
+inline void Start(const IRQLine& irqLine) {
+	outp(irqLine.maskPort, (inp(irqLine.maskPort)&irqLine.startMask)); }
+
+
+}  // namespace pic
 }  // namespace rqdq
