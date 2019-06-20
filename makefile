@@ -20,9 +20,14 @@ run: app.exe
 app.exe: app.lib
 	$(LD) N $@ F $<
 
-app.obj: app.cpp kbd.hpp vga.hpp snd.hpp mod.hpp ost.hpp
+app.obj: app.cpp kbd.hpp vga.hpp snd.hpp mod.hpp ost.hpp efx.hpp
 	$(CPP) $[@
-app.lib: app.obj kbd.lib vga.lib snd.lib mod.lib ost.lib
+app.lib: app.obj kbd.lib vga.lib snd.lib mod.lib ost.lib efx.lib
+	$(LIB) $@ $<
+
+efx.obj: efx.cpp efx.hpp vga.hpp
+	$(CPP) $[@
+efx.lib: efx.obj         vga.lib
 	$(LIB) $@ $<
 
 kbd.obj: kbd.cpp kbd.hpp 

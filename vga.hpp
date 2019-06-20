@@ -78,5 +78,10 @@ public:
 		return GetLastVBIFrequency(); }};
 
 
+struct VRAMPage {
+	std::uint8_t* addr;
+	std::uint16_t vgaAddr; };
+
+
 }  // namespace vga
 }  // namespace rqdq
