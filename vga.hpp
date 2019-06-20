@@ -79,8 +79,14 @@ public:
 
 
 struct VRAMPage {
-	std::uint8_t* addr;
-	std::uint16_t vgaAddr; };
+	const int num;
+	std::uint8_t* const addr;
+	const std::uint16_t vgaAddr; };
+
+
+const vga::VRAMPage modeXPages[2] = {
+	{ 0, vga::VGAPTR, 0 },
+	{ 1, vga::VGAPTR + (320*240/4), 320*240/4 } };
 
 
 }  // namespace vga

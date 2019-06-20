@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <i86.h>  // _disable/_enable
 
 #include "kbd.hpp"
 #include "vga.hpp"
@@ -21,10 +22,6 @@ using std::hex;
 using std::dec;
 using namespace rqdq;
 
-const vga::VRAMPage pages[2] = {
-	{ vga::VGAPTR, 0 },
-	{ vga::VGAPTR + (320*240/4), 320*240/4 } };
-
 volatile int timeInFrames = 0;
 volatile int8_t backPage = 1;
 volatile bool backLocked = true;
@@ -32,7 +29,7 @@ volatile bool backLocked = true;
 void vbi() {
 	++timeInFrames;
 	if (!backLocked) {
-		vga::SetStartAddress(pages[backPage].vgaAddr);
+		vga::SetStartAddress(vga::modeXPages[backPage].vgaAddr);
 		backPage ^= 1;
 		backLocked = true; }}
 
@@ -44,7 +41,7 @@ public:
 		if (locked_) {
 			backLocked = false; }}
 	const vga::VRAMPage& Page() {
-		return pages[backPage]; }
+		return vga::modeXPages[backPage]; }
 	bool IsLocked() {
 		return locked_; }
 private:
@@ -87,7 +84,6 @@ DemoStats Demo() {
 	snd::Blaster blaster(0x220, 7, 5, 22050);
 	blaster.AttachProc(&audiostream);
 
-	uint8_t colorpos = 40;
 	int lastSongPos = -1;
 	while (1) {
 		if (kbd.IsDataAvailable()) {
@@ -106,8 +102,6 @@ DemoStats Demo() {
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);
 #endif
-		// const int workFactor = 80;
-		// for (int i=0; i<workFactor; i++)
 		efx::DrawKefrensBars(vramLock.Page(), T, patternNum, rowNum);
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0,0,0);

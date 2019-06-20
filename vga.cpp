@@ -98,11 +98,14 @@ void InstallVBI(vbifunc proc) {
 
 	userVBIProc = proc;
 
-	SpinUntilNextRetraceBegins();
-	pit::BeginMeasuring();
-	SpinUntilNextRetraceBegins();
-	//SpinUntilNextRetraceBegins();
-	approximateFrameDurationInTicks = pit::EndMeasuring();
+	int ax = 0;
+	const int N = 10;
+	for (int si=0; si<N; si++) {
+		SpinUntilNextRetraceBegins();
+		pit::BeginMeasuring();
+		SpinUntilNextRetraceBegins();
+		ax += pit::EndMeasuring(); }
+	approximateFrameDurationInTicks = ax / N;
 
 	const float bufferPct = 0.02;
 	fpx = approximateFrameDurationInTicks * (1.0 - bufferPct);
