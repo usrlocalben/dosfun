@@ -20,12 +20,12 @@ run: app.exe
 app.exe: app.lib
 	$(LD) N $@ F $<
 
-app.obj: app.cpp kbd.hpp vga.hpp snd.hpp mod.hpp ost.hpp efx.hpp
+app.obj: app.cpp kbd.lib vga.lib snd.lib mod.lib ost.lib efx.lib
 	$(CPP) $[@
 app.lib: app.obj kbd.lib vga.lib snd.lib mod.lib ost.lib efx.lib
 	$(LIB) $@ $<
 
-efx.obj: efx.cpp efx.hpp vga.hpp
+efx.obj: efx.cpp efx.hpp vga.lib
 	$(CPP) $[@
 efx.lib: efx.obj         vga.lib
 	$(LIB) $@ $<
@@ -35,12 +35,12 @@ kbd.obj: kbd.cpp kbd.hpp
 kbd.lib: kbd.obj
 	$(LIB) $@ $<
 
-vga.obj: vga.cpp vga.hpp pit.hpp
+vga.obj: vga.cpp vga.hpp pit.lib
 	$(CPP) $[@
 vga.lib: vga.obj         pit.lib
 	$(LIB) $@ $<
 
-snd.obj: snd.cpp snd.hpp dma.hpp pic.hpp
+snd.obj: snd.cpp snd.hpp dma.lib pic.lib
 	$(CPP) $[@
 snd.lib: snd.obj         dma.lib pic.lib
 	$(LIB) $@ $<
@@ -55,7 +55,7 @@ pit.obj: pit.cpp pit.hpp
 pit.lib: pit.obj
 	$(LIB) $@ $<
 
-dma.obj: dma.cpp dma.hpp mem.hpp
+dma.obj: dma.cpp dma.hpp mem.lib
 	$(CPP) $[@
 dma.lib: dma.obj         mem.lib
 	$(LIB) $@ $<
