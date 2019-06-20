@@ -1,6 +1,16 @@
+app.exe
 *.obj
+*.lib
+
+# generated source
 ost.hpp
 ost.cpp
+
+# build support
 bin2cpp.exe
-app.exe
-*.lib
+
+# extenders
+dos32a.exe
+dos4gw.exe
+pmodew.exe
+pmwlite.exe
