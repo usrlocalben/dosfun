@@ -7,7 +7,7 @@
 namespace rqdq {
 namespace snd {
 
-typedef void (*audioproc)(std::int16_t* dest, int num);
+typedef void (*audioproc)(std::int16_t* dest, int numChannels, int numSamples);
 
 struct Ports {
 	int reset;
@@ -19,7 +19,7 @@ struct Ports {
 
 class Blaster {
 public:
-	Blaster(int ioAddr, int irqNum, int dmaNum, int rate);
+	Blaster(int baseAddr, int irqNum, int dmaNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
 
 private:
 	Blaster& operator=(const Blaster&);  // not copyable
@@ -48,6 +48,8 @@ private:
 	const pic::IRQLine irqLine_;
 	const dma::Channel dma_;
 	const int sampleRateInHz_;
+	const int numChannels_;
+	const int bufferSizeInSamples_;
 	int userBuffer_;
 	int playBuffer_;
 	const dma::Buffer dmaBuffer_;

@@ -77,22 +77,23 @@ void Paula::Voice::Trigger(int8_t* samplePtr, int sampleLen, int loopLen, int of
 	pos_ = std::min(offs, sampleLen-1); }
 
 
-Paula::Paula() :masterGain_(0.24f) {}
+Paula::Paula() :masterGain_(0.5f) {}
 
 
-void Paula::Render(float *outBuf, int numSamples) {
+void Paula::Render(float* lb, float* rb, int numSamples) {
 	// const float pan = 0.5f + 0.5f * masterSeparation_;
 	// const float vm0 = masterGain_ * sqrt(pan);
 	// const float vm1 = masterGain_ * sqrt(1-pan);
 
 	for (int i=0; i<numSamples; i++) {
-		out_[i] = 0; }
+		out_[i] = 0;
+		out_[i+4096] = 0; }
 	for (int vi=0; vi<kNumVoices; vi++) {
-		// float* dst = (vi==1||vi==2) ? out_ + 4096 : out_;
-		// if (vi==2)
-		voice_[vi].Render(out_, numSamples); }
+		float* dst = (vi==1||vi==2) ? out_ + 4096 : out_;
+		voice_[vi].Render(dst, numSamples); }
 	for (int s=0; s<numSamples; s++) {
-		*outBuf++ = out_[s] * masterGain_; }}
+		*lb++ = out_[s]      * masterGain_;
+		*rb++ = out_[s+4096] * masterGain_; }}
 
 
 void Player::Sample::Prepare() {
@@ -441,12 +442,13 @@ Player::Player(Paula* p, uint8_t* moddata) :paula_(p) {
 	Reset(); }
 
 
-void Player::Render(float* buf, int numSamples) {
+void Player::Render(float* lb, float* rb, int numSamples) {
 	while (numSamples) {
 		int todo = std::min(numSamples, trCounter_);
 		if (todo) {
-			paula_->Render(buf, todo);
-			buf += todo;
+			paula_->Render(lb, rb, todo);
+			lb += todo;
+			rb += todo;
 			numSamples -= todo;
 			trCounter_ -= todo; }
 		else {
@@ -454,8 +456,8 @@ void Player::Render(float* buf, int numSamples) {
 			trCounter_ = tickRate_; }}}
 
 
-void Player::RenderJmp(void* param, float* buf, int len) {
-	((Player*)param)->Render(buf, len); }
+void Player::RenderJmp(void* param, float* lb, float *rb, int len) {
+	((Player*)param)->Render(lb, rb, len); }
 
 
 int Player::basePTable[61] = { 0,

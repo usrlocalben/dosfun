@@ -22,13 +22,13 @@ public:
 		void Trigger(std::int8_t* samplePtr, int sampleLen, int loopLen, int offs=0); };
 
 	Voice voice_[4];
-	float out_[4096];  // *2];  // left, right
+	float out_[4096*2];  // left, right
 	float masterGain_;
 	// float masterSeparation_;
 
 public:
 	Paula();
-	void Render(float *outBuf, int numSamples); };
+	void Render(float* lb, float *rb, int numSamples); };
 
 
 class Player {
@@ -114,12 +114,12 @@ public:
 	char name_[21];
 
 	Player(Paula* paula, std::uint8_t* moddata);
-	void Render(float* buf, int numSamples);
+	void Render(float* lb, float* rb, int numSamples);
 	int GetCurrentPos() const {
 		return curPos_; }
 	int GetCurrentRow() const {
 		return curRow_; }
-	static void RenderJmp(void* param, float* buf, int len); };
+	static void RenderJmp(void* param, float* lb, float* rb, int len); };
 
 
 }  // namespace mod

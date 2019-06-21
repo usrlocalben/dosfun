@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <vector>
 #include <i86.h>  // _disable/_enable
 
@@ -21,6 +22,14 @@ using std::cout;
 using std::hex;
 using std::dec;
 using namespace rqdq;
+
+const int kAudioBufferSizeInSamples = 1024;
+const int kAudioSampleRateInHz = 22050;
+const int kSoundBlasterIOBaseAddr = 0x220;
+const int kSoundBlasterIRQNum = 0x7;
+const int kAudioChannels = 2;
+const int kSoundBlasterDMAChannelNum = 0x05;
+
 
 volatile int timeInFrames = 0;
 volatile int8_t backPage = 1;
@@ -52,36 +61,42 @@ struct DemoStats {
 	float measuredRefreshRateInHz; };
 
 
-float audioBuf[4096];
+float audioBuf[4096*2];
 
 mod::Player* thePlayer;
 
-void audiostream(int16_t* buf, int len) {
+void audiostream(int16_t* buf, int numChannels, int numSamples) {
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0x20, 0x3f, 0x10);
 #endif
-	thePlayer->Render(audioBuf, len);
+	thePlayer->Render(audioBuf, audioBuf+4096, numSamples);
 #ifdef SHOW_TIMING
-vga::SetRGB(0, 0,0,0);
+vga::SetRGB(0, 0, 0, 0);
 #endif
-	for (int i=0; i<len; i++) {
-		int16_t val = audioBuf[i] * 32767.0;
-		buf[i] = val; }}
+	for (int i=0; i<numSamples; i++) {
+		if (numChannels == 2) {
+			buf[i*2+0] = audioBuf[i]      * std::numeric_limits<int16_t>::max();
+			buf[i*2+1] = audioBuf[i+4096] * std::numeric_limits<int16_t>::max(); }
+		else {
+			buf[i] = ((audioBuf[i]+audioBuf[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
 
 
 DemoStats Demo() {
 	DemoStats stats;
 	kbd::Keyboard kbd;
 
-	mod::Paula paula;
-	thePlayer = new mod::Player(&paula, (uint8_t*)ostData);
-
 	vga::SetModeX();
-	
 	vga::SoftVBI softVBI(&vbi);
 	stats.measuredRefreshRateInHz = softVBI.GetFrequency();
 
-	snd::Blaster blaster(0x220, 7, 5, 22050);
+	mod::Paula paula;
+	thePlayer = new mod::Player(&paula, (uint8_t*)ostData);
+	snd::Blaster blaster(kSoundBlasterIOBaseAddr,
+	                     kSoundBlasterIRQNum,
+	                     kSoundBlasterDMAChannelNum,
+	                     kAudioSampleRateInHz,
+						 kAudioChannels,
+	                     kAudioBufferSizeInSamples);
 	blaster.AttachProc(&audiostream);
 
 	int lastSongPos = -1;

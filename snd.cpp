@@ -18,7 +18,6 @@ using std::int16_t;
 namespace rqdq {
 namespace {
 
-const int kBufferSizeInSamples = 128;
 const int kSampleSizeInWords = 1;
 
 
@@ -44,14 +43,16 @@ uint8_t lo(uint16_t value) { return value & 0x00ff; }
 uint8_t hi(uint16_t value) { return value >> 8; }
 
 
-Blaster::Blaster(int ioAddr, int irqNum, int dmaChannelNum, int rate)
-	:port_(make_ports(ioAddr)),
+Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples)
+	:port_(make_ports(baseAddr)),
 	irqLine_(pic::make_irqline(irqNum)),
 	dma_(dma::make_channel(dmaChannelNum)),
-	sampleRateInHz_(rate),
+	sampleRateInHz_(sampleRateInHz),
+	numChannels_(numChannels),
+	bufferSizeInSamples_(bufferSizeInSamples),
 	userBuffer_(1),
 	playBuffer_(0),
-	dmaBuffer_(kBufferSizeInSamples*kSampleSizeInWords*2),
+	dmaBuffer_(bufferSizeInSamples_*numChannels_*kSampleSizeInWords*2),
 	audioProcPtr_(0),
 	good_(false)
 {
@@ -84,13 +85,13 @@ Blaster::Blaster(int ioAddr, int irqNum, int dmaChannelNum, int rate)
 	TX(hi(sampleRateInHz_));
 	TX(lo(sampleRateInHz_));
 
-	// 16-bit DAC, A/I, FIFO
-	TX(0xb6);
-
-	// DMA mode: 16-bit signed mono
-	TX(0x10);
-	TX(lo(kBufferSizeInSamples*kSampleSizeInWords-1));
-	TX(hi(kBufferSizeInSamples*kSampleSizeInWords-1)); }
+	TX(0xb6);  // 16-bit DAC, A/I, FIFO
+	if (numChannels_ == 2) {
+		TX(0x30); }  // DMA mode: 16-bit signed stereo
+	else {
+		TX(0x10); }  // DMA mode: 16-bit signed mono
+	TX(lo(bufferSizeInSamples_*kSampleSizeInWords*numChannels_-1));
+	TX(hi(bufferSizeInSamples_*kSampleSizeInWords*numChannels_-1)); }
 
 
 Blaster::~Blaster() {
@@ -140,7 +141,7 @@ static void __interrupt Blaster::isrJmp() {
 
 inline int16_t* Blaster::GetUserBuffer() const {
 	int16_t* dst = (int16_t*)dmaBuffer_.Ptr16();
-	dst += userBuffer_*kBufferSizeInSamples*kSampleSizeInWords;
+	dst += userBuffer_*bufferSizeInSamples_*numChannels_*kSampleSizeInWords;
 	return dst; }
 
 
@@ -152,9 +153,9 @@ void Blaster::isr() {
 	std::swap(userBuffer_, playBuffer_);
 	int16_t* dst = GetUserBuffer();
 	if (audioProcPtr_ != nullptr) {
-		audioProcPtr_(dst, kBufferSizeInSamples); }
+		audioProcPtr_(dst, numChannels_, bufferSizeInSamples_); }
 	else {
-		for (int i=0; i<kBufferSizeInSamples; i++) {
+		for (int i=0; i<bufferSizeInSamples_*numChannels_; i++) {
 			dst[i] = 0; }}
 
 	ACK(); }
