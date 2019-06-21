@@ -7,7 +7,7 @@
 namespace rqdq {
 namespace snd {
 
-typedef void (*audioproc)(std::int16_t* dest, int numChannels, int numSamples);
+typedef void (*audioproc)(std::int16_t* dest, int numChannels, int numSamples, void *userPtr);
 
 struct Ports {
 	int reset;
@@ -38,7 +38,7 @@ private:
 
 public:
 	bool IsGood() const;
-	void AttachProc(audioproc value);
+	void AttachProc(audioproc userProc, void* userPtr);
 	void DetachProc();
 
 	~Blaster();
@@ -54,7 +54,8 @@ private:
 	int playBuffer_;
 	const dma::Buffer dmaBuffer_;
 	bool good_;
-	volatile audioproc audioProcPtr_; };
+	audioproc userProc_;
+	void* userPtr_; };
 
 
 }  // namespace snd

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <memory>
 #include <vector>
 #include <i86.h>  // _disable/_enable
 
@@ -16,11 +17,8 @@
 
 using std::int8_t;
 using std::uint8_t;
-using std::uint16_t;
 using std::int16_t;
-using std::cout;
-using std::hex;
-using std::dec;
+using std::uint16_t;
 using namespace rqdq;
 
 const int kAudioBufferSizeInSamples = 128;
@@ -29,7 +27,6 @@ const int kAudioWidthInChannels = 2;
 const int kSoundBlasterIOBaseAddr = 0x220;
 const int kSoundBlasterIRQNum = 0x7;
 const int kSoundBlasterDMAChannelNum = 0x05;
-
 
 float measuredRefreshRateInHz;
 
@@ -59,26 +56,31 @@ private:
 	bool locked_; };
 
 
+class PlayerAdapter {
+public:
+	PlayerAdapter(mod::Player& p) :player_(p) {}
 
-
-float pbuf[4096*2];
-
-mod::Player* thePlayer;
-
-void audiostream(int16_t* out, int numChannels, int numSamples) {
+	static void BlasterJmp(int16_t* out, int numChannels, int numSamples, void* self) {
+		static_cast<PlayerAdapter*>(self)->BlasterProc(out, numChannels, numSamples); }
+private:
+	void BlasterProc(int16_t* out, int numChannels, int numSamples) {
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0x20, 0x3f, 0x10);
 #endif
-	thePlayer->Render(pbuf, pbuf+4096, numSamples);
+		player_.Render(pbuf_, pbuf_+4096, numSamples);
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0, 0, 0);
 #endif
-	for (int i=0; i<numSamples; i++) {
-		if (numChannels == 2) {
-			out[i*2+0] = pbuf[i]      * std::numeric_limits<int16_t>::max();
-			out[i*2+1] = pbuf[i+4096] * std::numeric_limits<int16_t>::max(); }
-		else {
-			out[i] = ((pbuf[i]+pbuf[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
+		for (int i=0; i<numSamples; i++) {
+			if (numChannels == 2) {
+				out[i*2+0] = pbuf_[i]      * std::numeric_limits<int16_t>::max();
+				out[i*2+1] = pbuf_[i+4096] * std::numeric_limits<int16_t>::max(); }
+			else {
+				out[i] = ((pbuf_[i]+pbuf_[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
+
+private:
+	float pbuf_[4096*2];
+	mod::Player& player_; };
 
 
 void Demo() {
@@ -89,15 +91,16 @@ void Demo() {
 	vga::SoftVBI softVBI(&vbi);
 	measuredRefreshRateInHz = softVBI.GetFrequency();
 
-	mod::Paula paula;
-	thePlayer = new mod::Player(&paula, (uint8_t*)ostData);
+	std::shared_ptr<mod::Paula> paulaPtr(new mod::Paula());
+	std::shared_ptr<mod::Player> playerPtr(new mod::Player(paulaPtr.get(), (uint8_t*)ostData));
 	snd::Blaster blaster(kSoundBlasterIOBaseAddr,
 	                     kSoundBlasterIRQNum,
 	                     kSoundBlasterDMAChannelNum,
 	                     kAudioSampleRateInHz,
 						 kAudioWidthInChannels,
 	                     kAudioBufferSizeInSamples);
-	blaster.AttachProc(&audiostream);
+	std::shared_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr));
+	blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
 	int lastSongPos = -1;
 	while (1) {
@@ -111,8 +114,8 @@ void Demo() {
 			continue; } // spin until back-buffer is locked
 
 		float T = timeInFrames / measuredRefreshRateInHz;
-		int patternNum = thePlayer->GetCurrentPos();
-		int rowNum = thePlayer->GetCurrentRow();
+		int patternNum = playerPtr->GetCurrentPos();
+		int rowNum = playerPtr->GetCurrentRow();
 
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);

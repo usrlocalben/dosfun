@@ -53,8 +53,9 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	userBuffer_(1),
 	playBuffer_(0),
 	dmaBuffer_(bufferSizeInSamples_*numChannels_*kSampleSizeInWords*2),
-	audioProcPtr_(0),
-	good_(false)
+	good_(false),
+	userProc_(nullptr),
+	userPtr_(nullptr)
 {
 	theBlaster = this;
 
@@ -152,8 +153,8 @@ void Blaster::isr() {
 
 	std::swap(userBuffer_, playBuffer_);
 	int16_t* dst = GetUserBuffer();
-	if (audioProcPtr_ != nullptr) {
-		audioProcPtr_(dst, numChannels_, bufferSizeInSamples_); }
+	if (userProc_ != nullptr) {
+		userProc_(dst, numChannels_, bufferSizeInSamples_, userPtr_); }
 	else {
 		for (int i=0; i<bufferSizeInSamples_*numChannels_; i++) {
 			dst[i] = 0; }}
@@ -166,12 +167,15 @@ inline void Blaster::ACK() {
 	inp(port_.ack16); }  // XXX port name?
 
 
-void Blaster::AttachProc(audioproc value) {
-	audioProcPtr_ = value; }
+void Blaster::AttachProc(audioproc userProc, void* userPtr) {
+	_disable();
+	userPtr_ = userPtr;
+	userProc_ = userProc;
+	_enable(); }
 
 
 void Blaster::DetachProc() {
-	audioProcPtr_ = 0; }
+	userProc_ = 0; }
 
 
 bool Blaster::IsGood() const {
