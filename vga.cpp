@@ -1,11 +1,21 @@
 #include "vga.hpp"
+
 #include <dos.h>  // _dos_setvect, _dos_getvect
 #include <i86.h>  // int386
+
 #include "pit.hpp"
 
 #define nullptr (0)
 
 namespace rqdq {
+namespace {
+
+const int kNumVBISamples = 50;
+
+const float kSoftVBIJitterPct = 0.05;
+
+}  // namespace
+
 namespace vga {
 
 inline void SpinUntilRetracing() {
@@ -44,15 +54,15 @@ void SetModeX() {
 	outpw(VP_SEQC, 0x604);  // disable chain4
 
 	outpw(VP_SEQC, 0x100);  // synchronous reset while switching clocks
-	outp(VP_MISC, 0xe7);   // select 28 MHz dot clock & 60 Hz scanning rate
-	// outp(VP_MISC, 0xe3);   // select 25 MHz dot clock & 60 Hz scanning rate
+	outp(VP_MISC, 0xe3);    // select 25 MHz dot clock & 60 Hz scanning rate
 
 	outpw(VP_SEQC, 0x300);  // undo reset (restart sequencer)
 
-	outp(VP_CRTC, 0x11);   // VSync End reg contains register write-protect bit
-	uint8_t tmp = inp(VP_CRTC+1);  // get current VSync End register setting
-	tmp &= 0x7f;           // remove write-protect on various CRTC registers
-	outp(VP_CRTC+1, tmp);
+	// VSync End reg contains register write-protect bit
+	// get current VSync End register setting
+	// remove write-protect on various CRTC registers
+	outp(VP_CRTC, 0x11);
+	outp(VP_CRTC+1, inp(VP_CRTC+1)&0x7f);
 
 	outpw(VP_CRTC, 0x0d06);  // vertical total
 	outpw(VP_CRTC, 0x3e07);  // overflow (bit 8 of vertical counts)
@@ -63,21 +73,14 @@ void SetModeX() {
 	outpw(VP_CRTC, 0x0014);  // turn off dword mode
 	outpw(VP_CRTC, 0xe715);  // v blank start
 	outpw(VP_CRTC, 0x0616);  // v blank end
-	outpw(VP_CRTC, 0xe317);  // turn on byte mode
-
-	// outpw(VP_SEQC, 0x0f02);  // enable writes to all four planes
-	}
+	outpw(VP_CRTC, 0xe317); }// turn on byte mode
 
 
 void (__interrupt * oldTimerISRPtr)();
 
-void __interrupt noop_timer_isr() {
-	// _chain_intr(oldTimerISRPtr); }
-	outp(0x20, 0x20); }
-
 const int TIMER_ISR_NUM = 0x08;
 
-volatile uint16_t fpx = 0;
+volatile uint16_t softVBISleepTimeInTicks = 0;
 
 volatile vbifunc userVBIProc = nullptr;
 
@@ -85,7 +88,7 @@ void __interrupt vblank_isr() {
 	// SetRGB(0, 0x3f,0x3f,0x3f);
 	SpinUntilRetracing();
 	// SetRGB(0, 0x0, 0x0, 0x0);
-	pit::StartCountdown(fpx);
+	pit::StartCountdown(softVBISleepTimeInTicks);
 	if (userVBIProc != nullptr) {
 		userVBIProc(); }
 	outp(0x20, 0x20); }
@@ -99,21 +102,20 @@ void InstallVBI(vbifunc proc) {
 	userVBIProc = proc;
 
 	int ax = 0;
-	const int N = 10;
-	for (int si=0; si<N; si++) {
+	for (int si=0; si<kNumVBISamples; si++) {
 		SpinUntilNextRetraceBegins();
 		pit::BeginMeasuring();
 		SpinUntilNextRetraceBegins();
 		ax += pit::EndMeasuring(); }
-	approximateFrameDurationInTicks = ax / N;
+	approximateFrameDurationInTicks = ax / kNumVBISamples;
 
-	const float bufferPct = 0.02;
-	fpx = approximateFrameDurationInTicks * (1.0 - bufferPct);
+	softVBISleepTimeInTicks =
+		approximateFrameDurationInTicks * (1.0 - kSoftVBIJitterPct);
 
 	SpinWhileRetracing();
 	_dos_setvect(TIMER_ISR_NUM, &vblank_isr);
 	SpinUntilRetracing();
-	pit::StartCountdown(fpx); }
+	pit::StartCountdown(softVBISleepTimeInTicks); }
 
 
 void UninstallVBI() {

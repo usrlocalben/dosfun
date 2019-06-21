@@ -21,7 +21,6 @@ uint8_t hi(uint16_t value) { return value >> 8; }
 
 namespace dma {
 
-
 Buffer::Buffer(std::uint16_t sizeInWords)
 	:realMem_(sizeInWords*2*2),
 	sizeInWords_(sizeInWords) {

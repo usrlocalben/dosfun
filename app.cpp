@@ -23,13 +23,15 @@ using std::hex;
 using std::dec;
 using namespace rqdq;
 
-const int kAudioBufferSizeInSamples = 1024;
+const int kAudioBufferSizeInSamples = 128;
 const int kAudioSampleRateInHz = 22050;
+const int kAudioWidthInChannels = 2;
 const int kSoundBlasterIOBaseAddr = 0x220;
 const int kSoundBlasterIRQNum = 0x7;
-const int kAudioChannels = 2;
 const int kSoundBlasterDMAChannelNum = 0x05;
 
+
+float measuredRefreshRateInHz;
 
 volatile int timeInFrames = 0;
 volatile int8_t backPage = 1;
@@ -57,38 +59,35 @@ private:
 	bool locked_; };
 
 
-struct DemoStats {
-	float measuredRefreshRateInHz; };
 
 
-float audioBuf[4096*2];
+float pbuf[4096*2];
 
 mod::Player* thePlayer;
 
-void audiostream(int16_t* buf, int numChannels, int numSamples) {
+void audiostream(int16_t* out, int numChannels, int numSamples) {
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0x20, 0x3f, 0x10);
 #endif
-	thePlayer->Render(audioBuf, audioBuf+4096, numSamples);
+	thePlayer->Render(pbuf, pbuf+4096, numSamples);
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0, 0, 0);
 #endif
 	for (int i=0; i<numSamples; i++) {
 		if (numChannels == 2) {
-			buf[i*2+0] = audioBuf[i]      * std::numeric_limits<int16_t>::max();
-			buf[i*2+1] = audioBuf[i+4096] * std::numeric_limits<int16_t>::max(); }
+			out[i*2+0] = pbuf[i]      * std::numeric_limits<int16_t>::max();
+			out[i*2+1] = pbuf[i+4096] * std::numeric_limits<int16_t>::max(); }
 		else {
-			buf[i] = ((audioBuf[i]+audioBuf[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
+			out[i] = ((pbuf[i]+pbuf[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
 
 
-DemoStats Demo() {
-	DemoStats stats;
+void Demo() {
 	kbd::Keyboard kbd;
 
 	vga::ModeSetter modeSetter;
 	modeSetter.Set(vga::VM_MODEX);
 	vga::SoftVBI softVBI(&vbi);
-	stats.measuredRefreshRateInHz = softVBI.GetFrequency();
+	measuredRefreshRateInHz = softVBI.GetFrequency();
 
 	mod::Paula paula;
 	thePlayer = new mod::Player(&paula, (uint8_t*)ostData);
@@ -96,7 +95,7 @@ DemoStats Demo() {
 	                     kSoundBlasterIRQNum,
 	                     kSoundBlasterDMAChannelNum,
 	                     kAudioSampleRateInHz,
-						 kAudioChannels,
+						 kAudioWidthInChannels,
 	                     kAudioBufferSizeInSamples);
 	blaster.AttachProc(&audiostream);
 
@@ -111,24 +110,23 @@ DemoStats Demo() {
 		if (!vramLock.IsLocked()) {
 			continue; } // spin until back-buffer is locked
 
-		float T = timeInFrames / stats.measuredRefreshRateInHz;
+		float T = timeInFrames / measuredRefreshRateInHz;
 		int patternNum = thePlayer->GetCurrentPos();
 		int rowNum = thePlayer->GetCurrentRow();
 
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);
 #endif
+		for (int i=0; i<1; i++)
 		efx::DrawKefrensBars(vramLock.Page(), T, patternNum, rowNum);
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0,0,0);
 #endif
-		}
-
-	return stats; }
+		}}
 
 
 int main(int argc, char *argv[]) {
-	DemoStats stats = Demo();
+	Demo();
 	std::cout << "        elapsedTime: " << timeInFrames << " frames\n";
-	std::cout << "measuredRefreshRate:   " << stats.measuredRefreshRateInHz << " hz\n";
+	std::cout << "measuredRefreshRate:   " << measuredRefreshRateInHz << " hz\n";
 	return 0; }
