@@ -85,7 +85,8 @@ DemoStats Demo() {
 	DemoStats stats;
 	kbd::Keyboard kbd;
 
-	vga::SetModeX();
+	vga::ModeSetter modeSetter;
+	modeSetter.Set(vga::VM_MODEX);
 	vga::SoftVBI softVBI(&vbi);
 	stats.measuredRefreshRateInHz = softVBI.GetFrequency();
 
@@ -128,7 +129,6 @@ DemoStats Demo() {
 
 int main(int argc, char *argv[]) {
 	DemoStats stats = Demo();
-	vga::SetBIOSMode(0x3);
 	std::cout << "        elapsedTime: " << timeInFrames << " frames\n";
 	std::cout << "measuredRefreshRate:   " << stats.measuredRefreshRateInHz << " hz\n";
 	return 0; }

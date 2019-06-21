@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdlib>
 #include <cstdint>
 #include <conio.h>  // outp
 
@@ -87,6 +88,38 @@ struct VRAMPage {
 const vga::VRAMPage modeXPages[2] = {
 	{ 0, vga::VGAPTR, 0 },
 	{ 1, vga::VGAPTR + (320*240/4), 320*240/4 } };
+
+
+const int VM_TEXT = 3;
+const int VM_MODE13 = 0x13;
+const int VM_MODEX = 0x100;
+
+class ModeSetter {
+public:
+	// XXX assume text-mode, need detection
+	ModeSetter() :oldMode_(0x3), curMode_(oldMode_) {}
+
+	void Set(int req) {
+		if (req == VM_TEXT) {
+			vga::SetBIOSMode(0x3);
+			curMode_ = VM_TEXT; }
+		else if (req == VM_MODE13) {
+			vga::SetBIOSMode(0x13);
+			curMode_ = VM_MODE13; }
+		else if (req == VM_MODEX) {
+			vga::SetModeX();
+			curMode_ = VM_MODEX; }
+		else {
+			// XXX
+			std::exit(1); }}
+
+	~ModeSetter() {
+		if (curMode_ != oldMode_) {
+			Set(oldMode_); }}
+
+private:
+		const int oldMode_;
+		int curMode_; };
 
 
 }  // namespace vga
