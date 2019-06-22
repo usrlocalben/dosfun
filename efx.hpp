@@ -1,5 +1,5 @@
 #pragma once
-#include "vga.hpp"
+#include "vga_mode.hpp"
 
 namespace rqdq {
 namespace efx {

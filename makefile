@@ -21,14 +21,14 @@ run: app.exe
 app.exe: app.lib
 	$(LD) N $@ F $<
 
-app.obj: app.cpp kbd.lib vga.lib snd.lib mod.lib ost.lib efx.lib fli.lib
+app.obj: app.cpp kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
 	$(CPP) $[@
-app.lib: app.obj kbd.lib vga.lib snd.lib mod.lib ost.lib efx.lib fli.lib
+app.lib: app.obj kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
 	$(LIB) $@ $<
 
-efx.obj: efx.cpp efx.hpp vga.lib
+efx.obj: efx.cpp efx.hpp vga_mode.lib vga_reg.lib
 	$(CPP) $[@
-efx.lib: efx.obj         vga.lib
+efx.lib: efx.obj         vga_mode.lib vga_reg.lib
 	$(LIB) $@ $<
 
 kbd.obj: kbd.cpp kbd.hpp 
@@ -36,9 +36,19 @@ kbd.obj: kbd.cpp kbd.hpp
 kbd.lib: kbd.obj
 	$(LIB) $@ $<
 
-vga.obj: vga.cpp vga.hpp pit.lib
+vga_softvbi.obj: vga_softvbi.cpp vga_softvbi.hpp vga_reg.lib pit.lib
 	$(CPP) $[@
-vga.lib: vga.obj         pit.lib
+vga_softvbi.lib: vga_softvbi.obj                 vga_reg.lib pit.lib
+	$(LIB) $@ $<
+
+vga_mode.obj: vga_mode.cpp vga_mode.hpp vga_reg.lib pit.lib
+	$(CPP) $[@
+vga_mode.lib: vga_mode.obj              vga_reg.lib pit.lib
+	$(LIB) $@ $<
+
+vga_reg.obj: vga_reg.cpp vga_reg.hpp
+	$(CPP) $[@
+vga_reg.lib: vga_reg.obj
 	$(LIB) $@ $<
 
 snd.obj: snd.cpp snd.hpp dma.lib pic.lib
@@ -61,9 +71,9 @@ dma.obj: dma.cpp dma.hpp mem.lib
 dma.lib: dma.obj         mem.lib
 	$(LIB) $@ $<
 
-fli.obj: fli.cpp fli.hpp vga.lib
+vga_pageflip.obj: vga_pageflip.cpp vga_pageflip.hpp vga_mode.lib
 	$(CPP) $[@
-fli.lib: fli.obj         vga.lib
+vga_pageflip.lib: vga_pageflip.obj                  vga_mode.lib
 	$(LIB) $@ $<
 
 pic.obj: pic.cpp pic.hpp

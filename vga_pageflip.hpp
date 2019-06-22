@@ -1,5 +1,5 @@
 #pragma once
-#include "vga.hpp"
+#include "vga_mode.hpp"
 
 namespace rqdq {
 namespace vga {
@@ -17,8 +17,8 @@ public:
 	~VRAMLock() {
 		if (locked_) {
 			backLocked = false; }}
-	const vga::VRAMPage& Page() {
-		return vga::modeXPages[backPage]; }
+	const VRAMPage& Page() {
+		return modeXPages[backPage]; }
 	bool IsLocked() {
 		return locked_; }
 private:

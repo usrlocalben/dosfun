@@ -5,13 +5,15 @@
 #include <memory>
 
 #include "efx.hpp"
-#include "fli.hpp"
 #include "kbd.hpp"
 #include "mod.hpp"
 #include "ost.hpp"
-#include "snd.hpp"
-#include "vga.hpp"
 #include "pit.hpp"
+#include "snd.hpp"
+#include "vga_mode.hpp"
+#include "vga_pageflip.hpp"
+#include "vga_reg.hpp"
+#include "vga_softvbi.hpp"
 
 using std::uint8_t;
 using std::int16_t;

@@ -1,6 +1,7 @@
-#include "fli.hpp"
+#include "vga_pageflip.hpp"
 
-#include "vga.hpp"
+#include "vga_mode.hpp"
+#include "vga_reg.hpp"
 
 namespace rqdq {
 namespace vga {
@@ -12,7 +13,7 @@ volatile bool backLocked = true;
 void vbi() {
 	++timeInFrames;
 	if (!backLocked) {
-		vga::SetStartAddress(vga::modeXPages[backPage].vgaAddr);
+		SetStartAddress(modeXPages[backPage].vgaAddr);
 		backPage ^= 1;
 		backLocked = true; }}
 

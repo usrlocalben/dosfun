@@ -2,11 +2,21 @@
 
 #include <cmath>
 
-#include "vga.hpp"
+#include "vga_mode.hpp"
+#include "vga_reg.hpp"
 
 using std::uint8_t;
 
 namespace rqdq {
+namespace {
+
+inline void PutPixelSlow(int x, int y, uint8_t c, uint8_t* baseAddr) {
+	if (x<0 || x>=320) return;
+	vga::SelectPlanes(1<<(x&3));
+	baseAddr[y*80+(x>>2)] = c; }
+
+
+}  // namespace
 namespace efx {
 
 void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNum) {
@@ -57,7 +67,7 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 
 		// if (yyy%2==0)
 		for (int wx=-4; wx<=4; wx++) {
-			vga::PutPixelSlow(pos+wx, yyy, colorpos+wx, dst.addr); }
+			PutPixelSlow(pos+wx, yyy, colorpos+wx, dst.addr); }
 
 		prevPtr = rowPtr;
 		rowPtr += 80; }}
