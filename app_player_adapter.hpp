@@ -2,14 +2,14 @@
 #include <cstdint>
 #include <limits>
 
-#include "mod.hpp"
+#include "kb_tinymod.hpp"
 
 namespace rqdq {
 namespace app {
 
 class PlayerAdapter {
 public:
-	PlayerAdapter(mod::Player& p);
+	PlayerAdapter(kb::ModPlayer& p);
 
 	static void BlasterJmp(std::int16_t* out, int numChannels, int numSamples, void* self);
 
@@ -18,7 +18,7 @@ private:
 
 private:
 	float pbuf_[4096*2];
-	mod::Player& player_; };
+	kb::ModPlayer& player_; };
 
 
 }  // namespace app

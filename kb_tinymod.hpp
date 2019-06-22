@@ -2,8 +2,7 @@
 #pragma once
 #include <cstdint>
 
-namespace rqdq {
-namespace mod {
+namespace kb {
 
 class Paula {
 public:
@@ -31,7 +30,7 @@ public:
 	void Render(float* lb, float *rb, int numSamples); };
 
 
-class Player {
+class ModPlayer {
 	Paula *paula_;
 	static int basePTable[5*12 + 1];
 	static int pTable[16][60];
@@ -113,7 +112,7 @@ class Player {
 public:
 	char name_[21];
 
-	Player(Paula* paula, std::uint8_t* moddata);
+	ModPlayer(Paula* paula, std::uint8_t* moddata);
 	void Render(float* lb, float* rb, int numSamples);
 	int GetCurrentPos() const {
 		return curPos_; }
@@ -122,5 +121,4 @@ public:
 	static void RenderJmp(void* param, float* lb, float* rb, int len); };
 
 
-}  // namespace mod
-}  // namespace rqdq
+}  // namespace kb

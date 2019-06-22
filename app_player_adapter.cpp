@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <limits>
 
-#include "mod.hpp"
+#include "kb_tinymod.hpp"
 #ifdef SHOW_TIMING
 #include "vga_reg.hpp"
 #endif
@@ -15,7 +15,7 @@ using std::uint16_t;
 namespace rqdq {
 namespace app {
 
-PlayerAdapter::PlayerAdapter(mod::Player& p)
+PlayerAdapter::PlayerAdapter(kb::ModPlayer& p)
 	:player_(p) {}
 
 

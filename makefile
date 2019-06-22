@@ -21,14 +21,14 @@ run: app.exe
 app.exe: app.lib
 	$(LD) N $@ F $<
 
-app.obj: app.cpp app_player_adapter.lib kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
+app.obj: app.cpp app_player_adapter.lib kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib kb_tinymod.lib ost.lib efx.lib vga_pageflip.lib
 	$(CPP) $[@
-app.lib: app.obj app_player_adapter.lib kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
+app.lib: app.obj app_player_adapter.lib kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib kb_tinymod.lib ost.lib efx.lib vga_pageflip.lib
 	$(LIB) $@ $<
 
-app_player_adapter.obj: app_player_adapter.cpp app_player_adapter.hpp mod.lib
+app_player_adapter.obj: app_player_adapter.cpp app_player_adapter.hpp kb_tinymod.lib
 	$(CPP) $[@
-app_player_adapter.lib: app_player_adapter.obj                        mod.lib
+app_player_adapter.lib: app_player_adapter.obj                        kb_tinymod.lib
 	$(LIB) $@ $<
 
 efx.obj: efx.cpp efx.hpp vga_mode.lib vga_reg.lib
@@ -61,9 +61,9 @@ snd.obj: snd.cpp snd.hpp dma.lib pic.lib
 snd.lib: snd.obj         dma.lib pic.lib
 	$(LIB) $@ $<
 
-mod.obj: mod.cpp mod.hpp
+kb_tinymod.obj: kb_tinymod.cpp kb_tinymod.hpp
 	$(CPP) $[@
-mod.lib: mod.obj
+kb_tinymod.lib: kb_tinymod.obj
 	$(LIB) $@ $<
 
 pit.obj: pit.cpp pit.hpp pic.lib

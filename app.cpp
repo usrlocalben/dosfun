@@ -7,7 +7,7 @@
 #include "app_player_adapter.hpp"
 #include "efx.hpp"
 #include "kbd.hpp"
-#include "mod.hpp"
+#include "kb_tinymod.hpp"
 #include "ost.hpp"
 #include "pit.hpp"
 #include "snd.hpp"
@@ -38,8 +38,8 @@ public:
 	Demo()
 		:quitSoon_(false),
 		mCnt_(0),
-		paulaPtr_(new mod::Paula()),
-		playerPtr_(new mod::Player(paulaPtr_.get(), (uint8_t*)ostData)) {}
+		paulaPtr_(new kb::Paula()),
+		playerPtr_(new kb::ModPlayer(paulaPtr_.get(), (uint8_t*)ostData)) {}
 
 	void Run() {
 		kbd::Keyboard kbd;
@@ -95,8 +95,8 @@ private:
 
 private:
 	bool quitSoon_;
-	std::auto_ptr<mod::Paula> paulaPtr_;
-	std::auto_ptr<mod::Player> playerPtr_;
+	std::auto_ptr<kb::Paula> paulaPtr_;
+	std::auto_ptr<kb::ModPlayer> playerPtr_;
 
 public:
 	float measuredRefreshRateInHz_;
