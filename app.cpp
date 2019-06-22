@@ -1,25 +1,23 @@
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <fstream>
 #include <limits>
 #include <memory>
-#include <vector>
-#include <i86.h>  // _disable/_enable
 
+#include "efx.hpp"
+#include "fli.hpp"
 #include "kbd.hpp"
-#include "vga.hpp"
-#include "snd.hpp"
 #include "mod.hpp"
 #include "ost.hpp"
-#include "efx.hpp"
+#include "snd.hpp"
+#include "vga.hpp"
 
-using std::int8_t;
 using std::uint8_t;
 using std::int16_t;
 using std::uint16_t;
-using namespace rqdq;
+
+namespace rqdq {
+namespace app {
 
 const int kAudioBufferSizeInSamples = 128;
 const int kAudioSampleRateInHz = 22050;
@@ -27,33 +25,6 @@ const int kAudioWidthInChannels = 2;
 const int kSoundBlasterIOBaseAddr = 0x220;
 const int kSoundBlasterIRQNum = 0x7;
 const int kSoundBlasterDMAChannelNum = 0x05;
-
-float measuredRefreshRateInHz;
-
-volatile int timeInFrames = 0;
-volatile int8_t backPage = 1;
-volatile bool backLocked = true;
-
-void vbi() {
-	++timeInFrames;
-	if (!backLocked) {
-		vga::SetStartAddress(vga::modeXPages[backPage].vgaAddr);
-		backPage ^= 1;
-		backLocked = true; }}
-
-class VRAMLock {
-public:
-	VRAMLock() {
-		locked_ = backLocked; }
-	~VRAMLock() {
-		if (locked_) {
-			backLocked = false; }}
-	const vga::VRAMPage& Page() {
-		return vga::modeXPages[backPage]; }
-	bool IsLocked() {
-		return locked_; }
-private:
-	bool locked_; };
 
 
 class PlayerAdapter {
@@ -83,53 +54,76 @@ private:
 	mod::Player& player_; };
 
 
-void Demo() {
-	kbd::Keyboard kbd;
+class Demo {
+public:
+	Demo()
+		:quitSoon_(false),
+		paulaPtr_(new mod::Paula()),
+		playerPtr_(new mod::Player(paulaPtr_.get(), (uint8_t*)ostData)) {}
 
-	vga::ModeSetter modeSetter;
-	modeSetter.Set(vga::VM_MODEX);
-	vga::SoftVBI softVBI(&vbi);
-	measuredRefreshRateInHz = softVBI.GetFrequency();
+	void Run() {
+		kbd::Keyboard kbd;
 
-	std::shared_ptr<mod::Paula> paulaPtr(new mod::Paula());
-	std::shared_ptr<mod::Player> playerPtr(new mod::Player(paulaPtr.get(), (uint8_t*)ostData));
-	snd::Blaster blaster(kSoundBlasterIOBaseAddr,
-	                     kSoundBlasterIRQNum,
-	                     kSoundBlasterDMAChannelNum,
-	                     kAudioSampleRateInHz,
-						 kAudioWidthInChannels,
-	                     kAudioBufferSizeInSamples);
-	std::shared_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr));
-	blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
+		vga::ModeSetter modeSetter;
+		modeSetter.Set(vga::VM_MODEX);
+		vga::SoftVBI softVBI(&vga::vbi);
+		measuredRefreshRateInHz_ = softVBI.GetFrequency();
 
-	int lastSongPos = -1;
-	while (1) {
-		if (kbd.IsDataAvailable()) {
-			kbd::Event ke = kbd.GetMessage();
-			if (ke.down && ke.scanCode == kbd::SC_ESC) {
-				break; }}
+		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
+							 kSoundBlasterIRQNum,
+							 kSoundBlasterDMAChannelNum,
+							 kAudioSampleRateInHz,
+							 kAudioWidthInChannels,
+							 kAudioBufferSizeInSamples);
+		std::shared_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
+		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
-		VRAMLock vramLock;
-		if (!vramLock.IsLocked()) {
-			continue; } // spin until back-buffer is locked
+		quitSoon_ = false;
+		while (!quitSoon_) {
+			if (kbd.IsDataAvailable()) {
+				kbd::Event ke = kbd.GetMessage();
+				if (ke.down) {
+					OnKeyDown(ke.scanCode); }
+				continue; }
 
-		float T = timeInFrames / measuredRefreshRateInHz;
-		int patternNum = playerPtr->GetCurrentPos();
-		int rowNum = playerPtr->GetCurrentRow();
+			vga::VRAMLock vramLock;
+			if (vramLock.IsLocked()) {
+				Draw(vramLock.Page()); }}}
 
+private:
+	void Draw(const vga::VRAMPage& vram) {
+		float T = vga::GetTime() / measuredRefreshRateInHz_;
+		int patternNum = playerPtr_->GetCurrentPos();
+		int rowNum = playerPtr_->GetCurrentRow();
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);
 #endif
-		for (int i=0; i<1; i++)
-		efx::DrawKefrensBars(vramLock.Page(), T, patternNum, rowNum);
+		efx::DrawKefrensBars(vram, T, patternNum, rowNum);
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0,0,0);
 #endif
-		}}
+		}
+
+	void OnKeyDown(int scanCode) {
+		if (scanCode == kbd::SC_ESC) {
+			quitSoon_ = true; }}
+
+private:
+	bool quitSoon_;
+	std::shared_ptr<mod::Paula> paulaPtr_;
+	std::shared_ptr<mod::Player> playerPtr_;
+
+public:
+	float measuredRefreshRateInHz_; };
+
+
+}  // namespace app
+}  // namespace rqdq
 
 
 int main(int argc, char *argv[]) {
-	Demo();
-	std::cout << "        elapsedTime: " << timeInFrames << " frames\n";
-	std::cout << "measuredRefreshRate:   " << measuredRefreshRateInHz << " hz\n";
+	rqdq::app::Demo demo;
+	demo.Run();
+	std::cout << "        elapsedTime: " << rqdq::vga::GetTime() << " frames\n";
+	std::cout << "measuredRefreshRate:   " << demo.measuredRefreshRateInHz_ << " hz\n";
 	return 0; }
