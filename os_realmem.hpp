@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace rqdq {
-namespace sys {
+namespace os {
 
 class RealMem {
 public:
@@ -24,5 +24,5 @@ public:
 	std::uint16_t segment_; };
 
 
-}  // namespace sys
+}  // namespace os
 }  // namespace rqdq

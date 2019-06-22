@@ -1,6 +1,6 @@
 #include "vga_softvbi.hpp"
 
-#include "pit.hpp"
+#include "pc_pit.hpp"
 #include "vga_reg.hpp"
 
 #define nullptr (0)
@@ -36,7 +36,7 @@ const float kSoftVBIJitterPct = 0.03;
 
 namespace vga {
 
-pic::IRQLine pitIRQLine = pit::make_irqline();
+pc::IRQLine& pitIRQLine = pc::GetPITIRQLine();
 
 int softVBISleepTimeInTicks = 0;
 
@@ -69,7 +69,7 @@ void __interrupt vblank_isr() {
 	 * retrace just started.
 	 * reset the timer, then call the soft vbi handler
 	 */
-	pit::StartCountdown(softVBISleepTimeInTicks);
+	pc::StartCountdown(softVBISleepTimeInTicks);
 	if (userVBIProc != nullptr) {
 		userVBIProc(); }
 	pitIRQLine.SignalEOI(); }
@@ -89,9 +89,9 @@ void InstallVBI(vbifunc proc) {
 	int ax = 0;
 	for (int si=0; si<kNumVBISamples; si++) {
 		SpinUntilNextRetraceBegins();
-		pit::BeginMeasuring();
+		pc::BeginMeasuring();
 		SpinUntilNextRetraceBegins();
-		ax += pit::EndMeasuring(); }
+		ax += pc::EndMeasuring(); }
 	approximateFrameDurationInTicks = ax / kNumVBISamples;
 
 	softVBISleepTimeInTicks =
@@ -101,7 +101,7 @@ void InstallVBI(vbifunc proc) {
 	pitIRQLine.SaveVect();
 	pitIRQLine.SetVect(vblank_isr);
 	SpinUntilRetracing();
-	pit::StartCountdown(softVBISleepTimeInTicks); }
+	pc::StartCountdown(softVBISleepTimeInTicks); }
 
 
 /**
@@ -109,11 +109,11 @@ void InstallVBI(vbifunc proc) {
  */
 void UninstallVBI() {
 	pitIRQLine.RestoreVect();
-	pit::StartSquareWave(0); }
+	pc::StartSquareWave(0); }
 
 
 float GetLastVBIFrequency() {
-	return pit::ticksToHz(approximateFrameDurationInTicks); }
+	return pc::ticksToHz(approximateFrameDurationInTicks); }
 
 
 }  // namespace vga

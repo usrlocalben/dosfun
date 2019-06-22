@@ -1,10 +1,10 @@
-#include "dma.hpp"
+#include "pc_dma.hpp"
 
 #include <cstdint>
 #include <iostream>
 #include <conio.h>  // inp/outp
 
-#include "mem.hpp"
+#include "os_realmem.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -19,9 +19,9 @@ uint8_t hi(uint16_t value) { return value >> 8; }
 
 }  // namespace
 
-namespace dma {
+namespace pc {
 
-Buffer::Buffer(std::uint16_t sizeInWords)
+DMABuffer::DMABuffer(std::uint16_t sizeInWords)
 	:realMem_(sizeInWords*2*2),
 	sizeInWords_(sizeInWords) {
 
@@ -54,7 +54,7 @@ Channel make_channel(int dmaChannelNum) {
 	return out; }
 
 
-void Configure(const Channel ch, const Buffer& buf) {
+void Configure(const Channel ch, const DMABuffer& buf) {
 	outp(ch.maskPort, ch.stopMask);
 	outp(ch.clearPtrPort, 0x00);
 	outp(ch.modePort, ch.mode);
@@ -70,5 +70,5 @@ void Stop(const Channel ch) {
 	outp(ch.maskPort, ch.stopMask); }
 
 
-}  // namespace dma
+}  // namespace pc
 }  // namespace rqdq

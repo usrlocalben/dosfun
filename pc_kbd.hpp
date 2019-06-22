@@ -2,15 +2,14 @@
 #include <cstdint>
 
 namespace rqdq {
-namespace kbd {
+namespace pc {
+
+const int SC_ESC = 1;
 
 struct Event {
 	int scanCode;
 	bool down; };
 
-// keyinfo WaitForKey();
-
-const int SC_ESC = 1;
 
 void InstallKeyboard();
 void UninstallKeyboard();
@@ -33,5 +32,5 @@ public:
 		return GetKeyboardMessage(); }};
 
 
-}  // namespace kbd
+}  // namespace pc
 }  // namespace rqdq

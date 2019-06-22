@@ -1,25 +1,26 @@
 #pragma once
 #include <cstdint>
 #include <cstring>  // memset
-#include "mem.hpp"
+
+#include "os_realmem.hpp"
 
 namespace rqdq {
-namespace dma {
+namespace pc {
 
-class Buffer {
+class DMABuffer {
 public:
-	sys::RealMem realMem_;
+	os::RealMem realMem_;
 	std::uint32_t addr_;
 	int sizeInWords_;
 
-	Buffer() :realMem_(), addr_(0), sizeInWords_(0) {}
-	Buffer(std::uint16_t sizeInWords);
+	DMABuffer() :realMem_(), addr_(0), sizeInWords_(0) {}
+	DMABuffer(std::uint16_t sizeInWords);
 private:
-	Buffer(const Buffer& other);             // not copyable
-	Buffer& operator=(const Buffer& other);  // not copyable
+	DMABuffer(const DMABuffer& other);             // not copyable
+	DMABuffer& operator=(const DMABuffer& other);  // not copyable
 
 public:
-	void Swap(Buffer& other) {
+	void Swap(DMABuffer& other) {
 		realMem_.Swap(other.realMem_);
 		std::swap(addr_, other.addr_);
 		std::swap(sizeInWords_, other.sizeInWords_); }
@@ -53,9 +54,9 @@ struct Channel {
 
 
 Channel make_channel(int channelNum);
-void Configure(const Channel ch, const Buffer& buf);
+void Configure(const Channel ch, const DMABuffer& buf);
 void Stop(Channel ch);
 
 
-}  // namespace dma
+}  // namespace pc
 }  // namespace rqdq

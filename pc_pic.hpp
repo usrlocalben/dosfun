@@ -1,10 +1,13 @@
+/*
+ * "driver" for Intel 8259 PIC
+ */
 #pragma once
 #include <cstdint>
 #include <conio.h>  // inp/outp
 #include <dos.h>  // _dos_setvect/getvect
 
 namespace rqdq {
-namespace pic {
+namespace pc {
 
 typedef void (__interrupt * isrptr)();
 
@@ -60,5 +63,5 @@ private:
 	isrptr savedISRPtr_; };
 
 
-}  // namespace pic
+}  // namespace pc
 }  // namespace rqdq

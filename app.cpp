@@ -4,13 +4,13 @@
 #include <limits>
 #include <memory>
 
+#include "app_kefrens_bars.hpp"
 #include "app_player_adapter.hpp"
-#include "efx.hpp"
-#include "kbd.hpp"
 #include "kb_tinymod.hpp"
 #include "ost.hpp"
-#include "pit.hpp"
-#include "snd.hpp"
+#include "pc_kbd.hpp"
+#include "pc_pit.hpp"
+#include "sb16.hpp"
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
@@ -42,7 +42,7 @@ public:
 		playerPtr_(new kb::ModPlayer(paulaPtr_.get(), (uint8_t*)ostData)) {}
 
 	void Run() {
-		kbd::Keyboard kbd;
+		pc::Keyboard kbd;
 
 		vga::ModeSetter modeSetter;
 		modeSetter.Set(vga::VM_MODEX);
@@ -61,7 +61,7 @@ public:
 		quitSoon_ = false;
 		while (!quitSoon_) {
 			if (kbd.IsDataAvailable()) {
-				kbd::Event ke = kbd.GetMessage();
+				pc::Event ke = kbd.GetMessage();
 				if (ke.down) {
 					OnKeyDown(ke.scanCode); }
 				continue; }
@@ -78,8 +78,8 @@ private:
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);
 #endif
-		pit::Stopwatch drawtime;
-		efx::DrawKefrensBars(vram, T, patternNum, rowNum);
+		pc::Stopwatch drawtime;
+		DrawKefrensBars(vram, T, patternNum, rowNum);
 		if (mCnt_ < kNumDrawTimeSamples) {
 			float m = drawtime.GetElapsedTimeInSeconds();
 			if (m > 0) {
@@ -90,7 +90,7 @@ private:
 		}
 
 	void OnKeyDown(int scanCode) {
-		if (scanCode == kbd::SC_ESC) {
+		if (scanCode == pc::SC_ESC) {
 			quitSoon_ = true; }}
 
 private:

@@ -3,13 +3,13 @@
 #include <conio.h>  // outp, inp
 #include <i86.h>  // _disable, _enable
 
-#include "pic.hpp"
+#include "pc_pic.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
 
 namespace rqdq {
-namespace pit {
+namespace pc {
 
 const int PIT_MAX_PERIOD_IN_TICKS = 65536;
 
@@ -23,7 +23,7 @@ const uint8_t PIT_ACCESS_MODE_LATCH_COUNT_VALUE_COMMAND = 0;
 
 const uint8_t PIT_CHANNEL_SELECT_CH0 = 0;
 
-pic::IRQLine make_irqline();
+IRQLine& GetPITIRQLine();
 
 inline uint8_t lowbyte(uint16_t value) {
 	return value & 0xff; }
@@ -85,5 +85,5 @@ private:
 	int start_; };
 
 
-}  // namespace pit
+}  // namespace pc
 }  // namespace rqdq

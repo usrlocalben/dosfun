@@ -1,12 +1,12 @@
-#include "snd.hpp"
+#include "sb16.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
 #include <conio.h>  // outp/inp
 
-#include "dma.hpp"
-#include "pic.hpp"
+#include "pc_dma.hpp"
+#include "pc_pic.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -43,7 +43,7 @@ uint8_t hi(uint16_t value) { return value >> 8; }
 Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples)
 	:port_(make_ports(baseAddr)),
 	irqLine_(irqNum),
-	dma_(dma::make_channel(dmaChannelNum)),
+	dma_(pc::make_channel(dmaChannelNum)),
 	sampleRateInHz_(sampleRateInHz),
 	numChannels_(numChannels),
 	bufferSizeInSamples_(bufferSizeInSamples),
@@ -76,7 +76,7 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	_enable();
 
 	dmaBuffer_.Zero();
-	dma::Configure(dma_, dmaBuffer_);
+	pc::Configure(dma_, dmaBuffer_);
 
 	// set output sample rate
 	TX(0x41);
@@ -96,7 +96,7 @@ Blaster::~Blaster() {
 	TX(0xd5);  // pause output
 
 	_disable();
-	dma::Stop(dma_);
+	pc::Stop(dma_);
 	irqLine_.RestoreVect();
 	_enable();
 

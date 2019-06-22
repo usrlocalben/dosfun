@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
 
-#include "dma.hpp"
-#include "pic.hpp"
+#include "pc_dma.hpp"
+#include "pc_pic.hpp"
 
 namespace rqdq {
 namespace snd {
@@ -45,14 +45,14 @@ public:
 
 private:
 	const Ports port_;
-	pic::IRQLine irqLine_;
-	const dma::Channel dma_;
+	pc::IRQLine irqLine_;
+	const pc::Channel dma_;
 	const int sampleRateInHz_;
 	const int numChannels_;
 	const int bufferSizeInSamples_;
 	int userBuffer_;
 	int playBuffer_;
-	const dma::Buffer dmaBuffer_;
+	const pc::DMABuffer dmaBuffer_;
 	bool good_;
 	audioproc userProc_;
 	void* userPtr_; };

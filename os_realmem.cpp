@@ -1,4 +1,4 @@
-#include "mem.hpp"
+#include "os_realmem.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -8,7 +8,7 @@ using std::uint16_t;
 using std::uint32_t;
 
 namespace rqdq {
-namespace sys {
+namespace os {
 
 RealMem::RealMem(uint16_t sizeInBytes) {
 	union REGS regs;
@@ -33,5 +33,5 @@ RealMem::~RealMem() {
 		int386(0x31, &regs, &regs); }}
 
 
-}  // namespace sys
+}  // namespace os
 }  // namespace rqdq

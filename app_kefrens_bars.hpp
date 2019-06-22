@@ -2,10 +2,10 @@
 #include "vga_mode.hpp"
 
 namespace rqdq {
-namespace efx {
+namespace app {
 
 void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNum);
 
 
-}  // namespace efx
+}  // namespace app
 }  // namespace rqdq

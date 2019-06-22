@@ -1,4 +1,4 @@
-#include "efx.hpp"
+#include "app_kefrens_bars.hpp"
 
 #include <cmath>
 
@@ -17,7 +17,7 @@ inline void PutPixelSlow(int x, int y, uint8_t c, uint8_t* baseAddr) {
 
 
 }  // namespace
-namespace efx {
+namespace app {
 
 void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNum) {
 	int whole = T;
@@ -73,5 +73,5 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 		rowPtr += 80; }}
 
 
-}  // namespace efx
+}  // namespace app
 }  // namespace rqdq

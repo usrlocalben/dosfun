@@ -1,9 +1,9 @@
-#include "pic.hpp"
+#include "pc_pic.hpp"
 
 #define nullptr (0)
 
 namespace rqdq {
-namespace pic {
+namespace pc {
 
 IRQLine::IRQLine(int irqNum) :irqNum_(irqNum), savedISRPtr_(nullptr) {
 	if (irqNum < 8) {
@@ -20,5 +20,5 @@ IRQLine::IRQLine(int irqNum) :irqNum_(irqNum), savedISRPtr_(nullptr) {
 	startMask_ = ~stopMask_; }
 
 
-}  // namespace pic
+}  // namespace pc
 }  // namespace rqdq
