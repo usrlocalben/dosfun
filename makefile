@@ -1,6 +1,6 @@
-COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 -xs #-dSHOW_TIMING
-RELEASE_FLAGS = -ox -d0 -dNDEBUG
-DEBUG_FLAGS = -od -d3 -xs
+COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 -dSHOW_TIMING
+RELEASE_FLAGS = -oabhii+klmnrt -s -d0 -dNDEBUG
+DEBUG_FLAGS = -od -d3
 
 CPP = wpp386.exe -q $(COMMON_FLAGS) $(RELEASE_FLAGS)
 
@@ -21,9 +21,14 @@ run: app.exe
 app.exe: app.lib
 	$(LD) N $@ F $<
 
-app.obj: app.cpp kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
+app.obj: app.cpp app_player_adapter.lib kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
 	$(CPP) $[@
-app.lib: app.obj kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
+app.lib: app.obj app_player_adapter.lib kbd.lib vga_mode.lib vga_softvbi.lib vga_reg.lib snd.lib mod.lib ost.lib efx.lib vga_pageflip.lib
+	$(LIB) $@ $<
+
+app_player_adapter.obj: app_player_adapter.cpp app_player_adapter.hpp mod.lib
+	$(CPP) $[@
+app_player_adapter.lib: app_player_adapter.obj                        mod.lib
 	$(LIB) $@ $<
 
 efx.obj: efx.cpp efx.hpp vga_mode.lib vga_reg.lib

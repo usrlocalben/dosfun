@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 
+#include "app_player_adapter.hpp"
 #include "efx.hpp"
 #include "kbd.hpp"
 #include "mod.hpp"
@@ -32,33 +33,6 @@ const int kSoundBlasterDMAChannelNum = 0x05;
 const int kNumDrawTimeSamples = 500;
 
 
-class PlayerAdapter {
-public:
-	PlayerAdapter(mod::Player& p) :player_(p) {}
-
-	static void BlasterJmp(int16_t* out, int numChannels, int numSamples, void* self) {
-		static_cast<PlayerAdapter*>(self)->BlasterProc(out, numChannels, numSamples); }
-private:
-	void BlasterProc(int16_t* out, int numChannels, int numSamples) {
-#ifdef SHOW_TIMING
-vga::SetRGB(0, 0x20, 0x3f, 0x10);
-#endif
-		player_.Render(pbuf_, pbuf_+4096, numSamples);
-#ifdef SHOW_TIMING
-vga::SetRGB(0, 0, 0, 0);
-#endif
-		for (int i=0; i<numSamples; i++) {
-			if (numChannels == 2) {
-				out[i*2+0] = pbuf_[i]      * std::numeric_limits<int16_t>::max();
-				out[i*2+1] = pbuf_[i+4096] * std::numeric_limits<int16_t>::max(); }
-			else {
-				out[i] = ((pbuf_[i]+pbuf_[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
-
-private:
-	float pbuf_[4096*2];
-	mod::Player& player_; };
-
-
 class Demo {
 public:
 	Demo()
@@ -81,7 +55,7 @@ public:
 							 kAudioSampleRateInHz,
 							 kAudioWidthInChannels,
 							 kAudioBufferSizeInSamples);
-		std::shared_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
+		std::auto_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
 		quitSoon_ = false;
@@ -121,8 +95,8 @@ private:
 
 private:
 	bool quitSoon_;
-	std::shared_ptr<mod::Paula> paulaPtr_;
-	std::shared_ptr<mod::Player> playerPtr_;
+	std::auto_ptr<mod::Paula> paulaPtr_;
+	std::auto_ptr<mod::Player> playerPtr_;
 
 public:
 	float measuredRefreshRateInHz_;
@@ -134,7 +108,7 @@ public:
 }  // namespace rqdq
 
 
-int main(int argc, char *argv[]) {
+int main() {
 	rqdq::app::Demo demo;
 	demo.Run();
 

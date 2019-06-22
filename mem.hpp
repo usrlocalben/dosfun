@@ -11,8 +11,8 @@ public:
 	RealMem(std::uint16_t sizeInBytes);
 	~RealMem();
 private:
-	RealMem& operator=(const RealMem& other);
-	RealMem(const RealMem& other);
+	RealMem& operator=(const RealMem& other);  // not copyable
+	RealMem(const RealMem& other);             // not copyable
 
 public:
 	inline void Swap(RealMem& other) {
