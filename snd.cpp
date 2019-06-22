@@ -45,7 +45,7 @@ uint8_t hi(uint16_t value) { return value >> 8; }
 
 Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples)
 	:port_(make_ports(baseAddr)),
-	irqLine_(pic::make_irqline(irqNum)),
+	irqLine_(irqNum),
 	dma_(dma::make_channel(dmaChannelNum)),
 	sampleRateInHz_(sampleRateInHz),
 	numChannels_(numChannels),
@@ -72,10 +72,10 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	*/
 
 	_disable();
-	pic::Stop(irqLine_);
-	oldBlasterISRPtr = _dos_getvect(irqLine_.isrNum);
-	_dos_setvect(irqLine_.isrNum, &Blaster::isrJmp);
-	pic::Start(irqLine_);
+	irqLine_.Disconnect();
+	oldBlasterISRPtr = _dos_getvect(irqLine_.GetISRNum());
+	_dos_setvect(irqLine_.GetISRNum(), &Blaster::isrJmp);
+	irqLine_.Connect();
 	_enable();
 
 	dmaBuffer_.Zero();
@@ -100,7 +100,7 @@ Blaster::~Blaster() {
 
 	_disable();
 	dma::Stop(dma_);
-	_dos_setvect(irqLine_.isrNum, oldBlasterISRPtr);
+	_dos_setvect(irqLine_.GetISRNum(), oldBlasterISRPtr);
 	_enable();
 
 	RESET();
@@ -148,7 +148,7 @@ inline int16_t* Blaster::GetUserBuffer() const {
 
 void Blaster::isr() {
 	// if (!IsRealIRQ(irqLine_)) { return; }
-	pic::SignalEOI(irqLine_);
+	irqLine_.SignalEOI();
 	_enable();
 
 	std::swap(userBuffer_, playBuffer_);
@@ -160,7 +160,6 @@ void Blaster::isr() {
 			dst[i] = 0; }}
 
 	ACK(); }
-	//pic::SignalEOI(irqLine_); }
 
 
 inline void Blaster::ACK() {

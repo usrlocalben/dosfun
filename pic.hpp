@@ -5,40 +5,40 @@
 namespace rqdq {
 namespace pic {
 
-struct IRQLine {
-	int controllerNum;
-	int rotatePort;
-	int maskPort;
-	int irqNum;
-	std::uint8_t isrNum;
-	std::uint8_t stopMask;
-	std::uint8_t startMask; };
+class IRQLine {
+public:
+	IRQLine(int irqNum);
 
+	inline void SignalEOI() const {
+		if (irqNum_ >= 8) {
+			outp(0xa0, 0x20); }
+		outp(0x20, 0x20); }
 
-IRQLine make_irqline(int irqNum);
+	inline bool IsReal() const {
+		if (irqNum_ == 7) {
+			outp(0x20, 0x0b);  // read ISR
+			std::uint8_t isr = inp(0x20);
+			if (isr & 0x80 == 0) {
+				return false; }}
+		return true; }
 
+	inline int GetISRNum() const {
+		return isrNum_; }
 
-inline void SignalEOI(const IRQLine pi) {
-	if (pi.irqNum >= 8) {
-		outp(0xa0, 0x20); }
-	outp(0x20, 0x20); }
+	inline void Disconnect() const {
+		outp(maskPort_, (inp(maskPort_)|stopMask_)); }
 
+	inline void Connect() const {
+		outp(maskPort_, (inp(maskPort_)&startMask_)); }
 
-inline bool IsRealIRQ(const IRQLine pi) {
-	if (pi.irqNum == 7) {
-		outp(0x20, 0x0b);  // read ISR
-		std::uint8_t isr = inp(0x20);
-		if (isr & 0x80 == 0) {
-			return false; }}
-	return true; }
-
-
-inline void Stop(const IRQLine& irqLine) {
-	outp(irqLine.maskPort, (inp(irqLine.maskPort)|irqLine.stopMask)); }
-
-
-inline void Start(const IRQLine& irqLine) {
-	outp(irqLine.maskPort, (inp(irqLine.maskPort)&irqLine.startMask)); }
+private:
+	int controllerNum_;
+	int rotatePort_;
+	int maskPort_;
+	int irqNum_;
+	std::uint8_t isrNum_;
+	std::uint8_t stopMask_;
+	std::uint8_t startMask_; };
 
 
 }  // namespace pic
