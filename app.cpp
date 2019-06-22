@@ -11,6 +11,7 @@
 #include "ost.hpp"
 #include "snd.hpp"
 #include "vga.hpp"
+#include "pit.hpp"
 
 using std::uint8_t;
 using std::int16_t;
@@ -25,6 +26,8 @@ const int kAudioWidthInChannels = 2;
 const int kSoundBlasterIOBaseAddr = 0x220;
 const int kSoundBlasterIRQNum = 0x7;
 const int kSoundBlasterDMAChannelNum = 0x05;
+
+const int kNumDrawTimeSamples = 500;
 
 
 class PlayerAdapter {
@@ -58,6 +61,7 @@ class Demo {
 public:
 	Demo()
 		:quitSoon_(false),
+		mCnt_(0),
 		paulaPtr_(new mod::Paula()),
 		playerPtr_(new mod::Player(paulaPtr_.get(), (uint8_t*)ostData)) {}
 
@@ -98,7 +102,12 @@ private:
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0x30, 0x30, 0x30);
 #endif
+		pit::Stopwatch drawtime;
 		efx::DrawKefrensBars(vram, T, patternNum, rowNum);
+		if (mCnt_ < kNumDrawTimeSamples) {
+			float m = drawtime.GetElapsedTimeInSeconds();
+			if (m > 0) {
+				mLst_[mCnt_++] = m; }}
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0,0,0);
 #endif
@@ -114,7 +123,9 @@ private:
 	std::shared_ptr<mod::Player> playerPtr_;
 
 public:
-	float measuredRefreshRateInHz_; };
+	float measuredRefreshRateInHz_;
+	float mLst_[kNumDrawTimeSamples];
+	int mCnt_; };
 
 
 }  // namespace app
@@ -124,6 +135,13 @@ public:
 int main(int argc, char *argv[]) {
 	rqdq::app::Demo demo;
 	demo.Run();
+
+	float ax = 0;
+	for (int i=0; i<demo.mCnt_; i++) {
+		ax += demo.mLst_[i]; }
+	ax /= demo.mCnt_;
+
 	std::cout << "        elapsedTime: " << rqdq::vga::GetTime() << " frames\n";
 	std::cout << "measuredRefreshRate:   " << demo.measuredRefreshRateInHz_ << " hz\n";
+	std::cout << "        avgDrawTime:   " << (ax*1000) << " ms\n";
 	return 0; }

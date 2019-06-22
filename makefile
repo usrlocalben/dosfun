@@ -51,9 +51,9 @@ mod.obj: mod.cpp mod.hpp
 mod.lib: mod.obj
 	$(LIB) $@ $<
 
-pit.obj: pit.cpp pit.hpp
+pit.obj: pit.cpp pit.hpp pic.lib
 	$(CPP) $[@
-pit.lib: pit.obj
+pit.lib: pit.obj         pic.lib
 	$(LIB) $@ $<
 
 dma.obj: dma.cpp dma.hpp mem.lib

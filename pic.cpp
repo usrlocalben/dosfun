@@ -1,9 +1,11 @@
 #include "pic.hpp"
 
+#define nullptr (0)
+
 namespace rqdq {
 namespace pic {
 
-IRQLine::IRQLine(int irqNum) :irqNum_(irqNum) {
+IRQLine::IRQLine(int irqNum) :irqNum_(irqNum), savedISRPtr_(nullptr) {
 	if (irqNum < 8) {
 		controllerNum_ = 1;
 		rotatePort_ = 0x20;
