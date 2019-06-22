@@ -50,11 +50,11 @@ public:
 		measuredRefreshRateInHz_ = softVBI.GetFrequency();
 
 		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
-							 kSoundBlasterIRQNum,
-							 kSoundBlasterDMAChannelNum,
-							 kAudioSampleRateInHz,
-							 kAudioWidthInChannels,
-							 kAudioBufferSizeInSamples);
+		                     kSoundBlasterIRQNum,
+		                     kSoundBlasterDMAChannelNum,
+		                     kAudioSampleRateInHz,
+		                     kAudioWidthInChannels,
+		                     kAudioBufferSizeInSamples);
 		std::auto_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
