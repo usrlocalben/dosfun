@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <iostream>
 #include <conio.h>  // outp/inp
-#include <dos.h>  // _dos_setvect
 
 #include "dma.hpp"
 #include "pic.hpp"
@@ -34,8 +33,6 @@ Ports make_ports(int baseAddr) {
 	out.ack16 = baseAddr + 0x0f;
 	return out; }
 
-
-void (__interrupt * oldBlasterISRPtr)();
 
 class Blaster* theBlaster = 0;
 
@@ -73,8 +70,8 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 
 	_disable();
 	irqLine_.Disconnect();
-	oldBlasterISRPtr = _dos_getvect(irqLine_.GetISRNum());
-	_dos_setvect(irqLine_.GetISRNum(), &Blaster::isrJmp);
+	irqLine_.SaveVect();
+	irqLine_.SetVect(Blaster::isrJmp);
 	irqLine_.Connect();
 	_enable();
 
@@ -100,7 +97,7 @@ Blaster::~Blaster() {
 
 	_disable();
 	dma::Stop(dma_);
-	_dos_setvect(irqLine_.GetISRNum(), oldBlasterISRPtr);
+	irqLine_.RestoreVect();
 	_enable();
 
 	RESET();
@@ -163,7 +160,7 @@ void Blaster::isr() {
 
 
 inline void Blaster::ACK() {
-	inp(port_.ack16); }  // XXX port name?
+	inp(port_.ack16); }
 
 
 void Blaster::AttachProc(audioproc userProc, void* userPtr) {
