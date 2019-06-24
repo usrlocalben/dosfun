@@ -45,8 +45,18 @@ inline void SetBitMask(uint8_t mask) {
 	outpw(VP_GFXC, mask<<8|0x08); }
 
 
+inline int GetBitMask() {
+	outp(VP_GFXC, 0x08);
+	return inp(VP_GFXC+1); }
+
+
 inline void SelectPlanes(uint8_t mask) {
 	outpw(VP_SEQC, mask<<8|SC_MAP_MASK); }
+
+
+inline int GetPlanes() {
+	outp(VP_SEQC, SC_MAP_MASK);
+	return inp(VP_SEQC+1); }
 
 
 inline void SelectAllPlanes() {
