@@ -21,9 +21,9 @@ run: app.exe
 app.exe: app.lib
 	$(LD) N $@ F $<
 
-app.obj: app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_softvbi.lib
+app.obj: app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	$(CPP) $[@
-app.lib: app.obj app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_softvbi.lib
+app.lib: app.obj app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	$(LIB) $@ $<
 
 app_player_adapter.obj: app_player_adapter.cpp app_player_adapter.hpp kb_tinymod.lib
@@ -41,9 +41,9 @@ pc_kbd.obj: pc_kbd.cpp pc_kbd.hpp pc_pic.lib
 pc_kbd.lib: pc_kbd.obj            pc_pic.lib
 	$(LIB) $@ $<
 
-vga_softvbi.obj: vga_softvbi.cpp vga_softvbi.hpp vga_reg.lib pc_pit.lib
+vga_irq.obj: vga_irq.cpp vga_irq.hpp vga_reg.lib pc_pit.lib
 	$(CPP) $[@
-vga_softvbi.lib: vga_softvbi.obj                 vga_reg.lib pc_pit.lib
+vga_irq.lib: vga_irq.obj             vga_reg.lib pc_pit.lib
 	$(LIB) $@ $<
 
 vga_mode.obj: vga_mode.cpp vga_mode.hpp vga_reg.lib pc_pit.lib

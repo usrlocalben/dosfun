@@ -14,7 +14,7 @@
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
-#include "vga_softvbi.hpp"
+#include "vga_irq.hpp"
 
 using std::uint8_t;
 using std::int16_t;
@@ -46,8 +46,8 @@ public:
 
 		vga::ModeSetter modeSetter;
 		modeSetter.Set(vga::VM_MODEX);
-		vga::SoftVBI softVBI(&vga::vbi);
-		measuredRefreshRateInHz_ = softVBI.GetFrequency();
+		vga::RetraceIRQ retraceIRQ(&vga::vbi);
+		measuredRefreshRateInHz_ = retraceIRQ.GetHz();
 
 		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
 		                     kSoundBlasterIRQNum,

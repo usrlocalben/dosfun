@@ -1,4 +1,4 @@
-#include "vga_softvbi.hpp"
+#include "vga_irq.hpp"
 
 #include "pc_pit.hpp"
 #include "vga_reg.hpp"
@@ -11,8 +11,7 @@ namespace {
 const int kNumVBISamples = 50;
 
 /**
- * Soft-VBI PIT jitter allowance, as a percentage of
- * frame-time.
+ * Frame/PIT jitter buffer, as a percentage of frame-time.
  *
  * The smaller this value is, the less time will be
  * consumed spinning before retrace begins.
@@ -21,32 +20,25 @@ const int kNumVBISamples = 50;
  * cause the ISR to be called _after_ retrace has already
  * started.
  *
- * This would be disastrous: the effective soft-VBI period
- * would be longer than the VGA frame.  The IRQ-raise time
- * would drift slightly with each successive frame,
+ * This would be disastrous: the effective software VBI
+ * period would be longer than the VGA frame.  The IRQ-raise
+ * time would drift slightly with each successive frame,
  * eventually being raised _after_ retrace causing the cpu
  * to spin for an entire display period.  Additionally, the
- * wall-clock timer provided by the Soft-VBI would miss a
- * tick.
+ * wall-clock timer provided by the IRQ would miss a tick.
  */
-const float kSoftVBIJitterPct = 0.03;
-
-
-}  // namespace
-
-namespace vga {
+const float kJitterPct = 0.03;
 
 pc::IRQLine& pitIRQLine = pc::GetPITIRQLine();
 
-int softVBISleepTimeInTicks = 0;
+int irqSleepTimeInTicks = 0;
 
-vbifunc userVBIProc = nullptr;
+vga::vbifunc userVBIProc = nullptr;
 
-uint16_t approximateFrameDurationInTicks = 0;
-
+uint16_t frameDurationInTicks = 0;
 
 /**
- * Soft-VBI ISR
+ * Timer-based VBI ISR
  *
  * Execution should begin _just before_ VGA blanking/retrace
  * begins.
@@ -55,35 +47,37 @@ uint16_t approximateFrameDurationInTicks = 0;
  * signal is detected, then immediately begin the next PIT
  * countdown before calling the user's VBI function.
  *
- * See also kSoftVBIJitterPct
+ * See also kJitterPct
  */
 void __interrupt vblank_isr() {
 	/*
 	 * when execution begins, retrace still hasn't started
 	 */
 	// SetRGB(0, 0x3f,0x3f,0x3f);
-	SpinUntilRetracing();
+	vga::SpinUntilRetracing();
 	// SetRGB(0, 0x0, 0x0, 0x0);
 
 	/*
 	 * retrace just started.
-	 * reset the timer, then call the soft vbi handler
+	 * reset the timer, then call the user's vbi handler
 	 */
-	pc::StartCountdown(softVBISleepTimeInTicks);
+	pc::StartCountdown(irqSleepTimeInTicks);
 	if (userVBIProc != nullptr) {
 		userVBIProc(); }
 	pitIRQLine.SignalEOI(); }
 
+}  // namespace
+
+namespace vga {
 
 /**
- * Install the Soft-VBI system.
+ * Install the IRQ system.
  *
- * Calibrates the Soft-VBI timer by measuring the
- * refresh-to-refresh time for a VGA frame using the PIT.
- * Then, the ISR is installed and triggered on the
- * following frame.
+ * Calibrates the timer by measuring the refresh-to-refresh
+ * time for a VGA frame using the PIT.  Then, the ISR is
+ * installed and triggered on the following frame.
  */
-void InstallVBI(vbifunc proc) {
+RetraceIRQ::RetraceIRQ(vbifunc proc) {
 	userVBIProc = proc;
 
 	int ax = 0;
@@ -92,28 +86,30 @@ void InstallVBI(vbifunc proc) {
 		pc::BeginMeasuring();
 		SpinUntilNextRetraceBegins();
 		ax += pc::EndMeasuring(); }
-	approximateFrameDurationInTicks = ax / kNumVBISamples;
+	frameDurationInTicks = ax / kNumVBISamples;
 
-	softVBISleepTimeInTicks =
-		approximateFrameDurationInTicks * (1.0 - kSoftVBIJitterPct);
+	irqSleepTimeInTicks =
+		frameDurationInTicks * (1.0 - kJitterPct);
 
 	SpinWhileRetracing();
 	pitIRQLine.SaveVect();
 	pitIRQLine.SetVect(vblank_isr);
+	_disable();
 	SpinUntilRetracing();
-	pc::StartCountdown(softVBISleepTimeInTicks); }
+	pc::StartCountdown(irqSleepTimeInTicks);
+	_enable(); }
 
 
 /**
  * Restore the BIOS timer ISR and interval
  */
-void UninstallVBI() {
+RetraceIRQ::~RetraceIRQ() {
 	pitIRQLine.RestoreVect();
 	pc::StartSquareWave(0); }
 
 
-float GetLastVBIFrequency() {
-	return pc::ticksToHz(approximateFrameDurationInTicks); }
+float RetraceIRQ::GetHz() const {
+	return pc::ticksToHz(frameDurationInTicks); }
 
 
 }  // namespace vga
