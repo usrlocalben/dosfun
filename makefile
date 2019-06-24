@@ -1,5 +1,5 @@
-COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 -dSHOW_TIMING
-RELEASE_FLAGS = -oabhii+klmnrt -s -d0 -dNDEBUG
+COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 #-dSHOW_TIMING
+RELEASE_FLAGS = -onatx -d0 -dNDEBUG
 DEBUG_FLAGS = -od -d3
 
 CPP = wpp386.exe -q $(COMMON_FLAGS) $(RELEASE_FLAGS)
