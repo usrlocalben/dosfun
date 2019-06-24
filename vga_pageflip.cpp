@@ -13,7 +13,6 @@ volatile bool backLocked = true;
 void vbi() {
 	++timeInFrames;
 	if (!backLocked) {
-		SetStartAddress(modeXPages[backPage].vgaAddr);
 		backPage ^= 1;
 		backLocked = true; }}
 

@@ -16,6 +16,7 @@ public:
 		locked_ = backLocked; }
 	~VRAMLock() {
 		if (locked_) {
+			SetStartAddress(Page().vgaAddr);
 			backLocked = false; }}
 	const VRAMPage& Page() {
 		return modeXPages[backPage]; }
