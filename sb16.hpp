@@ -46,7 +46,7 @@ public:
 private:
 	const Ports port_;
 	pc::IRQLineRT irqLine_;
-	const pc::Channel dma_;
+	const pc::DMAChannel dma_;
 	const int sampleRateInHz_;
 	const int numChannels_;
 	const int bufferSizeInSamples_;

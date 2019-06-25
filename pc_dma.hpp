@@ -41,7 +41,7 @@ public:
 		std::memset(Ptr(), 0, sizeInWords_*2); } };
 
 
-struct Channel {
+struct DMAChannel {
 	int maskPort;
 	int clearPtrPort;
 	int modePort;
@@ -50,12 +50,11 @@ struct Channel {
 	int pagePort;
 	int stopMask;
 	int startMask;
-	int mode; };
+	int mode;
 
-
-Channel make_channel(int channelNum);
-void Configure(const Channel ch, const DMABuffer& buf);
-void Stop(Channel ch);
+	DMAChannel(int dmaChannelNum);
+	void Setup(const DMABuffer& buf) const;
+	void Stop() const; };
 
 
 }  // namespace pc

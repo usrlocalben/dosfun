@@ -36,38 +36,36 @@ DMABuffer::DMABuffer(std::uint16_t sizeInWords)
 	addr_ = phy; }
 
 
-Channel make_channel(int dmaChannelNum) {
-	Channel out;
-	out.maskPort = 0xd4;
-	out.clearPtrPort = 0xd8;
-	out.modePort = 0xd6;
-	out.baseAddrPort = 0xc0 + 4*(dmaChannelNum-4);
-	out.countPort = 0xc2 + 4*(dmaChannelNum-4);
+DMAChannel::DMAChannel(int dmaChannelNum) {
+	maskPort = 0xd4;
+	clearPtrPort = 0xd8;
+	modePort = 0xd6;
+	baseAddrPort = 0xc0 + 4*(dmaChannelNum-4);
+	countPort = 0xc2 + 4*(dmaChannelNum-4);
 	switch (dmaChannelNum) {
-	case 5: out.pagePort = 0x8b; break;
-	case 6: out.pagePort = 0x89; break;
-	case 7: out.pagePort = 0x8a; break; }
+	case 5: pagePort = 0x8b; break;
+	case 6: pagePort = 0x89; break;
+	case 7: pagePort = 0x8a; break; }
 	
-	out.stopMask = dmaChannelNum-4 + 0x04;
-	out.startMask = dmaChannelNum-4 + 0x00;
-	out.mode = dmaChannelNum-4 + 0x58;  // 010110xx
-	return out; }
+	stopMask = dmaChannelNum-4 + 0x04;
+	startMask = dmaChannelNum-4 + 0x00;
+	mode = dmaChannelNum-4 + 0x58; }  // 010110xx
 
 
-void Configure(const Channel ch, const DMABuffer& buf) {
-	outp(ch.maskPort, ch.stopMask);
-	outp(ch.clearPtrPort, 0x00);
-	outp(ch.modePort, ch.mode);
-	outp(ch.baseAddrPort, lo(buf.Offset16()));
-	outp(ch.baseAddrPort, hi(buf.Offset16()));
-	outp(ch.countPort, lo(buf.sizeInWords_ - 1));
-	outp(ch.countPort, hi(buf.sizeInWords_ - 1));
-	outp(ch.pagePort, buf.Page());
-	outp(ch.maskPort, ch.startMask); }
+void DMAChannel::Setup(const DMABuffer& buf) const {
+	outp(maskPort, stopMask);
+	outp(clearPtrPort, 0x00);
+	outp(modePort, mode);
+	outp(baseAddrPort, lo(buf.Offset16()));
+	outp(baseAddrPort, hi(buf.Offset16()));
+	outp(countPort, lo(buf.sizeInWords_ - 1));
+	outp(countPort, hi(buf.sizeInWords_ - 1));
+	outp(pagePort, buf.Page());
+	outp(maskPort, startMask); }
 
 
-void Stop(const Channel ch) {
-	outp(ch.maskPort, ch.stopMask); }
+void DMAChannel::Stop() const {
+	outp(maskPort, stopMask); }
 
 
 }  // namespace pc

@@ -43,7 +43,7 @@ uint8_t hi(uint16_t value) { return value >> 8; }
 Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples)
 	:port_(make_ports(baseAddr)),
 	irqLine_(irqNum),
-	dma_(pc::make_channel(dmaChannelNum)),
+	dma_(dmaChannelNum),
 	sampleRateInHz_(sampleRateInHz),
 	numChannels_(numChannels),
 	bufferSizeInSamples_(bufferSizeInSamples),
@@ -76,7 +76,7 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	_enable();
 
 	dmaBuffer_.Zero();
-	pc::Configure(dma_, dmaBuffer_);
+	dma_.Setup(dmaBuffer_);
 
 	// set output sample rate
 	TX(0x41);
@@ -96,7 +96,7 @@ Blaster::~Blaster() {
 	TX(0xd5);  // pause output
 
 	_disable();
-	pc::Stop(dma_);
+	dma_.Stop();
 	irqLine_.RestoreVect();
 	_enable();
 
