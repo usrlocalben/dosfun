@@ -35,8 +35,6 @@ const float kJitterPct = 0.03;
 
 const int kNumVBISamples = 50;
 
-extern pc::IRQLine& pitIRQLine;
-
 extern int irqSleepTimeInTicks;
 
 template <typename VBIPROC>
@@ -62,8 +60,8 @@ public:
 			frameDurationInTicks_ * (1.0 - kJitterPct);
 
 		SpinWhileRetracing();
-		pitIRQLine.SaveVect();
-		pitIRQLine.SetVect(RetraceIRQ::vblank_isr);
+		pc::pitIRQLine.SaveVect();
+		pc::pitIRQLine.SetVect(RetraceIRQ::vblank_isr);
 		_disable();
 		SpinUntilRetracing();
 		pc::StartCountdown(irqSleepTimeInTicks);
@@ -73,7 +71,7 @@ public:
 	 * Restore the BIOS timer ISR and interval
 	 */
 	~RetraceIRQ() {
-		pitIRQLine.RestoreVect();
+		pc::pitIRQLine.RestoreVect();
 		pc::StartSquareWave(0); }
 
 private:
@@ -110,7 +108,7 @@ public:
 		 */
 		pc::StartCountdown(irqSleepTimeInTicks);
 		VBIPROC()();
-		pitIRQLine.SignalEOI(); }
+		pc::pitIRQLine.SignalEOI(); }
 
 private:
 	uint16_t frameDurationInTicks_; };

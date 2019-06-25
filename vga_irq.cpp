@@ -5,8 +5,6 @@
 namespace rqdq {
 namespace vga {
 
-pc::IRQLine& pitIRQLine = pc::GetPITIRQLine();
-
 int irqSleepTimeInTicks = 0;
 
 

@@ -16,13 +16,11 @@ const int KBD_B_DATA = 0x60;
 const int KBD_B_CONTROL = 0x61;
 const int KBD_IRQ_RESET = 0x80;
 
-const int KBD_IRQ_NUM = 1;
-
 uint8_t inputBuffer[256];
 volatile uint8_t bufHead = 0;
 volatile uint8_t bufTail = 0;
 
-IRQLine irqLine(KBD_IRQ_NUM);
+IRQLineCT<1> kbdIRQLine;
 
 
 void __interrupt keyboard_isr() {
@@ -32,17 +30,17 @@ void __interrupt keyboard_isr() {
 	outp(KBD_B_CONTROL, status);
 
 	inputBuffer[bufTail++] = scanCode;
-	irqLine.SignalEOI(); }
+	kbdIRQLine.SignalEOI(); }
 
 
 
 void InstallKeyboard() {
-	irqLine.SaveVect();
-	irqLine.SetVect(keyboard_isr); }
+	kbdIRQLine.SaveVect();
+	kbdIRQLine.SetVect(keyboard_isr); }
 
 
 void UninstallKeyboard() {
-	irqLine.RestoreVect(); }
+	kbdIRQLine.RestoreVect(); }
 
 
 bool IsKeyboardDataAvailable() {

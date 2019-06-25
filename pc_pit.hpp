@@ -23,7 +23,7 @@ const uint8_t PIT_ACCESS_MODE_LATCH_COUNT_VALUE_COMMAND = 0;
 
 const uint8_t PIT_CHANNEL_SELECT_CH0 = 0;
 
-IRQLine& GetPITIRQLine();
+extern IRQLineCT<0> pitIRQLine;
 
 inline uint8_t lowbyte(uint16_t value) {
 	return value & 0xff; }
