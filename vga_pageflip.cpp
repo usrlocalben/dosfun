@@ -10,12 +10,6 @@ volatile int timeInFrames = 0;
 volatile int backPage = 1;
 volatile bool backLocked = true;
 
-void vbi() {
-	++timeInFrames;
-	if (!backLocked) {
-		backPage ^= 1;
-		backLocked = true; }}
-
 
 }  // namespace vga
 }  // namespace rqdq

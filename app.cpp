@@ -46,8 +46,8 @@ public:
 
 		vga::ModeSetter modeSetter;
 		modeSetter.Set(vga::VM_MODEX);
-		vga::RetraceIRQ retraceIRQ(&vga::vbi);
-		measuredRefreshRateInHz_ = retraceIRQ.GetHz();
+		vga::RetraceIRQ<vga::FlipPages> flipPagesIRQ;
+		measuredRefreshRateInHz_ = flipPagesIRQ.GetHz();
 
 		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
 		                     kSoundBlasterIRQNum,
@@ -66,9 +66,9 @@ public:
 					OnKeyDown(ke.scanCode); }
 				continue; }
 
-			vga::VRAMLock vramLock;
-			if (vramLock.IsLocked()) {
-				Draw(vramLock.Page()); }}}
+			vga::AnimationPage animationPage;
+			if (animationPage.IsLocked()) {
+				Draw(animationPage.Get()); }}}
 
 private:
 	void Draw(const vga::VRAMPage& vram) {

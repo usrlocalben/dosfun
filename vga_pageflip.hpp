@@ -8,20 +8,34 @@ extern volatile int timeInFrames;
 extern volatile int backPage;
 extern volatile bool backLocked;
 
-void vbi();
 
-class VRAMLock {
+struct FlipPages {
+	inline void operator()() {
+		++timeInFrames;
+		if (!backLocked) {
+			backPage ^= 1;
+			backLocked = true; }}};
+
+
+class AnimationPage {
 public:
-	VRAMLock() {
+	AnimationPage() {
 		locked_ = backLocked; }
-	~VRAMLock() {
-		if (locked_) {
-			SetStartAddress(Page().vgaAddr);
-			backLocked = false; }}
-	const VRAMPage& Page() {
+private:
+	AnimationPage(const AnimationPage&);             // not copyable
+	AnimationPage& operator=(const AnimationPage&);  // not copyable
+
+public:
+	const VRAMPage& Get() const {
 		return modeXPages[backPage]; }
-	bool IsLocked() {
+
+	bool IsLocked() const {
 		return locked_; }
+
+	~AnimationPage() {
+		if (locked_) {
+			SetStartAddress(Get().vgaAddr);
+			backLocked = false; }}
 private:
 	bool locked_; };
 

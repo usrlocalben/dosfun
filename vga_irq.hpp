@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdlib>
 #include <cstdint>
+#include <conio.h>
 
+#include "pc_pic.hpp"
 #include "vga_reg.hpp"
 
 using std::uint8_t;
@@ -12,16 +14,106 @@ namespace vga {
 
 typedef void (*vbifunc)();
 
+/**
+ * Frame/PIT jitter buffer, as a percentage of frame-time.
+ *
+ * The smaller this value is, the less time will be
+ * consumed spinning before retrace begins.
+ *
+ * However, if this value is _too small_, timing jitter may
+ * cause the ISR to be called _after_ retrace has already
+ * started.
+ *
+ * This would be disastrous: the effective software VBI
+ * period would be longer than the VGA frame.  The IRQ-raise
+ * time would drift slightly with each successive frame,
+ * eventually being raised _after_ retrace causing the cpu
+ * to spin for an entire display period.  Additionally, the
+ * wall-clock timer provided by the IRQ would miss a tick.
+ */
+const float kJitterPct = 0.03;
 
+const int kNumVBISamples = 50;
+
+extern pc::IRQLine& pitIRQLine;
+
+extern int irqSleepTimeInTicks;
+
+template <typename VBIPROC>
 class RetraceIRQ {
 public:
-	RetraceIRQ(vbifunc proc);
-	~RetraceIRQ();
+	/**
+	 * Install the IRQ system.
+	 *
+	 * Calibrates the timer by measuring the refresh-to-refresh
+	 * time for a VGA frame using the PIT.  Then, the ISR is
+	 * installed and triggered on the following frame.
+	 */
+	RetraceIRQ() :frameDurationInTicks_(0) {
+		int ax = 0;
+		for (int si=0; si<kNumVBISamples; si++) {
+			SpinUntilNextRetraceBegins();
+			pc::BeginMeasuring();
+			SpinUntilNextRetraceBegins();
+			ax += pc::EndMeasuring(); }
+		frameDurationInTicks_ = ax / kNumVBISamples;
+
+		irqSleepTimeInTicks =
+			frameDurationInTicks_ * (1.0 - kJitterPct);
+
+		SpinWhileRetracing();
+		pitIRQLine.SaveVect();
+		pitIRQLine.SetVect(RetraceIRQ::vblank_isr);
+		_disable();
+		SpinUntilRetracing();
+		pc::StartCountdown(irqSleepTimeInTicks);
+		_enable(); }
+
+	/**
+	 * Restore the BIOS timer ISR and interval
+	 */
+	~RetraceIRQ() {
+		pitIRQLine.RestoreVect();
+		pc::StartSquareWave(0); }
+
 private:
 	RetraceIRQ& operator=(const RetraceIRQ&);  // non-copyable
 	RetraceIRQ(const RetraceIRQ&);          // non-copyable
+
 public:
-	float GetHz() const; };
+	float GetHz() const {
+		return pc::ticksToHz(frameDurationInTicks_); }
+
+	/**
+	 * Timer-based VBI ISR
+	 *
+	 * Execution should begin _just before_ VGA blanking/retrace
+	 * begins.
+	 *
+	 * The CPU will spin until the rising-edge of the retrace
+	 * signal is detected, then immediately begin the next PIT
+	 * countdown before calling the user's VBI function.
+	 *
+	 * See also kJitterPct
+	 */
+	static void __interrupt vblank_isr() {
+		/*
+		 * when execution begins, retrace still hasn't started
+		 */
+		// SetRGB(0, 0x3f,0x3f,0x3f);
+		vga::SpinUntilRetracing();
+		// SetRGB(0, 0x0, 0x0, 0x0);
+
+		/*
+		 * retrace just started.
+		 * reset the timer, then call the user's vbi handler
+		 */
+		pc::StartCountdown(irqSleepTimeInTicks);
+		VBIPROC()();
+		pitIRQLine.SignalEOI(); }
+
+private:
+	uint16_t frameDurationInTicks_; };
 
 
 }  // namespace vga
