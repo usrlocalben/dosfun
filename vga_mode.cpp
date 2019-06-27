@@ -45,7 +45,12 @@ void SetModeX() {
 	outpw(VP_CRTC, 0x0014);  // turn off dword mode
 	outpw(VP_CRTC, 0xe715);  // v blank start
 	outpw(VP_CRTC, 0x0616);  // v blank end
-	outpw(VP_CRTC, 0xe317); }// turn on byte mode
+	outpw(VP_CRTC, 0xe317);  // turn on byte mode
+
+	// clear ram
+	SelectPlanes(0xf);
+	for (int i=0; i<65536; i++) {
+		VGAPTR[i] = 0; }}
 
 
 }  // namespace vga
