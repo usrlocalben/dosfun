@@ -79,14 +79,22 @@ void DMAChannel::SetMode() const {
 
 
 void DMAChannel::SetMemoryAddr(const DMABuffer& buf) const {
-	outp(baseAddrPort_, lo(buf.Offset16()));
-	outp(baseAddrPort_, hi(buf.Offset16()));
+	if (controllerNum_ == 0) {
+		outp(baseAddrPort_, lo(buf.addr_%65536));
+		outp(baseAddrPort_, hi(buf.addr_%65536)); }
+	else {
+		outp(baseAddrPort_, lo(buf.Offset16()));
+		outp(baseAddrPort_, hi(buf.Offset16())); }
 	outp(pagePort_, buf.Page()); }
 
 
 void DMAChannel::SetMemorySize(const DMABuffer& buf) const {
-	outp(countPort_, lo(buf.sizeInWords_ - 1));
-	outp(countPort_, hi(buf.sizeInWords_ - 1)); }
+	if (controllerNum_ == 0) {
+		outp(countPort_, lo(buf.sizeInWords_*2 - 1));
+		outp(countPort_, hi(buf.sizeInWords_*2 - 1)); }
+	else {
+		outp(countPort_, lo(buf.sizeInWords_ - 1));
+		outp(countPort_, hi(buf.sizeInWords_ - 1)); }}
 
 
 void DMAChannel::Stop() const {
