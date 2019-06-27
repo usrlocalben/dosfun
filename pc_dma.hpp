@@ -1,3 +1,6 @@
+/*
+ * support for Intel 8237 DMA controllers
+ */
 #pragma once
 #include <cstdint>
 #include <cstring>  // memset
@@ -41,20 +44,35 @@ public:
 		std::memset(Ptr(), 0, sizeInWords_*2); } };
 
 
-struct DMAChannel {
-	int maskPort;
-	int clearPtrPort;
-	int modePort;
-	int baseAddrPort;
-	int countPort;
-	int pagePort;
-	int stopMask;
-	int startMask;
-	int mode;
-
+class DMAChannel {
+public:
 	DMAChannel(int dmaChannelNum);
+	~DMAChannel();
 	void Setup(const DMABuffer& buf) const;
-	void Stop() const; };
+
+	void Stop() const;
+private:
+	void ClearFlipFlop() const;
+	void SetMode() const;
+	void SetMemoryAddr(const DMABuffer& buf) const;
+	void SetMemorySize(const DMABuffer& buf) const;
+	void Start() const;
+
+	const int controllerNum_;
+	const int channelNum_;
+	const int ioBase_;
+	const int stride_;
+
+	const int maskPort_;
+	const int modePort_;
+	const int clearPtrPort_;
+	const int baseAddrPort_;
+	const int countPort_;
+	const int pagePort_;
+
+	const int stopMask_;
+	const int startMask_;
+	const int mode_;  };
 
 
 }  // namespace pc

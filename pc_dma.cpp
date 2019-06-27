@@ -36,36 +36,65 @@ DMABuffer::DMABuffer(std::uint16_t sizeInWords)
 	addr_ = phy; }
 
 
-DMAChannel::DMAChannel(int dmaChannelNum) {
-	maskPort = 0xd4;
-	clearPtrPort = 0xd8;
-	modePort = 0xd6;
-	baseAddrPort = 0xc0 + 4*(dmaChannelNum-4);
-	countPort = 0xc2 + 4*(dmaChannelNum-4);
-	switch (dmaChannelNum) {
-	case 5: pagePort = 0x8b; break;
-	case 6: pagePort = 0x89; break;
-	case 7: pagePort = 0x8a; break; }
-	
-	stopMask = dmaChannelNum-4 + 0x04;
-	startMask = dmaChannelNum-4 + 0x00;
-	mode = dmaChannelNum-4 + 0x58; }  // 010110xx
+const int pagePorts[8] = {
+	0x87, 0x83, 0x81, 0x82,
+	0x00, 0x8b, 0x89, 0x8a };
+
+
+DMAChannel::DMAChannel(int dcn)
+	:controllerNum_(dcn < 4 ? 0 : 1),
+	channelNum_(dcn < 4 ? dcn : dcn - 4),
+	ioBase_(controllerNum_ == 0 ? 0x00 : 0xc0),
+	stride_(controllerNum_ == 0 ? 1 : 2),
+	maskPort_(ioBase_ + 0x0a*stride_),
+	modePort_(ioBase_ + 0x0b*stride_),
+	clearPtrPort_(ioBase_ + 0x0c*stride_),
+	baseAddrPort_(ioBase_+channelNum_*2*stride_),
+	countPort_(ioBase_+channelNum_*2*stride_+stride_),
+	pagePort_(pagePorts[dcn]),
+	stopMask_(channelNum_ + 0x04),
+	startMask_(channelNum_ + 0x00),
+	mode_(channelNum_ + 0x58) {}  // 010110xx
+
+
+DMAChannel::~DMAChannel() {
+	Stop(); }
 
 
 void DMAChannel::Setup(const DMABuffer& buf) const {
-	outp(maskPort, stopMask);
-	outp(clearPtrPort, 0x00);
-	outp(modePort, mode);
-	outp(baseAddrPort, lo(buf.Offset16()));
-	outp(baseAddrPort, hi(buf.Offset16()));
-	outp(countPort, lo(buf.sizeInWords_ - 1));
-	outp(countPort, hi(buf.sizeInWords_ - 1));
-	outp(pagePort, buf.Page());
-	outp(maskPort, startMask); }
+	Stop();
+	ClearFlipFlop();
+	SetMode();
+	SetMemoryAddr(buf);
+	SetMemorySize(buf);
+	Start(); }
+
+
+void DMAChannel::ClearFlipFlop() const {
+	outp(clearPtrPort_, 0x00); }
+
+
+void DMAChannel::SetMode() const {
+	outp(modePort_, mode_); }
+
+
+void DMAChannel::SetMemoryAddr(const DMABuffer& buf) const {
+	outp(baseAddrPort_, lo(buf.Offset16()));
+	outp(baseAddrPort_, hi(buf.Offset16()));
+	outp(pagePort_, buf.Page()); }
+
+
+void DMAChannel::SetMemorySize(const DMABuffer& buf) const {
+	outp(countPort_, lo(buf.sizeInWords_ - 1));
+	outp(countPort_, hi(buf.sizeInWords_ - 1)); }
 
 
 void DMAChannel::Stop() const {
-	outp(maskPort, stopMask); }
+	outp(maskPort_, stopMask_); }
+
+
+void DMAChannel::Start() const {
+	outp(maskPort_, startMask_); }
 
 
 }  // namespace pc
