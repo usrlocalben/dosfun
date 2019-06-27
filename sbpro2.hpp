@@ -9,7 +9,7 @@ namespace snd {
 
 typedef void (*audioproc)(void* dest, int fmt, int numChannels, int numSamples, void *userPtr);
 
-struct Ports {
+struct SBPro2Ports {
 	int reset;
 	int read;
 	int write;
@@ -17,15 +17,15 @@ struct Ports {
 	int ack16; };
 
 
-class Blaster {
+class SBPro2 {
 public:
-	Blaster(int baseAddr, int irqNum, int dmaNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
+	SBPro2(int baseAddr, int irqNum, int dmaNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
 
 private:
-	Blaster& operator=(const Blaster&);  // not copyable
-	Blaster(const Blaster&);             // not copyable
+	SBPro2& operator=(const SBPro2&);  // not copyable
+	SBPro2(const SBPro2&);             // not copyable
 
-	std::int16_t* GetUserBuffer() const;
+	std::int8_t* GetUserBuffer() const;
 	void SpinUntilReadyForWrite();
 	void SpinUntilReadyForRead();
 	void TX(std::uint8_t value);
@@ -41,10 +41,10 @@ public:
 	void AttachProc(audioproc userProc, void* userPtr);
 	void DetachProc();
 
-	~Blaster();
+	~SBPro2();
 
 private:
-	const Ports port_;
+	const SBPro2Ports port_;
 	pc::IRQLineRT irqLine_;
 	const pc::DMAChannel dma_;
 	const int sampleRateInHz_;

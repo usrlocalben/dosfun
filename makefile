@@ -1,4 +1,4 @@
-COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 #-dSHOW_TIMING
+COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 -dSHOW_TIMING
 RELEASE_FLAGS = -onatx -d0 -dNDEBUG
 DEBUG_FLAGS = -od -d3
 
@@ -20,10 +20,11 @@ run: app.exe
 
 app.exe: app.lib
 	$(LD) N $@ F $<
+	upx -9 app.exe
 
-app.obj: app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
+app.obj: app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sbpro2.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	$(CPP) $[@
-app.lib: app.obj app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
+app.lib: app.obj app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sbpro2.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	$(LIB) $@ $<
 
 app_player_adapter.obj: app_player_adapter.cpp app_player_adapter.hpp kb_tinymod.lib
@@ -59,6 +60,11 @@ vga_reg.lib: vga_reg.obj
 sb16.obj: sb16.cpp sb16.hpp pc_dma.lib pc_pic.lib
 	$(CPP) $[@
 sb16.lib: sb16.obj          pc_dma.lib pc_pic.lib
+	$(LIB) $@ $<
+
+sbpro2.obj: sbpro2.cpp sbpro2.hpp pc_dma.lib pc_pic.lib
+	$(CPP) $[@
+sbpro2.lib: sbpro2.obj            pc_dma.lib pc_pic.lib
 	$(LIB) $@ $<
 
 kb_tinymod.obj: kb_tinymod.cpp kb_tinymod.hpp

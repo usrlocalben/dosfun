@@ -11,10 +11,10 @@ class PlayerAdapter {
 public:
 	PlayerAdapter(kb::ModPlayer& p);
 
-	static void BlasterJmp(std::int16_t* out, int numChannels, int numSamples, void* self);
+	static void BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self);
 
 private:
-	void BlasterProc(std::int16_t* out, int numChannels, int numSamples);
+	void BlasterProc(void* out, int fmt, int numChannels, int numSamples);
 
 private:
 	float pbuf_[4096*2];

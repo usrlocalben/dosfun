@@ -11,6 +11,7 @@
 #include "pc_kbd.hpp"
 #include "pc_pit.hpp"
 #include "sb16.hpp"
+#include "sbpro2.hpp"
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
@@ -25,10 +26,17 @@ namespace app {
 
 const int kAudioBufferSizeInSamples = 128;
 const int kAudioSampleRateInHz = 22050;
-const int kAudioWidthInChannels = 2;
+const int kAudioWidthInChannels = 1;
+/*
+dosbox
 const int kSoundBlasterIOBaseAddr = 0x220;
 const int kSoundBlasterIRQNum = 0x7;
 const int kSoundBlasterDMAChannelNum = 0x05;
+*/
+
+const int kSoundBlasterIOBaseAddr = 0x220;
+const int kSoundBlasterIRQNum = 0x5;
+const int kSoundBlasterDMAChannelNum = 0x01;
 
 const int kNumDrawTimeSamples = 500;
 
@@ -49,7 +57,7 @@ public:
 		vga::RetraceIRQ<vga::FlipPages> flipPagesIRQ;
 		measuredRefreshRateInHz_ = flipPagesIRQ.GetHz();
 
-		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
+		snd::SBPro2  blaster(kSoundBlasterIOBaseAddr,
 		                     kSoundBlasterIRQNum,
 		                     kSoundBlasterDMAChannelNum,
 		                     kAudioSampleRateInHz,

@@ -34,9 +34,9 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
 
 	bool first = true;
-	uint8_t* rowPtr = dst.addr;
-	uint8_t* prevPtr = dst.addr - 80;
-	for (int yyy=0; yyy<240; yyy++) {
+	uint8_t* rowPtr = dst.addr; // + 80*60;
+	uint8_t* prevPtr = rowPtr - 80;
+	for (int yyy=0; yyy<120; yyy++) {
 		if (first) {
 			first = false;
 			vga::SelectPlanes(0xf);
