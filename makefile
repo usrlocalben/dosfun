@@ -17,7 +17,7 @@ LIB = wlib -n -q
 DOSBOX = c:\bin\dosbox-x\dosbox-x.exe
 
 run: app.exe
-	$(DOSBOX) -conf dosbox.conf
+	$(DOSBOX) -conf build-support\dosbox.conf
 
 app.exe: app.lib
 	$(LD) N $@ F $<
