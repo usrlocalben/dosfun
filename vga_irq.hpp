@@ -31,7 +31,7 @@ typedef void (*vbifunc)();
  * to spin for an entire display period.  Additionally, the
  * wall-clock timer provided by the IRQ would miss a tick.
  */
-const float kJitterPct = 0.03;
+const float kJitterPct = 0.025;
 
 const int kNumVBISamples = 50;
 
