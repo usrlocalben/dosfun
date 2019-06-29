@@ -36,33 +36,44 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 	bool first = true;
 	uint8_t* rowPtr = dst.addr; // + 80*60;
 	uint8_t* prevPtr = rowPtr - 80;
-	for (int yyy=0; yyy<120; yyy++) {
+	for (int yyy=0; yyy<160; yyy++) {
 		if (first) {
 			first = false;
 			vga::SelectPlanes(0xf);
-			for (int xxx=0; xxx<80; xxx++) {
-				rowPtr[xxx] = 0; }}
+
+			// multi-plane write zeros to rowPtr
+			_asm {
+			mov ecx, 80
+			xor eax, eax
+			mov edi, [rowPtr]
+			rep stosb }}
 		else {
 			vga::SelectPlanes(0xf);
 			vga::SetBitMask(0x00);  // latches will write
-			for (int xxx=0; xxx<80; xxx++) {
-				volatile char latchload = prevPtr[xxx];
-				rowPtr[xxx] = 0; }
-			vga::SetBitMask(0xff); }  // normal write
 
+			// latch-copy one row from prevPtr to rowPtr
+			_asm {
+			mov ecx, 80
+			mov esi, [prevPtr]
+			mov edi, [rowPtr]
+			rep movsb }
+
+			vga::SetBitMask(0xff); } // normal write
+
+#define SIN std::sin
 		int pos;
 		switch (patternNum%4) {
 		case 0:
-			pos = std::sin((T*2.19343) + yyy*(std::sin(T/4.0f)*0.05) * 3.14159 * 2.0) * (std::sin(T*1.781234)*150) + 160;
+			pos = SIN((T*2.19343f) + yyy*(SIN(T*0.25f)*0.05f) * 3.14159f * 2.0f) * (SIN(T*1.781234f)*150) + 160;
 			break;
 		case 1:
-			pos = std::sin((T) + yyy*0.005 * 3.14159 * 2.0) * (std::sin(T*3.781234)*150) + 160;
+			pos = SIN((T) + yyy*0.005f * 3.14159f * 2.0f) * (SIN(T*3.781234f)*150) + 160;
 			break;
 		case 2:
-			pos = std::sin((T*5.666) + yyy*0.008 * 3.14159 * 2.0) * (std::sin(T*1.781234+(yyy*0.010))*50+100) + std::sin((yyy+(T*60))*0.00898)*100+160;
+			pos = SIN((T*5.666f) + yyy*0.008f * 3.14159f * 2.0f) * (SIN(T*1.781234f+(yyy*0.010f))*50+100) + SIN((yyy+(T*60))*0.00898f)*100+160;
 			break;
 		case 3:
-			pos = std::sin((T*2.45) + yyy*0.012 * 3.14159 * 2.0) * (std::sin(T*1.781234+(yyy*0.010))*66+33) + std::sin((yyy+(T*60))*0.01111)*100+50;
+			pos = SIN((T*2.45f) + yyy*0.012f * 3.14159f * 2.0f) * (SIN(T*1.781234f+(yyy*0.010f))*66+33) + SIN((yyy+(T*60))*0.01111f)*100+50;
 			break; }
 
 		// if (yyy%2==0)
