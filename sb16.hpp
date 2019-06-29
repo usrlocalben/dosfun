@@ -25,7 +25,13 @@ private:
 	Blaster& operator=(const Blaster&);  // not copyable
 	Blaster(const Blaster&);             // not copyable
 
-	std::int16_t* GetUserBuffer() const;
+	void SpeakerOn();
+	void StartDMA();
+	void StopDMA();
+	void SpeakerOff();
+	void SetSampleRate();
+
+	void* GetUserBuffer() const;
 	void SpinUntilReadyForWrite();
 	void SpinUntilReadyForRead();
 	void TX(std::uint8_t value);
@@ -47,6 +53,7 @@ private:
 	const Ports port_;
 	pc::IRQLineRT irqLine_;
 	const pc::DMAChannel dma_;
+	const int bits_;
 	const int sampleRateInHz_;
 	const int numChannels_;
 	const int bufferSizeInSamples_;

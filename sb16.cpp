@@ -10,6 +10,7 @@
 
 using std::uint8_t;
 using std::uint16_t;
+using std::int8_t;
 using std::int16_t;
 
 #define nullptr (0)
@@ -44,12 +45,13 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	:port_(make_ports(baseAddr)),
 	irqLine_(irqNum),
 	dma_(dmaChannelNum),
+	bits_(dmaChannelNum < 4 ? 8 : 16),
 	sampleRateInHz_(sampleRateInHz),
 	numChannels_(numChannels),
 	bufferSizeInSamples_(bufferSizeInSamples),
 	userBuffer_(1),
 	playBuffer_(0),
-	dmaBuffer_(bufferSizeInSamples_*numChannels_*kSampleSizeInWords*2),
+	dmaBuffer_(bufferSizeInSamples_*numChannels_ * (bits_ == 16 ? 2 : 1)),
 	good_(false),
 	userProc_(nullptr),
 	userPtr_(nullptr)
@@ -79,21 +81,64 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	dma_.Setup(dmaBuffer_);
 
 	// set output sample rate
-	TX(0x41);
-	TX(hi(sampleRateInHz_));
-	TX(lo(sampleRateInHz_));
+	SetSampleRate();
+	SpeakerOn();
+	StartDMA(); }
 
-	TX(0xb6);  // 16-bit DAC, A/I, FIFO
-	if (numChannels_ == 2) {
-		TX(0x30); }  // DMA mode: 16-bit signed stereo
+
+void Blaster::SpeakerOn() {
+	if (bits_ == 8) {
+		TX(0xd1); }}
+
+
+void Blaster::SpeakerOff() {
+	if (bits_ == 8) {
+		TX(0xd3); }}
+
+
+void Blaster::SetSampleRate() {
+	if (bits_ == 8) {
+		TX(0x40);
+		int tmp = 256 - (1000000 / (numChannels_ * sampleRateInHz_));
+		TX(tmp); }
 	else {
-		TX(0x10); }  // DMA mode: 16-bit signed mono
-	TX(lo(bufferSizeInSamples_*kSampleSizeInWords*numChannels_-1));
-	TX(hi(bufferSizeInSamples_*kSampleSizeInWords*numChannels_-1)); }
+		TX(0x41);
+		TX(hi(sampleRateInHz_));
+		TX(lo(sampleRateInHz_)); }}
+
+
+void Blaster::StartDMA() {
+	if (bits_ == 8) {
+		/*
+		TX(0xc6);  // 8-bit, DAC, auto-init, fifo-enable
+		TX(0x10);  // mode: mono, signed
+		TX(lo(bufferSizeInSamples_*numChannels_-1));
+		TX(hi(bufferSizeInSamples_*numChannels_-1));
+		*/
+		TX(0x48);
+		TX(lo(bufferSizeInSamples_*numChannels_-1));
+		TX(hi(bufferSizeInSamples_*numChannels_-1));
+		TX(0x1c); }  // start auto-init playback
+	else {
+		TX(0xb6);  // 16-bit DAC, A/I, FIFO
+		if (numChannels_ == 2) {
+			TX(0x30); }  // DMA mode: 16-bit signed stereo
+		else {
+			TX(0x10); }  // DMA mode: 16-bit signed mono
+		TX(lo(bufferSizeInSamples_*kSampleSizeInWords*numChannels_-1));
+		TX(hi(bufferSizeInSamples_*kSampleSizeInWords*numChannels_-1)); }}
+
+
+void Blaster::StopDMA() {
+	if (bits_ == 8) {
+		TX(0xd0);    // pause 8-bit DMA
+		TX(0xd3); }  // turn off speaker
+	else {
+		TX(0xd5); }}  // pause output
 
 
 Blaster::~Blaster() {
-	TX(0xd5);  // pause output
+	StopDMA(); 
 
 	_disable();
 	dma_.Stop();
@@ -137,30 +182,35 @@ static void __interrupt Blaster::isrJmp() {
 	theBlaster->isr(); }
 
 
-inline int16_t* Blaster::GetUserBuffer() const {
-	int16_t* dst = (int16_t*)dmaBuffer_.Ptr16();
-	dst += userBuffer_*bufferSizeInSamples_*numChannels_*kSampleSizeInWords;
-	return dst; }
+inline void* Blaster::GetUserBuffer() const {
+	if (bits_ == 8) {
+		int8_t* dst = (int8_t*)dmaBuffer_.Ptr16();
+		dst += userBuffer_*bufferSizeInSamples_*numChannels_;
+		return dst; }
+	else {
+		int16_t* dst = (int16_t*)dmaBuffer_.Ptr16();
+		dst += userBuffer_*bufferSizeInSamples_*numChannels_;
+		return dst; }}
 
 
 void Blaster::isr() {
 	// if (!IsRealIRQ(irqLine_)) { return; }
+	ACK();
 	irqLine_.SignalEOI();
 	_enable();
 
 	std::swap(userBuffer_, playBuffer_);
-	int16_t* dst = GetUserBuffer();
+	void* dst = GetUserBuffer();
+	int fmt = (bits_ == 8 ? 1 : 2);
 	if (userProc_ != nullptr) {
-		userProc_(dst, 2, numChannels_, bufferSizeInSamples_, userPtr_); }
-	else {
-		for (int i=0; i<bufferSizeInSamples_*numChannels_; i++) {
-			dst[i] = 0; }}
-
-	ACK(); }
+		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }}
 
 
 inline void Blaster::ACK() {
-	inp(port_.ack16); }
+	if (bits_ == 8) {
+		inp(port_.poll); }
+	else {
+		inp(port_.ack16); }}
 
 
 void Blaster::AttachProc(audioproc userProc, void* userPtr) {
