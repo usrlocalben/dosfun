@@ -3,7 +3,8 @@
  */
 #pragma once
 #include <cstdint>
-#include <conio.h>  // outp
+
+#include "pc_bus.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -30,33 +31,33 @@ uint8_t* const VGAPTR = (uint8_t*)0xa0000L;
 
 
 inline void SetRGB(int idx, int r, int g, int b) {
-	outp(VP_PALETTE_INDEX, idx);
-	outp(VP_PALETTE_DATA, r);
-	outp(VP_PALETTE_DATA, g);
-	outp(VP_PALETTE_DATA, b); }
+	pc::TXdb(VP_PALETTE_INDEX, idx);
+	pc::TXdb(VP_PALETTE_DATA, r);
+	pc::TXdb(VP_PALETTE_DATA, g);
+	pc::TXdb(VP_PALETTE_DATA, b); }
 
 
 inline void SetStartAddress(uint16_t addr) {
-	outpw(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
-	outpw(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
+	pc::TXdw(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
+	pc::TXdw(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
 
 
 inline void SetBitMask(uint8_t mask) {
-	outpw(VP_GFXC, mask<<8|0x08); }
+	pc::TXdw(VP_GFXC, mask<<8|0x08); }
 
 
 inline int GetBitMask() {
-	outp(VP_GFXC, 0x08);
-	return inp(VP_GFXC+1); }
+	pc::TXdb(VP_GFXC, 0x08);
+	return pc::RXdb(VP_GFXC+1); }
 
 
 inline void SelectPlanes(uint8_t mask) {
-	outpw(VP_SEQC, mask<<8|SC_MAP_MASK); }
+	pc::TXdw(VP_SEQC, mask<<8|SC_MAP_MASK); }
 
 
 inline int GetPlanes() {
-	outp(VP_SEQC, SC_MAP_MASK);
-	return inp(VP_SEQC+1); }
+	pc::TXdb(VP_SEQC, SC_MAP_MASK);
+	return pc::RXdb(VP_SEQC+1); }
 
 
 inline void SelectAllPlanes() {
@@ -79,11 +80,11 @@ inline void SelectAllPlanes() {
  * already be in-progress when detection begins.
  */
 inline void SpinUntilRetracing() {
-	while (!(inp(VP_STA1) & VF_VRETRACE)) {}}
+	while (!(pc::RXdb(VP_STA1) & VF_VRETRACE)) {}}
 
 
 inline void SpinWhileRetracing() {
-	while (inp(VP_STA1) & VF_VRETRACE) {}}
+	while (pc::RXdb(VP_STA1) & VF_VRETRACE) {}}
 
 
 inline void SpinUntilNextRetraceBegins() {
@@ -94,11 +95,11 @@ inline void SpinUntilNextRetraceBegins() {
 /*
 untested
 inline void SpinUntilHorizontalRetrace() {
-	while (!(inp(VP_STA1) & VF_DD)) {}}
+	while (!(pc::RXdb(VP_STA1) & VF_DD)) {}}
 
 
 inline void SpinWhileHorizontalRetrace() {
-	while (inp(VP_STA1) & VF_DD) {}}
+	while (pc::RXdb(VP_STA1) & VF_DD) {}}
 */
 
 

@@ -3,14 +3,12 @@
  */
 #pragma once
 #include <cstdint>
-#include <conio.h>  // inp/outp
-#include <dos.h>  // _dos_setvect/getvect
+
+#include "pc_bus.hpp"
+#include "pc_cpu.hpp"
 
 namespace rqdq {
 namespace pc {
-
-typedef void (__interrupt * isrptr)();
-
 
 template <int IRQNUM>
 class IRQLineCT {
@@ -25,41 +23,41 @@ public:
 		stopMask_(1 << (IRQNUM % 8)),
 		startMask_(~stopMask_) {}
 
-	inline void SignalEOI() const {
+	void SignalEOI() const {
 		// todo: optimizer won't eliminate this branch
 		//       even when irqNum is const at compile-time
 		if (IRQNUM >= 8) {
-			outp(0xa0, 0x20); }
-		outp(0x20, 0x20); }
+			TXdb(0xa0, 0x20); }
+		TXdb(0x20, 0x20); }
 
-	inline bool IsReal() const {
+	bool IsReal() const {
 		if (IRQNUM == 7) {
-			outp(0x20, 0x0b);  // read ISR
+			TXdb(0x20, 0x0b);  // read ISR
 			std::uint8_t isr = inp(0x20);
 			if (isr & 0x80 == 0) {
 				return false; }}
 		return true; }
 
-	inline int GetISRNum() const {
+	int GetISRNum() const {
 		return isrNum_; }
 
-	inline void Disconnect() const {
-		outp(maskPort_, (inp(maskPort_)|stopMask_)); }
+	void Disconnect() const {
+		TXdb(maskPort_, (inp(maskPort_)|stopMask_)); }
 
-	inline void Connect() const {
-		outp(maskPort_, (inp(maskPort_)&startMask_)); }
+	void Connect() const {
+		TXdb(maskPort_, (inp(maskPort_)&startMask_)); }
 
-	void SetVect(isrptr func) const {
-		_dos_setvect(isrNum_, func); }
+	void SetISR(ISRPtr func) const {
+		SetVect(isrNum_, func); }
 
-	isrptr GetVect() const {
-		return _dos_getvect(isrNum_); }
+	ISRPtr GetISR() const {
+		return GetVect(isrNum_); }
 
-	void SaveVect() {
-		savedISRPtr_ = GetVect(); }
+	void SaveISR() {
+		savedISRPtr_ = GetISR(); }
 
-	void RestoreVect() {
-		SetVect(savedISRPtr_); }
+	void RestoreISR() {
+		SetISR(savedISRPtr_); }
 
 private:
 	const int irqNum_;
@@ -69,48 +67,48 @@ private:
 	const std::uint8_t isrNum_;
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
-	isrptr savedISRPtr_; };
+	ISRPtr savedISRPtr_; };
 
 
 class IRQLineRT {
 public:
 	IRQLineRT(int irqNum);
 
-	inline void SignalEOI() const {
+	void SignalEOI() const {
 		// todo: optimizer won't eliminate this branch
 		//       even when irqNum is const at compile-time
 		if (irqNum_ >= 8) {
-			outp(0xa0, 0x20); }
-		outp(0x20, 0x20); }
+			TXdb(0xa0, 0x20); }
+		TXdb(0x20, 0x20); }
 
-	inline bool IsReal() const {
+	bool IsReal() const {
 		if (irqNum_ == 7) {
-			outp(0x20, 0x0b);  // read ISR
+			TXdb(0x20, 0x0b);  // read ISR
 			std::uint8_t isr = inp(0x20);
 			if (isr & 0x80 == 0) {
 				return false; }}
 		return true; }
 
-	inline int GetISRNum() const {
+	int GetISRNum() const {
 		return isrNum_; }
 
-	inline void Disconnect() const {
-		outp(maskPort_, (inp(maskPort_)|stopMask_)); }
+	void Disconnect() const {
+		TXdb(maskPort_, (inp(maskPort_)|stopMask_)); }
 
-	inline void Connect() const {
-		outp(maskPort_, (inp(maskPort_)&startMask_)); }
+	void Connect() const {
+		TXdb(maskPort_, (inp(maskPort_)&startMask_)); }
 
-	void SetVect(isrptr func) const {
-		_dos_setvect(isrNum_, func); }
+	void SetISR(ISRPtr func) const {
+		SetVect(isrNum_, func); }
 
-	isrptr GetVect() const {
-		return _dos_getvect(isrNum_); }
+	ISRPtr GetISR() const {
+		return GetVect(isrNum_); }
 
-	void SaveVect() {
-		savedISRPtr_ = GetVect(); }
+	void SaveISR() {
+		savedISRPtr_ = GetISR(); }
 
-	void RestoreVect() {
-		SetVect(savedISRPtr_); }
+	void RestoreISR() {
+		SetISR(savedISRPtr_); }
 
 private:
 	const int irqNum_;
@@ -120,7 +118,7 @@ private:
 	const std::uint8_t isrNum_;
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
-	isrptr savedISRPtr_; };
+	ISRPtr savedISRPtr_; };
 
 
 }  // namespace pc

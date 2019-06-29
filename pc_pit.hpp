@@ -1,8 +1,7 @@
 #pragma once
 #include <cstdint>
-#include <conio.h>  // outp, inp
-#include <i86.h>  // _disable, _enable
 
+#include "pc_cpu.hpp"
 #include "pc_pic.hpp"
 
 using std::uint8_t;
@@ -44,9 +43,9 @@ inline float ticksToSeconds(int value) {
 
 inline void StartCountdown(uint16_t period) {
 	// start timer
-	outp(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE0 | PIT_VALUE_MODE_16_BIT_BINARY);
-	outp(0x40, lowbyte(period));
-	outp(0x40, highbyte(period)); }
+	TXdb(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE0 | PIT_VALUE_MODE_16_BIT_BINARY);
+	TXdb(0x40, lowbyte(period));
+	TXdb(0x40, highbyte(period)); }
 
 
 inline void BeginMeasuring() {
@@ -54,17 +53,16 @@ inline void BeginMeasuring() {
 
 
 inline void StartSquareWave(uint16_t period) {
-	outp(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE3 | PIT_VALUE_MODE_16_BIT_BINARY);
-	outp(0x40, lowbyte(period));
-	outp(0x40, highbyte(period)); }
+	TXdb(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE3 | PIT_VALUE_MODE_16_BIT_BINARY);
+	TXdb(0x40, lowbyte(period));
+	TXdb(0x40, highbyte(period)); }
 
 
 inline uint16_t ReadCounter() {
-	_disable();
-	outp(0x43, 0);  // latch counter for channel 0
+	CriticalSection cs;
+	TXdb(0x43, 0);  // latch counter for channel 0
 	uint8_t lo = inp(0x40);
 	uint8_t hi = inp(0x40);
-	_enable();
 	return hi<<8|lo; }
 
 

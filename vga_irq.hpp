@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdlib>
 #include <cstdint>
-#include <conio.h>
 
+#include "pc_cpu.hpp"
 #include "pc_pic.hpp"
 #include "vga_reg.hpp"
 
@@ -60,18 +60,18 @@ public:
 			frameDurationInTicks_ * (1.0 - kJitterPct);
 
 		SpinWhileRetracing();
-		pc::pitIRQLine.SaveVect();
-		pc::pitIRQLine.SetVect(RetraceIRQ::vblank_isr);
-		_disable();
-		SpinUntilRetracing();
-		pc::StartCountdown(irqSleepTimeInTicks);
-		_enable(); }
+		pc::pitIRQLine.SaveISR();
+		pc::pitIRQLine.SetISR(RetraceIRQ::vblank_isr);
+		{
+			pc::CriticalSection cs;
+			SpinUntilRetracing();
+			pc::StartCountdown(irqSleepTimeInTicks); }}
 
 	/**
 	 * Restore the BIOS timer ISR and interval
 	 */
 	~RetraceIRQ() {
-		pc::pitIRQLine.RestoreVect();
+		pc::pitIRQLine.RestoreISR();
 		pc::StartSquareWave(0); }
 
 private:

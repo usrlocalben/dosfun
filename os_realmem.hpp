@@ -15,7 +15,7 @@ private:
 	RealMem(const RealMem& other);             // not copyable
 
 public:
-	inline void Swap(RealMem& other) {
+	void Swap(RealMem& other) {
 		std::swap(selector_, other.selector_);
 		std::swap(segment_, other.segment_); }
 

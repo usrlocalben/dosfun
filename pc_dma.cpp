@@ -2,9 +2,9 @@
 
 #include <cstdint>
 #include <iostream>
-#include <conio.h>  // inp/outp
 
 #include "os_realmem.hpp"
+#include "pc_bus.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -71,38 +71,38 @@ void DMAChannel::Setup(const DMABuffer& buf) const {
 
 
 void DMAChannel::ClearFlipFlop() const {
-	outp(clearPtrPort_, 0x00); }
+	TXdb(clearPtrPort_, 0x00); }
 
 
 void DMAChannel::SetMode() const {
-	outp(modePort_, mode_); }
+	TXdb(modePort_, mode_); }
 
 
 void DMAChannel::SetMemoryAddr(const DMABuffer& buf) const {
 	if (controllerNum_ == 0) {
-		outp(baseAddrPort_, lo(buf.addr_%65536));
-		outp(baseAddrPort_, hi(buf.addr_%65536)); }
+		TXdb(baseAddrPort_, lo(buf.addr_%65536));
+		TXdb(baseAddrPort_, hi(buf.addr_%65536)); }
 	else {
-		outp(baseAddrPort_, lo(buf.Offset16()));
-		outp(baseAddrPort_, hi(buf.Offset16())); }
-	outp(pagePort_, buf.Page()); }
+		TXdb(baseAddrPort_, lo(buf.Offset16()));
+		TXdb(baseAddrPort_, hi(buf.Offset16())); }
+	TXdb(pagePort_, buf.Page()); }
 
 
 void DMAChannel::SetMemorySize(const DMABuffer& buf) const {
 	if (controllerNum_ == 0) {
-		outp(countPort_, lo(buf.sizeInWords_*2 - 1));
-		outp(countPort_, hi(buf.sizeInWords_*2 - 1)); }
+		TXdb(countPort_, lo(buf.sizeInWords_*2 - 1));
+		TXdb(countPort_, hi(buf.sizeInWords_*2 - 1)); }
 	else {
-		outp(countPort_, lo(buf.sizeInWords_ - 1));
-		outp(countPort_, hi(buf.sizeInWords_ - 1)); }}
+		TXdb(countPort_, lo(buf.sizeInWords_ - 1));
+		TXdb(countPort_, hi(buf.sizeInWords_ - 1)); }}
 
 
 void DMAChannel::Stop() const {
-	outp(maskPort_, stopMask_); }
+	TXdb(maskPort_, stopMask_); }
 
 
 void DMAChannel::Start() const {
-	outp(maskPort_, startMask_); }
+	TXdb(maskPort_, startMask_); }
 
 
 }  // namespace pc

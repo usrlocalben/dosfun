@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
-#include <conio.h>  // outp/inp
 
+#include "pc_bus.hpp"
+#include "pc_cpu.hpp"
 #include "pc_dma.hpp"
 #include "pc_pic.hpp"
 
@@ -35,7 +36,7 @@ Ports make_ports(int baseAddr) {
 	return out; }
 
 
-class Blaster* theBlaster = 0;
+class Blaster* theBlaster = nullptr;
 
 uint8_t lo(uint16_t value) { return value & 0x00ff; }
 uint8_t hi(uint16_t value) { return value >> 8; }
@@ -70,12 +71,12 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	hwInfo |= RX();
 	*/
 
-	_disable();
-	irqLine_.Disconnect();
-	irqLine_.SaveVect();
-	irqLine_.SetVect(Blaster::isrJmp);
-	irqLine_.Connect();
-	_enable();
+	{
+		pc::CriticalSection cs;
+		irqLine_.Disconnect();
+		irqLine_.SaveISR();
+		irqLine_.SetISR(Blaster::isrJmp);
+		irqLine_.Connect(); }
 
 	dmaBuffer_.Zero();
 	dma_.Setup(dmaBuffer_);
@@ -140,36 +141,36 @@ void Blaster::StopDMA() {
 Blaster::~Blaster() {
 	StopDMA(); 
 
-	_disable();
-	dma_.Stop();
-	irqLine_.RestoreVect();
-	_enable();
+	{
+		pc::CriticalSection cs;
+		dma_.Stop();
+		irqLine_.RestoreISR(); }
 
 	RESET();
 	SpinUntilReset(); }
 
 
 inline void Blaster::SpinUntilReadyForWrite() {
-	while (inp(port_.write) & 0x80); }
+	while (pc::RXdb(port_.write) & 0x80); }
 
 
 inline void Blaster::SpinUntilReadyForRead() {
-	while (!(inp(port_.poll) & 0x80)); }
+	while (!(pc::RXdb(port_.poll) & 0x80)); }
 
 
 void Blaster::TX(uint8_t value) {
 	SpinUntilReadyForWrite();
-	outp(port_.write, value); }
+	pc::TXdb(port_.write, value); }
 
 
 uint8_t Blaster::RX() {
 	SpinUntilReadyForRead();
-	return inp(port_.read); }
+	return pc::RXdb(port_.read); }
 
 
 void Blaster::RESET() {
-	outp(port_.reset, 1);
-	outp(port_.reset, 0); }
+	pc::TXdb(port_.reset, 1);
+	pc::TXdb(port_.reset, 0); }
 
 
 bool Blaster::SpinUntilReset() {
@@ -197,7 +198,7 @@ void Blaster::isr() {
 	// if (!IsRealIRQ(irqLine_)) { return; }
 	ACK();
 	irqLine_.SignalEOI();
-	_enable();
+	pc::EnableInterrupts();
 
 	std::swap(userBuffer_, playBuffer_);
 	void* dst = GetUserBuffer();
@@ -208,20 +209,19 @@ void Blaster::isr() {
 
 inline void Blaster::ACK() {
 	if (bits_ == 8) {
-		inp(port_.poll); }
+		pc::RXdb(port_.poll); }
 	else {
-		inp(port_.ack16); }}
+		pc::RXdb(port_.ack16); }}
 
 
 void Blaster::AttachProc(audioproc userProc, void* userPtr) {
-	_disable();
+	pc::CriticalSection cs;
 	userPtr_ = userPtr;
-	userProc_ = userProc;
-	_enable(); }
+	userProc_ = userProc; }
 
 
 void Blaster::DetachProc() {
-	userProc_ = 0; }
+	userProc_ = nullptr; }
 
 
 bool Blaster::IsGood() const {

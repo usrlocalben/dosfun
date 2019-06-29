@@ -1,10 +1,8 @@
 #include "pc_kbd.hpp"
 
 #include <cstdint>
-#include <i86.h>  // int386
-#include <dos.h>  // _dos_getvect, _dos_setvect
-#include <conio.h>  // inp/outp
 
+#include "pc_cpu.hpp"
 #include "pc_pic.hpp"
 
 using std::uint8_t;
@@ -26,8 +24,8 @@ IRQLineCT<1> kbdIRQLine;
 void __interrupt keyboard_isr() {
 	uint8_t scanCode = inp(KBD_B_DATA);
 	uint8_t status = inp(KBD_B_CONTROL);
-	outp(KBD_B_CONTROL, status | KBD_IRQ_RESET);
-	outp(KBD_B_CONTROL, status);
+	TXdb(KBD_B_CONTROL, status | KBD_IRQ_RESET);
+	TXdb(KBD_B_CONTROL, status);
 
 	inputBuffer[bufTail++] = scanCode;
 	kbdIRQLine.SignalEOI(); }
@@ -35,12 +33,12 @@ void __interrupt keyboard_isr() {
 
 
 void InstallKeyboard() {
-	kbdIRQLine.SaveVect();
-	kbdIRQLine.SetVect(keyboard_isr); }
+	kbdIRQLine.SaveISR();
+	kbdIRQLine.SetISR(keyboard_isr); }
 
 
 void UninstallKeyboard() {
-	kbdIRQLine.RestoreVect(); }
+	kbdIRQLine.RestoreISR(); }
 
 
 bool IsKeyboardDataAvailable() {

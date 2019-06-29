@@ -10,7 +10,7 @@ extern volatile bool backLocked;
 
 
 struct FlipPages {
-	inline void operator()() {
+	void operator()() {
 		++timeInFrames;
 		if (!backLocked) {
 			backPage ^= 1;
