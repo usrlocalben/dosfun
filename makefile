@@ -1,4 +1,4 @@
-COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 #-dSHOW_TIMING
+COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 -dSHOW_TIMING
 RELEASE_FLAGS = -onatxl+ -d0 -dNDEBUG
 DEBUG_FLAGS = -od -d3
 

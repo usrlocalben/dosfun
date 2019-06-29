@@ -1,6 +1,7 @@
 #include "app_kefrens_bars.hpp"
 
 #include <cmath>
+#include <string>
 
 #include "vga_mode.hpp"
 #include "vga_reg.hpp"
@@ -29,37 +30,16 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 		24, 30, 33, 34, 36,
 		39, 49, 51, 52 };
 
+	uint8_t row[320];
+	std::memset(row, 0, 320);
+
 	// int magicIdx = patternNum<<1 | (rowNum>>4&1);
 	int magicIdx = patternNum;
 	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
 
-	bool first = true;
 	uint8_t* rowPtr = dst.addr; // + 80*60;
-	uint8_t* prevPtr = rowPtr - 80;
 	for (int yyy=0; yyy<160; yyy++) {
-		if (first) {
-			first = false;
-			vga::SelectPlanes(0xf);
-
-			// multi-plane write zeros to rowPtr
-			_asm {
-			mov ecx, 80
-			xor eax, eax
-			mov edi, [rowPtr]
-			rep stosb }}
-		else {
-			vga::SelectPlanes(0xf);
-			vga::SetBitMask(0x00);  // latches will write
-
-			// latch-copy one row from prevPtr to rowPtr
-			_asm {
-			mov ecx, 80
-			mov esi, [prevPtr]
-			mov edi, [rowPtr]
-			rep movsb }
-
-			vga::SetBitMask(0xff); } // normal write
-
+		// animate
 #define SIN std::sin
 		int pos;
 		switch (patternNum%4) {
@@ -76,11 +56,18 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 			pos = SIN((T*2.45f) + yyy*0.012f * 3.14159f * 2.0f) * (SIN(T*1.781234f+(yyy*0.010f))*66+33) + SIN((yyy+(T*60))*0.01111f)*100+50;
 			break; }
 
-		// if (yyy%2==0)
+		// draw bar
 		for (int wx=-4; wx<=4; wx++) {
-			PutPixelSlow(pos+wx, yyy, colorpos+wx, dst.addr); }
+			int ox = pos+wx;
+			if (0 <= ox && ox < 320) {
+				row[ox] = colorpos+wx; }}
 
-		prevPtr = rowPtr;
+		// copy row[] to vram
+		for (int p=0; p<4; p++) {
+			vga::SelectPlanes(1<<p);
+			for (int xxx=0; xxx<80; xxx++) {
+				rowPtr[xxx] = row[xxx*4+p]; }}
+
 		rowPtr += 80; }}
 
 
