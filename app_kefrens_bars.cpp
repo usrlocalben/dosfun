@@ -9,15 +9,6 @@
 using std::uint8_t;
 
 namespace rqdq {
-namespace {
-
-inline void PutPixelSlow(int x, int y, uint8_t c, uint8_t* baseAddr) {
-	if (x<0 || x>=320) return;
-	vga::SelectPlanes(1<<(x&3));
-	baseAddr[y*80+(x>>2)] = c; }
-
-
-}  // namespace
 namespace app {
 
 void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNum) {
@@ -37,8 +28,8 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 	int magicIdx = patternNum;
 	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
 
-	uint8_t* rowPtr = dst.addr; // + 80*60;
-	for (int yyy=0; yyy<160; yyy++) {
+	uint8_t* rowPtr = dst.addr;
+	for (int yyy=0; yyy<240; yyy++) {
 		// animate
 #define SIN std::sin
 		int pos;
@@ -60,13 +51,14 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 		for (int wx=-4; wx<=4; wx++) {
 			int ox = pos+wx;
 			if (0 <= ox && ox < 320) {
-				row[ox] = colorpos+wx; }}
+				int plane = ox&3;
+				int ofs = ox>>2;
+				row[plane*80+ofs] = colorpos+wx; }}
 
-		// copy row[] to vram
+		// copy row[] to vram planes
 		for (int p=0; p<4; p++) {
 			vga::SelectPlanes(1<<p);
-			for (int xxx=0; xxx<80; xxx++) {
-				rowPtr[xxx] = row[xxx*4+p]; }}
+			std::memcpy(rowPtr, row+p*80, 80); }
 
 		rowPtr += 80; }}
 
