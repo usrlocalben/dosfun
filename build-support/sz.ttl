@@ -1,4 +1,4 @@
 connect '/C=3'
-restoresetup 'c:\src\TERATERM.INI'
+restoresetup 'c:\src\build-support\serial.ini'
 zmodemsend 'c:\src\app.exe' 1
 closett
