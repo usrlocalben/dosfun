@@ -16,15 +16,12 @@ using std::uint16_t;
 namespace rqdq {
 namespace app {
 
-PlayerAdapter::PlayerAdapter(kb::ModPlayer& p)
-	:player_(p) {}
-
 
 void PlayerAdapter::BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self) {
 	static_cast<PlayerAdapter*>(self)->BlasterProc(out, fmt, numChannels, numSamples); }
 
 
-void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSamples) {
+inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSamples) {
 #ifdef SHOW_TIMING
 //vga::SetRGB(0, 0x20, 0x3f, 0x10);
 #endif

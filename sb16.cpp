@@ -179,10 +179,6 @@ bool Blaster::SpinUntilReset() {
 	return attempts != 0; }
 
 
-static void __interrupt Blaster::isrJmp() {
-	theBlaster->isr(); }
-
-
 inline void* Blaster::GetUserBuffer() const {
 	if (bits_ == 8) {
 		int8_t* dst = (int8_t*)dmaBuffer_.Ptr16();
@@ -194,7 +190,11 @@ inline void* Blaster::GetUserBuffer() const {
 		return dst; }}
 
 
-void Blaster::isr() {
+static void __interrupt Blaster::isrJmp() {
+	theBlaster->isr(); }
+
+
+inline void Blaster::isr() {
 	// if (!IsRealIRQ(irqLine_)) { return; }
 	ACK();
 	irqLine_.SignalEOI();

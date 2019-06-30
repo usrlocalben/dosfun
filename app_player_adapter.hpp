@@ -9,7 +9,7 @@ namespace app {
 
 class PlayerAdapter {
 public:
-	PlayerAdapter(kb::ModPlayer& p);
+	PlayerAdapter(kb::ModPlayer& p) :player_(p) {}
 
 	static void BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self);
 
@@ -17,8 +17,8 @@ private:
 	void BlasterProc(void* out, int fmt, int numChannels, int numSamples);
 
 private:
-	float pbuf_[4096*2];
-	kb::ModPlayer& player_; };
+	kb::ModPlayer& player_;
+	float pbuf_[4096*2]; };
 
 
 }  // namespace app

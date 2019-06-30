@@ -13,8 +13,8 @@ using std::uint32_t;
 namespace rqdq {
 namespace {
 
-uint8_t lo(uint16_t value) { return value & 0x00ff; }
-uint8_t hi(uint16_t value) { return value >> 8; }
+inline uint8_t lo(uint16_t value) { return value & 0x00ff; }
+inline uint8_t hi(uint16_t value) { return value >> 8; }
 
 
 }  // namespace
@@ -70,11 +70,11 @@ void DMAChannel::Setup(const DMABuffer& buf) const {
 	Start(); }
 
 
-void DMAChannel::ClearFlipFlop() const {
+inline void DMAChannel::ClearFlipFlop() const {
 	TXdb(clearPtrPort_, 0x00); }
 
 
-void DMAChannel::SetMode() const {
+inline void DMAChannel::SetMode() const {
 	TXdb(modePort_, mode_); }
 
 
