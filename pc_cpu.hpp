@@ -6,7 +6,6 @@ namespace rqdq {
 namespace pc {
 
 typedef void (__interrupt * ISRPtr)();
-// typedef void (*ISRPtrEx)(void* userPtr);
 
 
 inline void EnableInterrupts() {
@@ -22,7 +21,10 @@ public:
 	CriticalSection() {
 		_disable(); }
 	~CriticalSection() {
-		_enable(); }};
+		_enable(); }
+private:
+	CriticalSection& operator=(const CriticalSection&);  // non-copyable
+	CriticalSection(const CriticalSection&); };          // non-copyable
 
 
 inline void SetVect(int isrNum, ISRPtr func) {

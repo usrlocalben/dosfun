@@ -3,6 +3,7 @@
 #include <i86.h>  // int386
 
 #include "pc_bus.hpp"
+#include "pc_cpu.hpp"
 #include "vga_reg.hpp"
 
 namespace rqdq {
@@ -15,21 +16,33 @@ void SetBIOSMode(int num) {
 	int386(0x10, &r, &r); }
 
 
+class SequencerDisabledSection {
+public:
+	SequencerDisabledSection(const pc::CriticalSection& cs) :cs(cs) {
+		pc::TXdw(VP_SEQC, 0x100); }  // clear bit 1, starting reset
+	~SequencerDisabledSection() {
+		pc::TXdw(VP_SEQC, 0x300); }  // undo reset / restart sequencer)
+private:
+	SequencerDisabledSection& operator=(const SequencerDisabledSection&);  // non-copyable
+	SequencerDisabledSection(const SequencerDisabledSection&);             // non-copyable
+	const pc::CriticalSection& cs; };
+
+
 /*
  * ModeX 320x240 initialization
  *
  * This is taken directly from M.Abrash's Mode-X .asm code
  */
 void SetModeX() {
-	SpinUntilRetracing();
 	SetBIOSMode(0x13);
+	SpinUntilNextRetraceBegins();
 
 	pc::TXdw(VP_SEQC, 0x604);  // disable chain4
 
-	pc::TXdw(VP_SEQC, 0x100);  // synchronous reset while switching clocks
-	pc::TXdb(VP_MISC, 0xe3);    // select 25 MHz dot clock & 60 Hz scanning rate
-
-	pc::TXdw(VP_SEQC, 0x300);  // undo reset (restart sequencer)
+	{
+		pc::CriticalSection criticalSection;
+		SequencerDisabledSection sequencerDisabledSection(criticalSection);
+		pc::TXdb(VP_MISC, 0xe3); }  // select 25 MHz dot clock & 60 Hz scanning rate
 
 	// VSync End reg contains register write-protect bit
 	// get current VSync End register setting

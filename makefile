@@ -48,9 +48,9 @@ vga_irq.obj: vga_irq.cpp vga_irq.hpp vga_reg.lib pc_pit.lib pc_cpu.lib
 vga_irq.lib: vga_irq.obj             vga_reg.lib pc_pit.lib pc_cpu.lib
 	$(LIB) $@ $<
 
-vga_mode.obj: vga_mode.cpp vga_mode.hpp vga_reg.lib pc_bus.lib
+vga_mode.obj: vga_mode.cpp vga_mode.hpp vga_reg.lib pc_bus.lib pc_cpu.lib
 	$(CPP) $[@
-vga_mode.lib: vga_mode.obj              vga_reg.lib pc_bus.lib
+vga_mode.lib: vga_mode.obj              vga_reg.lib pc_bus.lib pc_cpu.lib
 	$(LIB) $@ $<
 
 vga_reg.obj: vga_reg.cpp vga_reg.hpp pc_bus.lib
