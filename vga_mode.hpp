@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
 using std::uint8_t;
@@ -10,7 +11,7 @@ using std::uint16_t;
 namespace rqdq {
 namespace vga {
 
-const int VM_TEXT = 3;
+const int VM_TEXT = 0x03;
 const int VM_MODE13 = 0x13;
 const int VM_MODEX = 0x100;
 
@@ -26,27 +27,24 @@ const vga::VRAMPage modeXPages[2] = {
 	{ 1, vga::VGAPTR + (320*240/4), 320*240/4 } };
 
 
-void SetBIOSMode(int num);
 void SetModeX();
 
 
 class ModeSetter {
 public:
-	// XXX assume text-mode, need detection
-	ModeSetter() :oldMode_(0x3), curMode_(oldMode_) {}
+	ModeSetter()
+		:oldMode_(bios::GetMode()),
+		curMode_(oldMode_) {}
 
 	void Set(int req) {
-		if (req == VM_TEXT) {
-			vga::SetBIOSMode(0x3);
-			curMode_ = VM_TEXT; }
-		else if (req == VM_MODE13) {
-			vga::SetBIOSMode(0x13);
-			curMode_ = VM_MODE13; }
+		if (req < 256) {
+			bios::SetMode(req);
+			curMode_ = req; }
 		else if (req == VM_MODEX) {
 			vga::SetModeX();
 			curMode_ = VM_MODEX; }
 		else {
-			// XXX
+			// xxx throw std::runtime_error("unsupported vga mode");
 			std::exit(1); }}
 
 	~ModeSetter() {

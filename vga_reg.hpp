@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "pc_bus.hpp"
+#include "pc_cpu.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -101,6 +102,18 @@ inline void SpinUntilHorizontalRetrace() {
 inline void SpinWhileHorizontalRetrace() {
 	while (pc::RXdb(VP_STA1) & VF_DD) {}}
 */
+
+
+class SequencerDisabledSection {
+public:
+	SequencerDisabledSection(const pc::CriticalSection& cs) :cs(cs) {
+		pc::TXdw(VP_SEQC, 0x100); }  // clear bit 1, starting reset
+	~SequencerDisabledSection() {
+		pc::TXdw(VP_SEQC, 0x300); }  // undo reset / restart sequencer)
+private:
+	SequencerDisabledSection& operator=(const SequencerDisabledSection&);  // non-copyable
+	SequencerDisabledSection(const SequencerDisabledSection&);             // non-copyable
+	const class pc::CriticalSection& cs; };
 
 
 }  // namespace vga

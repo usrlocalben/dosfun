@@ -1,32 +1,12 @@
 #include "vga_mode.hpp"
 
-#include <i86.h>  // int386
-
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
+#include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
 namespace rqdq {
 namespace vga {
-
-
-void SetBIOSMode(int num) {
-	union REGS r;
-	r.x.eax = num;
-	int386(0x10, &r, &r); }
-
-
-class SequencerDisabledSection {
-public:
-	SequencerDisabledSection(const pc::CriticalSection& cs) :cs(cs) {
-		pc::TXdw(VP_SEQC, 0x100); }  // clear bit 1, starting reset
-	~SequencerDisabledSection() {
-		pc::TXdw(VP_SEQC, 0x300); }  // undo reset / restart sequencer)
-private:
-	SequencerDisabledSection& operator=(const SequencerDisabledSection&);  // non-copyable
-	SequencerDisabledSection(const SequencerDisabledSection&);             // non-copyable
-	const pc::CriticalSection& cs; };
-
 
 /*
  * ModeX 320x240 initialization
@@ -34,7 +14,7 @@ private:
  * This is taken directly from M.Abrash's Mode-X .asm code
  */
 void SetModeX() {
-	SetBIOSMode(0x13);
+	bios::SetMode(0x13);
 	SpinUntilNextRetraceBegins();
 
 	pc::TXdw(VP_SEQC, 0x604);  // disable chain4
