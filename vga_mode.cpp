@@ -8,6 +8,10 @@
 namespace rqdq {
 namespace vga {
 
+using pc::InB;
+using pc::OutB;
+using pc::OutW;
+
 /*
  * ModeX 320x240 initialization
  *
@@ -17,29 +21,29 @@ void SetModeX() {
 	bios::SetMode(0x13);
 	SpinUntilNextRetraceBegins();
 
-	pc::TXdw(VP_SEQC, 0x604);  // disable chain4
+	OutW(VP_SEQC, 0x604);  // disable chain4
 
 	{
 		pc::CriticalSection criticalSection;
 		SequencerDisabledSection sequencerDisabledSection(criticalSection);
-		pc::TXdb(VP_MISC, 0xe3); }  // select 25 MHz dot clock & 60 Hz scanning rate
+		OutB(VP_MISC, 0xe3); }  // select 25 MHz dot clock & 60 Hz scanning rate
 
 	// VSync End reg contains register write-protect bit
 	// get current VSync End register setting
 	// remove write-protect on various CRTC registers
-	pc::TXdb(VP_CRTC, 0x11);
-	pc::TXdb(VP_CRTC+1, pc::RXdb(VP_CRTC+1)&0x7f);
+	OutB(VP_CRTC, 0x11);
+	OutB(VP_CRTC+1, InB(VP_CRTC+1)&0x7f);
 
-	pc::TXdw(VP_CRTC, 0x0d06);  // vertical total
-	pc::TXdw(VP_CRTC, 0x3e07);  // overflow (bit 8 of vertical counts)
-	pc::TXdw(VP_CRTC, 0x4109);  // cell height (2 to double-scan)
-	pc::TXdw(VP_CRTC, 0xea10);  // v sync start
-	pc::TXdw(VP_CRTC, 0xac11);  // v sync end and protect cr0-cr7
-	pc::TXdw(VP_CRTC, 0xdf12);  // vertical displayed
-	pc::TXdw(VP_CRTC, 0x0014);  // turn off dword mode
-	pc::TXdw(VP_CRTC, 0xe715);  // v blank start
-	pc::TXdw(VP_CRTC, 0x0616);  // v blank end
-	pc::TXdw(VP_CRTC, 0xe317);  // turn on byte mode
+	OutW(VP_CRTC, 0x0d06);  // vertical total
+	OutW(VP_CRTC, 0x3e07);  // overflow (bit 8 of vertical counts)
+	OutW(VP_CRTC, 0x4109);  // cell height (2 to double-scan)
+	OutW(VP_CRTC, 0xea10);  // v sync start
+	OutW(VP_CRTC, 0xac11);  // v sync end and protect cr0-cr7
+	OutW(VP_CRTC, 0xdf12);  // vertical displayed
+	OutW(VP_CRTC, 0x0014);  // turn off dword mode
+	OutW(VP_CRTC, 0xe715);  // v blank start
+	OutW(VP_CRTC, 0x0616);  // v blank end
+	OutW(VP_CRTC, 0xe317);  // turn on byte mode
 
 	// clear ram
 	SelectPlanes(0xf);

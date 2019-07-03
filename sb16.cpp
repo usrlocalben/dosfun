@@ -13,6 +13,8 @@ using std::uint8_t;
 using std::uint16_t;
 using std::int8_t;
 using std::int16_t;
+using rqdq::pc::OutB;
+using rqdq::pc::InB;
 
 #define nullptr (0)
 
@@ -151,26 +153,26 @@ Blaster::~Blaster() {
 
 
 inline void Blaster::SpinUntilReadyForWrite() {
-	while (pc::RXdb(port_.write) & 0x80); }
+	while (InB(port_.write) & 0x80); }
 
 
 inline void Blaster::SpinUntilReadyForRead() {
-	while (!(pc::RXdb(port_.poll) & 0x80)); }
+	while (!(InB(port_.poll) & 0x80)); }
 
 
 void Blaster::TX(uint8_t value) {
 	SpinUntilReadyForWrite();
-	pc::TXdb(port_.write, value); }
+	OutB(port_.write, value); }
 
 
 uint8_t Blaster::RX() {
 	SpinUntilReadyForRead();
-	return pc::RXdb(port_.read); }
+	return InB(port_.read); }
 
 
 void Blaster::RESET() {
-	pc::TXdb(port_.reset, 1);
-	pc::TXdb(port_.reset, 0); }
+	OutB(port_.reset, 1);
+	OutB(port_.reset, 0); }
 
 
 bool Blaster::SpinUntilReset() {
@@ -209,9 +211,9 @@ inline void Blaster::isr() {
 
 inline void Blaster::ACK() {
 	if (bits_ == 8) {
-		pc::RXdb(port_.poll); }
+		InB(port_.poll); }
 	else {
-		pc::RXdb(port_.ack16); }}
+		InB(port_.ack16); }}
 
 
 void Blaster::AttachProc(audioproc userProc, void* userPtr) {

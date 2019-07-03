@@ -7,9 +7,6 @@
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 
-using std::uint8_t;
-using std::uint16_t;
-
 namespace rqdq {
 namespace vga {
 
@@ -23,42 +20,42 @@ const int VP_STA1 = 0x3da;  // Input Status #1 (color mode)
 const int VF_VRETRACE = 0x08;
 const int VF_DD = 0x01;
 
-const uint8_t CRT_HIGH_ADDR = 0x0c;
-const uint8_t CRT_LOW_ADDR = 0x0d;
+const std::uint8_t CRT_HIGH_ADDR = 0x0c;
+const std::uint8_t CRT_LOW_ADDR = 0x0d;
 
-const uint8_t SC_MAP_MASK = 0x02;
+const std::uint8_t SC_MAP_MASK = 0x02;
 
-uint8_t* const VGAPTR = (uint8_t*)0xa0000L;
+std::uint8_t* const VGAPTR = (std::uint8_t*)0xa0000L;
 
 
 inline void SetRGB(int idx, int r, int g, int b) {
-	pc::TXdb(VP_PALETTE_INDEX, idx);
-	pc::TXdb(VP_PALETTE_DATA, r);
-	pc::TXdb(VP_PALETTE_DATA, g);
-	pc::TXdb(VP_PALETTE_DATA, b); }
+	pc::OutB(VP_PALETTE_INDEX, idx);
+	pc::OutB(VP_PALETTE_DATA, r);
+	pc::OutB(VP_PALETTE_DATA, g);
+	pc::OutB(VP_PALETTE_DATA, b); }
 
 
-inline void SetStartAddress(uint16_t addr) {
-	pc::TXdw(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
-	pc::TXdw(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
+inline void SetStartAddress(std::uint16_t addr) {
+	pc::OutW(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
+	pc::OutW(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
 
 
-inline void SetBitMask(uint8_t mask) {
-	pc::TXdw(VP_GFXC, mask<<8|0x08); }
+inline void SetBitMask(std::uint8_t mask) {
+	pc::OutW(VP_GFXC, mask<<8|0x08); }
 
 
 inline int GetBitMask() {
-	pc::TXdb(VP_GFXC, 0x08);
-	return pc::RXdb(VP_GFXC+1); }
+	pc::OutB(VP_GFXC, 0x08);
+	return pc::InB(VP_GFXC+1); }
 
 
-inline void SelectPlanes(uint8_t mask) {
-	pc::TXdw(VP_SEQC, mask<<8|SC_MAP_MASK); }
+inline void SelectPlanes(std::uint8_t mask) {
+	pc::OutW(VP_SEQC, mask<<8|SC_MAP_MASK); }
 
 
 inline int GetPlanes() {
-	pc::TXdb(VP_SEQC, SC_MAP_MASK);
-	return pc::RXdb(VP_SEQC+1); }
+	pc::OutB(VP_SEQC, SC_MAP_MASK);
+	return pc::InB(VP_SEQC+1); }
 
 
 inline void SelectAllPlanes() {
@@ -81,11 +78,11 @@ inline void SelectAllPlanes() {
  * already be in-progress when detection begins.
  */
 inline void SpinUntilRetracing() {
-	while (!(pc::RXdb(VP_STA1) & VF_VRETRACE)) {}}
+	while (!(pc::InB(VP_STA1) & VF_VRETRACE)) {}}
 
 
 inline void SpinWhileRetracing() {
-	while (pc::RXdb(VP_STA1) & VF_VRETRACE) {}}
+	while (pc::InB(VP_STA1) & VF_VRETRACE) {}}
 
 
 inline void SpinUntilNextRetraceBegins() {
@@ -96,20 +93,20 @@ inline void SpinUntilNextRetraceBegins() {
 /*
 untested
 inline void SpinUntilHorizontalRetrace() {
-	while (!(pc::RXdb(VP_STA1) & VF_DD)) {}}
+	while (!(pc::InB(VP_STA1) & VF_DD)) {}}
 
 
 inline void SpinWhileHorizontalRetrace() {
-	while (pc::RXdb(VP_STA1) & VF_DD) {}}
+	while (pc::InB(VP_STA1) & VF_DD) {}}
 */
 
 
 class SequencerDisabledSection {
 public:
 	SequencerDisabledSection(const pc::CriticalSection& cs) :cs(cs) {
-		pc::TXdw(VP_SEQC, 0x100); }  // clear bit 1, starting reset
+		pc::OutW(VP_SEQC, 0x100); }  // clear bit 1, starting reset
 	~SequencerDisabledSection() {
-		pc::TXdw(VP_SEQC, 0x300); }  // undo reset / restart sequencer)
+		pc::OutW(VP_SEQC, 0x300); }  // undo reset / restart sequencer)
 private:
 	SequencerDisabledSection& operator=(const SequencerDisabledSection&);  // non-copyable
 	SequencerDisabledSection(const SequencerDisabledSection&);             // non-copyable

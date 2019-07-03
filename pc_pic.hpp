@@ -27,13 +27,13 @@ public:
 		// todo: optimizer won't eliminate this branch
 		//       even when irqNum is const at compile-time
 		if (IRQNUM >= 8) {
-			TXdb(0xa0, 0x20); }
-		TXdb(0x20, 0x20); }
+			OutB(0xa0, 0x20); }
+		OutB(0x20, 0x20); }
 
 	bool IsReal() const {
 		if (IRQNUM == 7) {
-			TXdb(0x20, 0x0b);  // read ISR
-			std::uint8_t isr = inp(0x20);
+			OutB(0x20, 0x0b);  // read ISR
+			std::uint8_t isr = InB(0x20);
 			if (isr & 0x80 == 0) {
 				return false; }}
 		return true; }
@@ -42,10 +42,10 @@ public:
 		return isrNum_; }
 
 	void Disconnect() const {
-		TXdb(maskPort_, (inp(maskPort_)|stopMask_)); }
+		OutB(maskPort_, (InB(maskPort_)|stopMask_)); }
 
 	void Connect() const {
-		TXdb(maskPort_, (inp(maskPort_)&startMask_)); }
+		OutB(maskPort_, (InB(maskPort_)&startMask_)); }
 
 	void SetISR(ISRPtr func) const {
 		SetVect(isrNum_, func); }
@@ -78,13 +78,13 @@ public:
 		// todo: optimizer won't eliminate this branch
 		//       even when irqNum is const at compile-time
 		if (irqNum_ >= 8) {
-			TXdb(0xa0, 0x20); }
-		TXdb(0x20, 0x20); }
+			OutB(0xa0, 0x20); }
+		OutB(0x20, 0x20); }
 
 	bool IsReal() const {
 		if (irqNum_ == 7) {
-			TXdb(0x20, 0x0b);  // read ISR
-			std::uint8_t isr = inp(0x20);
+			OutB(0x20, 0x0b);  // read ISR
+			std::uint8_t isr = InB(0x20);
 			if (isr & 0x80 == 0) {
 				return false; }}
 		return true; }
@@ -93,10 +93,10 @@ public:
 		return isrNum_; }
 
 	void Disconnect() const {
-		TXdb(maskPort_, (inp(maskPort_)|stopMask_)); }
+		OutB(maskPort_, (InB(maskPort_)|stopMask_)); }
 
 	void Connect() const {
-		TXdb(maskPort_, (inp(maskPort_)&startMask_)); }
+		OutB(maskPort_, (InB(maskPort_)&startMask_)); }
 
 	void SetISR(ISRPtr func) const {
 		SetVect(isrNum_, func); }

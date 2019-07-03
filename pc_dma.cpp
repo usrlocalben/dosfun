@@ -71,38 +71,38 @@ void DMAChannel::Setup(const DMABuffer& buf) const {
 
 
 inline void DMAChannel::ClearFlipFlop() const {
-	TXdb(clearPtrPort_, 0x00); }
+	OutB(clearPtrPort_, 0x00); }
 
 
 inline void DMAChannel::SetMode() const {
-	TXdb(modePort_, mode_); }
+	OutB(modePort_, mode_); }
 
 
 void DMAChannel::SetMemoryAddr(const DMABuffer& buf) const {
 	if (controllerNum_ == 0) {
-		TXdb(baseAddrPort_, lo(buf.addr_%65536));
-		TXdb(baseAddrPort_, hi(buf.addr_%65536)); }
+		OutB(baseAddrPort_, lo(buf.addr_%65536));
+		OutB(baseAddrPort_, hi(buf.addr_%65536)); }
 	else {
-		TXdb(baseAddrPort_, lo(buf.Offset16()));
-		TXdb(baseAddrPort_, hi(buf.Offset16())); }
-	TXdb(pagePort_, buf.Page()); }
+		OutB(baseAddrPort_, lo(buf.Offset16()));
+		OutB(baseAddrPort_, hi(buf.Offset16())); }
+	OutB(pagePort_, buf.Page()); }
 
 
 void DMAChannel::SetMemorySize(const DMABuffer& buf) const {
 	if (controllerNum_ == 0) {
-		TXdb(countPort_, lo(buf.sizeInWords_*2 - 1));
-		TXdb(countPort_, hi(buf.sizeInWords_*2 - 1)); }
+		OutB(countPort_, lo(buf.sizeInWords_*2 - 1));
+		OutB(countPort_, hi(buf.sizeInWords_*2 - 1)); }
 	else {
-		TXdb(countPort_, lo(buf.sizeInWords_ - 1));
-		TXdb(countPort_, hi(buf.sizeInWords_ - 1)); }}
+		OutB(countPort_, lo(buf.sizeInWords_ - 1));
+		OutB(countPort_, hi(buf.sizeInWords_ - 1)); }}
 
 
 void DMAChannel::Stop() const {
-	TXdb(maskPort_, stopMask_); }
+	OutB(maskPort_, stopMask_); }
 
 
 void DMAChannel::Start() const {
-	TXdb(maskPort_, startMask_); }
+	OutB(maskPort_, startMask_); }
 
 
 }  // namespace pc

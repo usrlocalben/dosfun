@@ -43,9 +43,9 @@ inline float ticksToSeconds(int value) {
 
 inline void StartCountdown(uint16_t period) {
 	// start timer
-	TXdb(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE0 | PIT_VALUE_MODE_16_BIT_BINARY);
-	TXdb(0x40, lowbyte(period));
-	TXdb(0x40, highbyte(period)); }
+	OutB(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE0 | PIT_VALUE_MODE_16_BIT_BINARY);
+	OutB(0x40, lowbyte(period));
+	OutB(0x40, highbyte(period)); }
 
 
 inline void BeginMeasuring() {
@@ -53,16 +53,16 @@ inline void BeginMeasuring() {
 
 
 inline void StartSquareWave(uint16_t period) {
-	TXdb(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE3 | PIT_VALUE_MODE_16_BIT_BINARY);
-	TXdb(0x40, lowbyte(period));
-	TXdb(0x40, highbyte(period)); }
+	OutB(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE3 | PIT_VALUE_MODE_16_BIT_BINARY);
+	OutB(0x40, lowbyte(period));
+	OutB(0x40, highbyte(period)); }
 
 
 inline uint16_t ReadCounter() {
 	CriticalSection cs;
-	TXdb(0x43, 0);  // latch counter for channel 0
-	uint8_t lo = inp(0x40);
-	uint8_t hi = inp(0x40);
+	OutB(0x43, 0);  // latch counter for channel 0
+	uint8_t lo = InB(0x40);
+	uint8_t hi = InB(0x40);
 	return hi<<8|lo; }
 
 
