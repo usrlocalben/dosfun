@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 	ofstream hppFd(hppName.c_str());
 	ofstream cppFd(cppName.c_str());
 
-	uint8_t ch;
+	char ch;
 
 	hppFd << "#pragma once\n";
 	hppFd << "namespace " << namespaceName << " {\n";

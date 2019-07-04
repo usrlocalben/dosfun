@@ -1,11 +1,10 @@
 #pragma once
-#include <i86.h>    // _enable(), _disable()
-#include <dos.h>    // _dos_setvect(), _dos_getvect()
+#include <dos.h>    // enable/disable
 
 namespace rqdq {
 namespace pc {
 
-typedef void (__interrupt * ISRPtr)();
+typedef void (*ISRPtr)();
 
 
 inline void EnableInterrupts() {

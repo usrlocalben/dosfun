@@ -58,7 +58,7 @@ public:
 		                     kAudioSampleRateInHz,
 		                     kAudioWidthInChannels,
 		                     kAudioBufferSizeInSamples);
-		std::auto_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
+		std::unique_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
 		quitSoon_ = false;
@@ -98,8 +98,8 @@ private:
 
 private:
 	bool quitSoon_;
-	std::auto_ptr<kb::Paula> paulaPtr_;
-	std::auto_ptr<kb::ModPlayer> playerPtr_;
+	std::unique_ptr<kb::Paula> paulaPtr_;
+	std::unique_ptr<kb::ModPlayer> playerPtr_;
 
 public:
 	float measuredRefreshRateInHz_;
