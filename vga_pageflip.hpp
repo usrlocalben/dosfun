@@ -32,10 +32,14 @@ public:
 	bool IsLocked() const {
 		return locked_; }
 
-	~AnimationPage() {
+	void Unlock() {
 		if (locked_) {
 			SetStartAddress(Get().vgaAddr);
+			locked_ = false;
 			backLocked = false; }}
+
+	~AnimationPage() {
+		Unlock(); }
 private:
 	bool locked_; };
 

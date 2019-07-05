@@ -22,40 +22,46 @@ void PlayerAdapter::BlasterJmp(void* out, int fmt, int numChannels, int numSampl
 
 
 inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSamples) {
-
-	__asm__("sub %esp, 200\n\t" \
-			"fsave (%esp)\n\t" \
-			"finit");
-
 #ifdef SHOW_TIMING
 //vga::SetRGB(0, 0x20, 0x3f, 0x10);
 #endif
-	player_.Render(pbuf_, pbuf_+4096, numSamples);
+	if (rw_.Size() >= numSamples) {
+		if (fmt == 2) {
+			// 16-bit signed PCM
+			int16_t* out = static_cast<int16_t*>(out_);
+			for (int i=0; i<numSamples; i++) {
+				int l, r;
+				Shift(l, r);
+				if (numChannels == 2) {
+					out[i*2+0] = l;
+					out[i*2+1] = r; }
+				else {
+					out[i] = (l+r)>>1; }}}
+		else {
+			// 8-bit signed PCM
+			uint8_t* out = static_cast<uint8_t*>(out_);
+			for (int i=0; i<numSamples; i++) {
+				int l, r;
+				Shift(l, r);
+				if (numChannels == 2) {
+					out[i*2+0] = (l+32767)>>8;
+					out[i*2+1] = (r+32767)>>8; }
+				else {
+					out[i] = (l+r+65536)>>9; }}}}
 #ifdef SHOW_TIMING
 //vga::SetRGB(0, 0, 0, 0);
 #endif
-	if (fmt == 2) {
-		// 16-bit signed PCM
-		int16_t* out = static_cast<int16_t*>(out_);
-		for (int i=0; i<numSamples; i++) {
-			if (numChannels == 2) {
-				out[i*2+0] = pbuf_[i]      * std::numeric_limits<int16_t>::max();
-				out[i*2+1] = pbuf_[i+4096] * std::numeric_limits<int16_t>::max(); }
-			else {
-				out[i] = ((pbuf_[i]+pbuf_[i+4096])*0.5f) * std::numeric_limits<int16_t>::max(); }}}
-	else {
-		// 8-bit signed PCM
-		uint8_t* out = static_cast<uint8_t*>(out_);
-		for (int i=0; i<numSamples; i++) {
-			if (numChannels == 2) {
-				out[i*2+0] = (pbuf_[i]+1.0f)      * std::numeric_limits<int8_t>::max();
-				out[i*2+1] = (pbuf_[i+4096]+1.0f) * std::numeric_limits<int8_t>::max(); }
-			else {
-				out[i] = (((pbuf_[i]+pbuf_[i+4096])*0.5f)+1.0f) * std::numeric_limits<int8_t>::max(); }}}
-
-	__asm__("frstor (%esp)\n\t" \
-			"add %esp, 200");
 	}
+
+
+void PlayerAdapter::Refill() {
+	int numSamples = rw_.Available();
+	if (numSamples > 0) {
+		player_.Render(pbuf_, pbuf_+4096, numSamples);
+		for (int i=0; i<numSamples; i++) {
+			int l = pbuf_[i] * 32767.0;
+			int r = pbuf_[i+4096] * 32767.0;
+			Push(l, r); }}}
 
 
 }  // namespace app

@@ -81,7 +81,7 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 		irqLine_.SetISR(Blaster::isrJmp);
 		irqLine_.Connect(); }
 
-//	dmaBuffer_.Zero();
+	dmaBuffer_.Zero();
 	dma_.Setup(dmaBuffer_);
 
 	// set output sample rate
