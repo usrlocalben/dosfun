@@ -60,8 +60,8 @@ public:
 		                     kAudioWidthInChannels,
 		                     kAudioBufferSizeInSamples);
 		std::unique_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
+		adapterPtr->Refill();
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
-
 
 		quitSoon_ = false;
 		while (!quitSoon_) {
@@ -73,7 +73,16 @@ public:
 
 			vga::AnimationPage animationPage;
 			if (animationPage.IsLocked()) {
-				Draw(animationPage.Get()); }
+				Draw(animationPage.Get());
+				animationPage.Unlock();
+#ifdef SHOW_TIMING
+vga::SetRGB(0, 0x30, 0x20, 0x10);
+#endif
+				adapterPtr->Refill();
+#ifdef SHOW_TIMING
+vga::SetRGB(0, 0,0,0);
+#endif
+				}
 
 			}}
 
