@@ -1,7 +1,6 @@
 #include "pc_dma.hpp"
 
 #include <cstdint>
-#include <iostream>
 
 #include "os_realmem.hpp"
 #include "pc_bus.hpp"

@@ -22,8 +22,6 @@ const int kFPS = 50;  // pal
 const float kOutputFreqInHz = 22050.0;
 const int kNumVoices = 4;
 
-#define nullptr (0)
-
 inline float int8ToFloat(int8_t value) {
 	return value / 128.0; }
 

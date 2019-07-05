@@ -1,7 +1,5 @@
 #pragma once
 
-#define nullptr (0)
-
 namespace rqdq {
 namespace hw {
 
@@ -47,5 +45,3 @@ BlasterDetectResult DetectBlaster();
 
 }  // namespace hw
 }  // namespace rqdq
-
-#undef nullptr

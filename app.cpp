@@ -1,6 +1,6 @@
 #include <cmath>
 #include <cstdint>
-#include <iostream>
+#include <cstdio>
 #include <limits>
 #include <memory>
 #include <sys/nearptr.h>
@@ -21,8 +21,6 @@
 using std::uint8_t;
 using std::int16_t;
 using std::uint16_t;
-
-#define nullptr (0)
 
 namespace rqdq {
 namespace app {
@@ -125,34 +123,30 @@ public:
 int main() {
 	rqdq::hw::BlasterDetectResult bd = rqdq::hw::DetectBlaster();
 	if (!bd.found) {
-		std::cout << "BLASTER not found\n";
-		std::exit(1); }
+		std::printf("BLASTER not found\n");
+		return 1; }
 
 	rqdq::app::kSoundBlasterIOBaseAddr = bd.value.ioAddr;
 	rqdq::app::kSoundBlasterIRQNum = bd.value.irqNum;
 	rqdq::app::kSoundBlasterDMAChannelNum = bd.value.BestDMA();
 
-	std::cout << "Found BLASTER";
-	std::cout << " addr=0x" << std::hex << rqdq::app::kSoundBlasterIOBaseAddr << std::dec;
-	std::cout << " irq=" << rqdq::app::kSoundBlasterIRQNum;
-	std::cout << " dma=" << rqdq::app::kSoundBlasterDMAChannelNum;
-	std::cout << "\n";
-	// std::exit(0);
+	std::printf("Found BLASTER addr=0x%x irq=%d dma=%d\n",
+	            rqdq::app::kSoundBlasterIOBaseAddr,
+	            rqdq::app::kSoundBlasterIRQNum,
+	            rqdq::app::kSoundBlasterDMAChannelNum);
 
 	if (!__djgpp_nearptr_enable()) {
-		std::cout << "can't enable nearptr.\n";
+		std::printf("can't enable nearptr.\n");
 		return 1; }
 
 	rqdq::app::Demo demo;
 	demo.Run();
-
 
 	float ax = 0;
 	for (int i=0; i<demo.mCnt_; i++) {
 		ax += demo.mLst_[i]; }
 	ax /= demo.mCnt_;
 
-	std::cout << "        elapsedTime: " << std::dec << rqdq::vga::GetTime() << " frames\n";
-	std::cout << "measuredRefreshRate:   " << demo.measuredRefreshRateInHz_ << " hz\n";
-	std::cout << "        avgDrawTime:   " << (ax*1000) << " ms\n";
+	std::printf("measuredRefreshRate: %.2f hz\n", demo.measuredRefreshRateInHz_);
+	std::printf("        avgDrawTime: %.2f ms\n", (ax*1000));
 	return 0; }

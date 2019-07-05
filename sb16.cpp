@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 #include <sys/nearptr.h>
 
 #include "pc_bus.hpp"
@@ -16,8 +15,6 @@ using std::int8_t;
 using std::int16_t;
 using rqdq::pc::InB;
 using rqdq::pc::OutB;
-
-#define nullptr (0)
 
 namespace rqdq {
 namespace {

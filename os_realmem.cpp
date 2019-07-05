@@ -1,7 +1,6 @@
 #include "os_realmem.hpp"
 
 #include <cstdlib>
-#include <iostream>
 #include <dpmi.h>
 
 using std::uint16_t;
