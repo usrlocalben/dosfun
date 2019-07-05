@@ -13,7 +13,7 @@ namespace pc {
 template <int IRQNUM>
 class IRQLineCT {
 public:
-	IRQLineCT::IRQLineCT()
+	IRQLineCT()
 		:irqNum_(IRQNUM),
 		savedISRPtr_(0),
 		controllerNum_(IRQNUM < 8 ? 1 : 2),
