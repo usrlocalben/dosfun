@@ -73,7 +73,9 @@ public:
 
 			vga::AnimationPage animationPage;
 			if (animationPage.IsLocked()) {
-				Draw(animationPage.Get()); }}}
+				Draw(animationPage.Get()); }
+
+			}}
 
 private:
 	void Draw(const vga::VRAMPage& vram) {

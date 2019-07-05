@@ -9,7 +9,7 @@
 #LIB = wlib -n -q
 
 OBJ = o
-CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O0 -DSHOW_TIMING
+CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O2 #-DSHOW_TIMING
 #CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O2 -DNDEBUG
 
 LIB = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-ar rcs

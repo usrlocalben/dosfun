@@ -1,3 +1,5 @@
+app_cwsstub.coff
+app_cwsstub.exe
 app.exe
 *.obj
 *.o
@@ -9,6 +11,7 @@ ost.cpp
 
 # build support
 bin2cpp.exe
+exe2coff.exe
 
 # extenders
 dos32a.exe

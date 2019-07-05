@@ -1,5 +1,7 @@
 #include "vga_mode.hpp"
 
+#include <sys/nearptr.h>
+
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 #include "vga_bios.hpp"
@@ -47,8 +49,9 @@ void SetModeX() {
 
 	// clear ram
 	SelectPlanes(0xf);
+	uint8_t *dst = VGAPTR + __djgpp_conventional_base;
 	for (int i=0; i<65536; i++) {
-		VGAPTR[i] = 0; }}
+		dst[i] = 0; }}
 
 
 }  // namespace vga

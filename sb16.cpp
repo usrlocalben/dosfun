@@ -9,7 +9,6 @@
 #include "pc_cpu.hpp"
 #include "pc_dma.hpp"
 #include "pc_pic.hpp"
-#include "vga_reg.hpp"
 
 using std::uint8_t;
 using std::uint16_t;
@@ -48,7 +47,7 @@ uint8_t hi(uint16_t value) { return value >> 8; }
 
 Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples)
 	:port_(make_ports(baseAddr)),
-	irqLine_(), //irqNum),
+	irqLine_(irqNum),
 	dma_(dmaChannelNum),
 	bits_(dmaChannelNum < 4 ? 8 : 16),
 	sampleRateInHz_(sampleRateInHz),
@@ -82,7 +81,7 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 		irqLine_.SetISR(Blaster::isrJmp);
 		irqLine_.Connect(); }
 
-	dmaBuffer_.Zero();
+//	dmaBuffer_.Zero();
 	dma_.Setup(dmaBuffer_);
 
 	// set output sample rate
@@ -195,27 +194,21 @@ inline void* Blaster::GetUserBuffer() const {
 
 
 void Blaster::isrJmp() {
-vga::SetRGB(0, 0x20, 0x3f, 0x10);
-	theBlaster->isr();
-vga::SetRGB(0,0,0,0);
-	}
+	theBlaster->isr(); }
 
 
 inline void Blaster::isr() {
 	// if (!IsRealIRQ(irqLine_)) { return; }
-	//ACK();
-	//irqLine_.SignalEOI();
-	// pc::EnableInterrupts();
+	ACK();
+	irqLine_.SignalEOI();
+	pc::EnableInterrupts();
 
 	std::swap(userBuffer_, playBuffer_);
-	void* dst = GetUserBuffer() + __djgpp_conventional_base;
+	void* dst = (char*)GetUserBuffer() + __djgpp_conventional_base;
 	int fmt = (bits_ == 8 ? 1 : 2);
 	if (userProc_ != nullptr) {
 		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }
 
-	ACK();
-	irqLine_.SignalEOI();
-	//pc::DisableInterrupts();
 	}
 
 

@@ -22,6 +22,11 @@ void PlayerAdapter::BlasterJmp(void* out, int fmt, int numChannels, int numSampl
 
 
 inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSamples) {
+
+	__asm__("sub %esp, 200\n\t" \
+			"fsave (%esp)\n\t" \
+			"finit");
+
 #ifdef SHOW_TIMING
 //vga::SetRGB(0, 0x20, 0x3f, 0x10);
 #endif
@@ -46,7 +51,11 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 				out[i*2+0] = (pbuf_[i]+1.0f)      * std::numeric_limits<int8_t>::max();
 				out[i*2+1] = (pbuf_[i+4096]+1.0f) * std::numeric_limits<int8_t>::max(); }
 			else {
-				out[i] = (((pbuf_[i]+pbuf_[i+4096])*0.5f)+1.0f) * std::numeric_limits<int8_t>::max(); }}}}
+				out[i] = (((pbuf_[i]+pbuf_[i+4096])*0.5f)+1.0f) * std::numeric_limits<int8_t>::max(); }}}
+
+	__asm__("frstor (%esp)\n\t" \
+			"add %esp, 200");
+	}
 
 
 }  // namespace app
