@@ -19,15 +19,14 @@ public:
 
 	DMABuffer() :realMem_(), addr_(0), sizeInWords_(0) {}
 	DMABuffer(std::uint16_t sizeInWords);
-private:
-	DMABuffer(const DMABuffer& other);             // not copyable
-	DMABuffer& operator=(const DMABuffer& other);  // not copyable
+	DMABuffer(const DMABuffer& other) = delete;             // not-copyable
+	DMABuffer& operator=(const DMABuffer& other) = delete;  // not-copyable
 
 public:
-	void Swap(DMABuffer& other) {
+	/*void Swap(DMABuffer& other) {
 		realMem_.Swap(other.realMem_);
 		std::swap(addr_, other.addr_);
-		std::swap(sizeInWords_, other.sizeInWords_); }
+		std::swap(sizeInWords_, other.sizeInWords_); }*/
 
 	std::uint8_t* Ptr() const {
 		return (std::uint8_t*)addr_; }

@@ -1,25 +1,25 @@
 #pragma once
 #include <cstdint>
 
-#include <pc.h>  // inp/inpw/outp/outpw
+#include <inlines/pc.h>  // inp/inpw/outp/outpw
 
 namespace rqdq {
 namespace pc {
 
 inline void OutB(std::uint16_t port, std::uint8_t value) {
-	outp(port, value); }
+	outportb(port, value); }
 
 
 inline void OutW(std::uint16_t port, std::uint16_t value) {
-	outpw(port, value); }
+	outportw(port, value); }
 
 
 inline std::uint8_t InB(std::uint16_t port) {
-	return inp(port); }
+	return inportb(port); }
 
 
 inline std::uint16_t InW(std::uint16_t port) {
-	return inpw(port); }
+	return inportw(port); }
 
 
 }  // namespace pc
