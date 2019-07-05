@@ -4,6 +4,7 @@
 
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
+#include "pc_pit.hpp"
 #include "vga_reg.hpp"
 
 using std::uint8_t;
@@ -94,7 +95,7 @@ public:
 	 *
 	 * See also kJitterPct
 	 */
-	static void __interrupt vblank_isr() {
+	static void vblank_isr() {
 		/*
 		 * when execution begins, retrace still hasn't started
 		 */

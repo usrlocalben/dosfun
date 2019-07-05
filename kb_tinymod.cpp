@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 
 using std::int8_t;
 using std::int16_t;

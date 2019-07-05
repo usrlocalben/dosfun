@@ -19,19 +19,22 @@ int main(int argc, char** argv) {
 	ofstream hppFd(hppName.c_str());
 	ofstream cppFd(cppName.c_str());
 
-	char ch;
+	char ch_;
 
 	hppFd << "#pragma once\n";
+	cppFd << "#include <cstdint>\n";
 	hppFd << "namespace " << namespaceName << " {\n";
-	hppFd << "extern char " << varName << "[];\n";
+	hppFd << "extern std::uint8_t " << varName << "[];\n";
 	hppFd << "}";
 
 	cppFd << "#include \"" << hppName.c_str() << "\"\n";
+	cppFd << "#include <cstdint>\n";
 	cppFd << "namespace " << namespaceName << " {\n";
-	cppFd << "char " << varName << "[] = {\n";
+	cppFd << "uint8_t " << varName << "[] = {\n";
 	int n = 0;
 	bool first = true;
-	while (fd.get(ch)) {
+	while (fd.get(ch_)) {
+		auto ch = (uint8_t)ch_;
 		if (first) {
 			first = false; }
 		else {

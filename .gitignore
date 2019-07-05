@@ -1,5 +1,6 @@
 app.exe
 *.obj
+*.o
 *.lib
 
 # generated source

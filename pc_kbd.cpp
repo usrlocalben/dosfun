@@ -21,7 +21,7 @@ volatile uint8_t bufTail = 0;
 IRQLineCT<1> kbdIRQLine;
 
 
-void __interrupt keyboard_isr() {
+void keyboard_isr() {
 	uint8_t scanCode = InB(KBD_B_DATA);
 	uint8_t status = InB(KBD_B_CONTROL);
 	OutB(KBD_B_CONTROL, status | KBD_IRQ_RESET);
@@ -34,7 +34,7 @@ void __interrupt keyboard_isr() {
 
 void InstallKeyboard() {
 	kbdIRQLine.SaveISR();
-	kbdIRQLine.SetISR(keyboard_isr); }
+	kbdIRQLine.SetISR(&keyboard_isr); }
 
 
 void UninstallKeyboard() {

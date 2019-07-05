@@ -5,7 +5,7 @@ namespace pc {
 
 IRQLineRT::IRQLineRT(int irqNum)
 		:irqNum_(irqNum),
-		savedISRPtr_(0),
+		savedISRPtr_(),
 		controllerNum_(irqNum < 8 ? 1 : 2),
 		rotatePort_(irqNum < 8 ? 0x20 : 0xa0),
 		maskPort_(irqNum < 8 ? 0x21 : 0xa1),

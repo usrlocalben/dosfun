@@ -1,7 +1,7 @@
 #include "app_kefrens_bars.hpp"
 
 #include <cmath>
-#include <string>
+#include <cstring>
 
 #include "vga_mode.hpp"
 #include "vga_reg.hpp"
@@ -22,13 +22,13 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 		39, 49, 51, 52 };
 
 	uint8_t row[320];
-	std::memset(row, 0, 320);
+	for (int i=0; i<320; i++) row[i] = 0;
 
 	// int magicIdx = patternNum<<1 | (rowNum>>4&1);
 	int magicIdx = patternNum;
 	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
 
-	uint8_t* rowPtr = dst.addr;
+	uint8_t* rowPtr = dst.addr + __djgpp_conventional_base;
 	for (int yyy=0; yyy<240; yyy++) {
 		// animate
 #define SIN std::sin

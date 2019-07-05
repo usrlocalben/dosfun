@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-#include <conio.h>  // inp/inpw/outp/outpw
+#include <pc.h>  // inp/inpw/outp/outpw
 
 namespace rqdq {
 namespace pc {

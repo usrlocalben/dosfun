@@ -38,7 +38,7 @@ private:
 	std::uint8_t RX();
 	void RESET();
 	bool SpinUntilReset();
-	static void __interrupt isrJmp();
+	static void isrJmp();
 	void isr();
 	void ACK();
 
@@ -51,7 +51,7 @@ public:
 
 private:
 	const Ports port_;
-	pc::IRQLineRT irqLine_;
+	pc::IRQLineCT<7> irqLine_;
 	const pc::DMAChannel dma_;
 	const int bits_;
 	const int sampleRateInHz_;

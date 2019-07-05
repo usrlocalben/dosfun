@@ -4,6 +4,7 @@
 #pragma once
 #include <cstdint>
 #include <cstring>  // memset
+#include <sys/nearptr.h>
 
 #include "os_realmem.hpp"
 
@@ -41,7 +42,7 @@ public:
 		return (addr_ >> 1) % 65536; }
 
 	void Zero() const {
-		std::memset(Ptr(), 0, sizeInWords_*2); } };
+		std::memset(Ptr() + __djgpp_conventional_base, 0, sizeInWords_*2); } };
 
 
 class DMAChannel {

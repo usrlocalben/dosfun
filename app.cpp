@@ -3,6 +3,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <sys/nearptr.h>
 
 #include "app_kefrens_bars.hpp"
 #include "app_player_adapter.hpp"
@@ -61,6 +62,7 @@ public:
 		std::unique_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
+
 		quitSoon_ = false;
 		while (!quitSoon_) {
 			if (kbd.IsDataAvailable()) {
@@ -96,6 +98,9 @@ private:
 		if (scanCode == pc::SC_ESC) {
 			quitSoon_ = true; }}
 
+public:
+	~Demo() = default;
+
 private:
 	bool quitSoon_;
 	std::unique_ptr<kb::Paula> paulaPtr_;
@@ -112,6 +117,7 @@ public:
 
 
 int main() {
+
 	rqdq::hw::BlasterDetectResult bd = rqdq::hw::DetectBlaster();
 	if (!bd.found) {
 		std::cout << "BLASTER not found\n";
@@ -128,8 +134,13 @@ int main() {
 	std::cout << "\n";
 	// std::exit(0);
 
+	if (!__djgpp_nearptr_enable()) {
+		std::cout << "can't enable nearptr, sorry.\n";
+		return 1; }
+
 	rqdq::app::Demo demo;
 	demo.Run();
+
 
 	float ax = 0;
 	for (int i=0; i<demo.mCnt_; i++) {

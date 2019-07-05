@@ -1,8 +1,7 @@
 #include "vga_bios.hpp"
 
 #include <cstdint>
-
-#include "i86.h"  // int386
+#include <dpmi.h>
 
 using std::uint8_t;
 
@@ -12,16 +11,16 @@ namespace vga {
 namespace bios {
 
 void SetMode(uint8_t modeNum) {
-	union REGS r;
+	__dpmi_regs r;
 	r.h.ah = 0;  // set video mode
 	r.h.al = modeNum;
-	int386(0x10, &r, &r); }
+	__dpmi_int(0x10, &r); }
 
 
 std::uint8_t GetMode() {
-	union REGS r;
+	__dpmi_regs r;
 	r.h.ah = 0x0f;  // get current video mode
-	int386(0x10, &r, &r);
+	__dpmi_int(0x10, &r);
 	return r.h.al; }
 
 

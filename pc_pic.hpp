@@ -3,6 +3,7 @@
  */
 #pragma once
 #include <cstdint>
+#include <go32.h>  // go32_my_cs
 
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
@@ -13,9 +14,9 @@ namespace pc {
 template <int IRQNUM>
 class IRQLineCT {
 public:
-	IRQLineCT::IRQLineCT()
+	IRQLineCT()
 		:irqNum_(IRQNUM),
-		savedISRPtr_(0),
+		savedISRPtr_(),
 		controllerNum_(IRQNUM < 8 ? 1 : 2),
 		rotatePort_(IRQNUM < 8 ? 0x20 : 0xa0),
 		maskPort_(IRQNUM < 8 ? 0x21 : 0xa1),
@@ -47,8 +48,11 @@ public:
 	void Connect() const {
 		OutB(maskPort_, (InB(maskPort_)&startMask_)); }
 
-	void SetISR(ISRPtr func) const {
-		SetVect(isrNum_, func); }
+	void SetISR(ISRFunc func) {
+		customISRPtr_.pm_offset = (int)func;
+		customISRPtr_.pm_selector = _go32_my_cs();
+		_go32_dpmi_allocate_iret_wrapper(&customISRPtr_);
+		SetVect(isrNum_, customISRPtr_); }
 
 	ISRPtr GetISR() const {
 		return GetVect(isrNum_); }
@@ -57,7 +61,7 @@ public:
 		savedISRPtr_ = GetISR(); }
 
 	void RestoreISR() {
-		SetISR(savedISRPtr_); }
+		SetVect(isrNum_, savedISRPtr_); }
 
 private:
 	const int irqNum_;
@@ -67,7 +71,8 @@ private:
 	const std::uint8_t isrNum_;
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
-	ISRPtr savedISRPtr_; };
+	ISRPtr savedISRPtr_;
+	ISRPtr customISRPtr_; };
 
 
 class IRQLineRT {
@@ -98,8 +103,11 @@ public:
 	void Connect() const {
 		OutB(maskPort_, (InB(maskPort_)&startMask_)); }
 
-	void SetISR(ISRPtr func) const {
-		SetVect(isrNum_, func); }
+	void SetISR(ISRFunc func) {
+		customISRPtr_.pm_offset = (int)func;
+		customISRPtr_.pm_selector = _go32_my_cs();
+		_go32_dpmi_allocate_iret_wrapper(&customISRPtr_);
+		SetVect(isrNum_, customISRPtr_); }
 
 	ISRPtr GetISR() const {
 		return GetVect(isrNum_); }
@@ -108,7 +116,7 @@ public:
 		savedISRPtr_ = GetISR(); }
 
 	void RestoreISR() {
-		SetISR(savedISRPtr_); }
+		SetVect(isrNum_, savedISRPtr_); }
 
 private:
 	const int irqNum_;
@@ -118,7 +126,8 @@ private:
 	const std::uint8_t isrNum_;
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
-	ISRPtr savedISRPtr_; };
+	ISRPtr savedISRPtr_;
+	ISRPtr customISRPtr_; };
 
 
 }  // namespace pc
