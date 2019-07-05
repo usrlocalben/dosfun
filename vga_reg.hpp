@@ -3,7 +3,6 @@
  */
 #pragma once
 #include <cstdint>
-#include <sys/nearptr.h>
 
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"

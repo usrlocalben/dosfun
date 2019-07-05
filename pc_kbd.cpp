@@ -34,7 +34,7 @@ void keyboard_isr() {
 
 void InstallKeyboard() {
 	kbdIRQLine.SaveISR();
-	kbdIRQLine.SetISR(&keyboard_isr); }
+	kbdIRQLine.SetISR(keyboard_isr); }
 
 
 void UninstallKeyboard() {

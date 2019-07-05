@@ -14,8 +14,8 @@ using std::uint8_t;
 using std::uint16_t;
 using std::int8_t;
 using std::int16_t;
-using rqdq::pc::OutB;
 using rqdq::pc::InB;
+using rqdq::pc::OutB;
 
 #define nullptr (0)
 
@@ -207,9 +207,7 @@ inline void Blaster::isr() {
 	void* dst = (char*)GetUserBuffer() + __djgpp_conventional_base;
 	int fmt = (bits_ == 8 ? 1 : 2);
 	if (userProc_ != nullptr) {
-		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }
-
-	}
+		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }}
 
 
 inline void Blaster::ACK() {

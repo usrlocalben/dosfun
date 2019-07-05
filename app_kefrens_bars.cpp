@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <sys/nearptr.h>
 
 #include "vga_mode.hpp"
 #include "vga_reg.hpp"
@@ -22,7 +23,7 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 		39, 49, 51, 52 };
 
 	uint8_t row[320];
-	for (int i=0; i<320; i++) row[i] = 0;
+	std::memset(row, 0, 320);
 
 	// int magicIdx = patternNum<<1 | (rowNum>>4&1);
 	int magicIdx = patternNum;

@@ -25,7 +25,7 @@ DMABuffer::DMABuffer(std::uint16_t sizeInWords)
 	:realMem_(sizeInWords*2*2),
 	sizeInWords_(sizeInWords) {
 
-	uint32_t phy = realMem_.GetAddr();  //segment_ * 16;
+	uint32_t phy = realMem_.GetRealAddr();
 	uint32_t rel = phy % 65536;
 	if ((rel + (sizeInWords*2)) > 65536) {
 		// if the start addr would cross
@@ -33,9 +33,7 @@ DMABuffer::DMABuffer(std::uint16_t sizeInWords)
 		// to the start of the next page
 		phy = (phy+65536) & 0xff0000; }
 
-	addr_ = phy;
-	// std::cout << "DMABuffer: setup buffer at 0x" << std::hex << addr_ << std::dec << std::endl;
-	}
+	addr_ = phy; }
 
 
 const int pagePorts[8] = {

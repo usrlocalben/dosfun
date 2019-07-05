@@ -9,7 +9,7 @@
 #LIB = wlib -n -q
 
 OBJ = o
-CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O2 -DSHOW_TIMING
+CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O3 -ffast-math -DSHOW_TIMING
 #CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O2 -DNDEBUG
 
 LIB = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-ar rcs
@@ -34,9 +34,9 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp    app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
+app.$(OBJ): app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	$(CPP) $<
-app.lib:    app.$(OBJ) app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
+app.lib: app.$(OBJ) app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	rm -f $@
 	$(LIB) $@ $^
 

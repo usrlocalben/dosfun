@@ -7,12 +7,12 @@
 #include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
+using rqdq::pc::InB;
+using rqdq::pc::OutB;
+using rqdq::pc::OutW;
+
 namespace rqdq {
 namespace vga {
-
-using pc::InB;
-using pc::OutB;
-using pc::OutW;
 
 /*
  * ModeX 320x240 initialization

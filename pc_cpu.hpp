@@ -10,19 +10,19 @@ using ISRFunc = void (*)();
 
 
 inline void EnableInterrupts() {
-	_enable(); }
+	__asm__ __volatile__("sti"); }
 
 
 inline void DisableInterrupts() {
-	_disable(); }
+	__asm__ __volatile__("cli"); }
 
 
 class CriticalSection {
 public:
 	CriticalSection() {
-		_disable(); }
+		DisableInterrupts(); }
 	~CriticalSection() {
-		_enable(); }
+		EnableInterrupts(); }
 private:
 	CriticalSection& operator=(const CriticalSection&);  // non-copyable
 	CriticalSection(const CriticalSection&); };          // non-copyable

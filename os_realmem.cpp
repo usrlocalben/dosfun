@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <dpmi.h>  // __dpmi_int
+#include <dpmi.h>
 
 using std::uint16_t;
 using std::uint32_t;
@@ -11,8 +11,6 @@ namespace rqdq {
 namespace os {
 
 RealMem::RealMem(uint16_t sizeInBytes) {
-	//std::cout << "RealMem: allocating " << sizeInBytes << " bytes..." << std::flush;
-
 	info_.size = (sizeInBytes + 15) / 16;  // size in paragraphs
 	int result = _go32_dpmi_allocate_dos_memory(&info_);
 	if (result != 0) {
