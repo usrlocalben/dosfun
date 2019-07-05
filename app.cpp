@@ -80,11 +80,9 @@ vga::SetRGB(0, 0x30, 0x20, 0x10);
 #endif
 				adapterPtr->Refill();
 #ifdef SHOW_TIMING
-vga::SetRGB(0, 0,0,0);
+vga::SetRGB(0, 0, 0, 0);
 #endif
-				}
-
-			}}
+				}}}
 
 private:
 	void Draw(const vga::VRAMPage& vram) {
@@ -109,9 +107,6 @@ private:
 		if (scanCode == pc::SC_ESC) {
 			quitSoon_ = true; }}
 
-public:
-	~Demo() = default;
-
 private:
 	bool quitSoon_;
 	std::unique_ptr<kb::Paula> paulaPtr_;
@@ -128,7 +123,6 @@ public:
 
 
 int main() {
-
 	rqdq::hw::BlasterDetectResult bd = rqdq::hw::DetectBlaster();
 	if (!bd.found) {
 		std::cout << "BLASTER not found\n";
@@ -146,7 +140,7 @@ int main() {
 	// std::exit(0);
 
 	if (!__djgpp_nearptr_enable()) {
-		std::cout << "can't enable nearptr, sorry.\n";
+		std::cout << "can't enable nearptr.\n";
 		return 1; }
 
 	rqdq::app::Demo demo;
