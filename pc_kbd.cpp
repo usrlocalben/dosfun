@@ -22,10 +22,10 @@ IRQLineCT<1> kbdIRQLine;
 
 
 void __interrupt keyboard_isr() {
-	uint8_t scanCode = inp(KBD_B_DATA);
-	uint8_t status = inp(KBD_B_CONTROL);
-	TXdb(KBD_B_CONTROL, status | KBD_IRQ_RESET);
-	TXdb(KBD_B_CONTROL, status);
+	uint8_t scanCode = InB(KBD_B_DATA);
+	uint8_t status = InB(KBD_B_CONTROL);
+	OutB(KBD_B_CONTROL, status | KBD_IRQ_RESET);
+	OutB(KBD_B_CONTROL, status);
 
 	inputBuffer[bufTail++] = scanCode;
 	kbdIRQLine.SignalEOI(); }

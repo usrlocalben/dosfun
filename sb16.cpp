@@ -151,26 +151,26 @@ Blaster::~Blaster() {
 
 
 inline void Blaster::SpinUntilReadyForWrite() {
-	while (pc::RXdb(port_.write) & 0x80); }
+	while (pc::InB(port_.write) & 0x80); }
 
 
 inline void Blaster::SpinUntilReadyForRead() {
-	while (!(pc::RXdb(port_.poll) & 0x80)); }
+	while (!(pc::InB(port_.poll) & 0x80)); }
 
 
 void Blaster::TX(uint8_t value) {
 	SpinUntilReadyForWrite();
-	pc::TXdb(port_.write, value); }
+	pc::OutB(port_.write, value); }
 
 
 uint8_t Blaster::RX() {
 	SpinUntilReadyForRead();
-	return pc::RXdb(port_.read); }
+	return pc::InB(port_.read); }
 
 
 void Blaster::RESET() {
-	pc::TXdb(port_.reset, 1);
-	pc::TXdb(port_.reset, 0); }
+	pc::OutB(port_.reset, 1);
+	pc::OutB(port_.reset, 0); }
 
 
 bool Blaster::SpinUntilReset() {
@@ -209,9 +209,9 @@ inline void Blaster::isr() {
 
 inline void Blaster::ACK() {
 	if (bits_ == 8) {
-		pc::RXdb(port_.poll); }
+		pc::InB(port_.poll); }
 	else {
-		pc::RXdb(port_.ack16); }}
+		pc::InB(port_.ack16); }}
 
 
 void Blaster::AttachProc(audioproc userProc, void* userPtr) {
