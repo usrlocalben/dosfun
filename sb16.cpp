@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"

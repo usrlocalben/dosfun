@@ -1,11 +1,10 @@
 #include "sb_detect.hpp"
 
 #include <cstdlib>
-#include <iostream>
 
 #define nullptr (0)
 
-using std::cout;
+// using std::cout;
 
 namespace rqdq {
 namespace {
