@@ -7,6 +7,8 @@
 namespace rqdq {
 namespace snd {
 
+extern int spuriousIRQCnt;
+
 typedef void (*audioproc)(void* dest, int fmt, int numChannels, int numSamples, void *userPtr);
 
 struct Ports {

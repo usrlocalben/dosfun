@@ -8,6 +8,12 @@ namespace pc {
 typedef void (__interrupt * ISRPtr)();
 
 
+inline void Sleep() {
+	__asm {
+	sti
+	hlt }}
+
+
 inline void EnableInterrupts() {
 	_enable(); }
 

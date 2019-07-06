@@ -24,6 +24,9 @@ public:
 	std::uint32_t Available() const {
 		return CAP - Size(); }
 
+	const int Capacity() const {
+		return CAP; }
+
 	bool Full() const { return Size() == CAP; }
 
 	int BackIdx() const {
@@ -50,6 +53,12 @@ public:
 	static void BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self);
 
 	void Refill();
+
+	bool Full() const {
+		return rw_.Full(); }
+
+	bool Low() const {
+		return rw_.Size() < (rw_.Capacity() / 3); }
 
 private:
 	void BlasterProc(void* out, int fmt, int numChannels, int numSamples);

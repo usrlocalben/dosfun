@@ -99,9 +99,13 @@ public:
 		/*
 		 * when execution begins, retrace still hasn't started
 		 */
-		// SetRGB(0, 0x3f,0x3f,0x3f);
+#ifdef SHOW_TIMING
+		SetRGB(0, 0x3f,0x3f,0x3f);
+#endif
 		vga::SpinUntilRetracing();
-		// SetRGB(0, 0x0, 0x0, 0x0);
+#ifdef SHOW_TIMING
+		SetRGB(0, 0x0, 0x0, 0x0);
+#endif
 
 		/*
 		 * retrace just started.
