@@ -2,8 +2,6 @@
 
 #include <cstdlib>
 
-#define nullptr (0)
-
 // using std::cout;
 
 namespace rqdq {
@@ -31,7 +29,7 @@ namespace hw {
 
 BlasterSerializer::BlasterSerializer(const char *data)
 	:params_(-1,-1,-1,-1), valid_(-1), curField_(0), ax_(0), base_(10) {
-	if (data != nullptr) {
+	if (data != NULL) {
 		Deserialize(data); }}
 
 
@@ -111,7 +109,7 @@ bool BlasterSerializer::IsValid() {
 
 BlasterDetectResult DetectBlaster() {
 	char* blasterStr = std::getenv("BLASTER");
-	if (blasterStr != nullptr) {
+	if (blasterStr != NULL) {
 // cout << "blaster is \"" << blasterStr << "\"\n";
 		BlasterSerializer serializer(/*data=*/blasterStr);
 		if (serializer.IsValid()) {

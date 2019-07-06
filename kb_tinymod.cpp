@@ -21,8 +21,6 @@ const int kFPS = 50;  // pal
 const float kOutputFreqInHz = 22050.0;
 const int kNumVoices = 4;
 
-#define nullptr (0)
-
 inline float int8ToFloat(int8_t value) {
 	return value / 128.0; }
 
@@ -40,7 +38,7 @@ namespace kb {
 
 Paula::Voice::Voice()
 	:pos_(0),
-	samplePtr_(nullptr),
+	samplePtr_(NULL),
 	sampleLen_(0),
 	loopLen_(1),
 	period_(65535),
@@ -48,7 +46,7 @@ Paula::Voice::Voice()
 
 
 void Paula::Voice::Render(float* buffer, int numSamples) {
-	if (samplePtr_ == nullptr) {
+	if (samplePtr_ == NULL) {
 		return; }
 
 	const float gain = (volume_ == 0) ? 0.0f : volume_ / 64.0;

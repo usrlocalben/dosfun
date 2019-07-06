@@ -21,8 +21,6 @@ using std::uint8_t;
 using std::int16_t;
 using std::uint16_t;
 
-#define nullptr (0)
-
 namespace rqdq {
 namespace app {
 

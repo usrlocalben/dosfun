@@ -1,6 +1,5 @@
 #pragma once
-
-#define nullptr (0)
+#include <cstddef>
 
 namespace rqdq {
 namespace hw {
@@ -19,7 +18,7 @@ struct BlasterParams {
 
 class BlasterSerializer {
 public:
-	BlasterSerializer(const char* data=nullptr);
+	BlasterSerializer(const char* data=NULL);
 	BlasterParams Save() const {
 		return params_; }
 	bool IsValid();
@@ -47,5 +46,3 @@ BlasterDetectResult DetectBlaster();
 
 }  // namespace hw
 }  // namespace rqdq
-
-#undef nullptr

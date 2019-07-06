@@ -15,8 +15,6 @@ using std::int16_t;
 using rqdq::pc::InB;
 using rqdq::pc::OutB;
 
-#define nullptr (0)
-
 namespace rqdq {
 namespace {
 
@@ -39,7 +37,7 @@ Ports make_ports(int baseAddr) {
 	return out; }
 
 
-class Blaster* theBlaster = nullptr;
+class Blaster* theBlaster = NULL;
 
 uint8_t lo(uint16_t value) { return value & 0x00ff; }
 uint8_t hi(uint16_t value) { return value >> 8; }
@@ -57,8 +55,8 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	playBuffer_(0),
 	dmaBuffer_(bufferSizeInSamples_*numChannels_ * (bits_ == 16 ? 2 : 1)),
 	good_(false),
-	userProc_(nullptr),
-	userPtr_(nullptr)
+	userProc_(NULL),
+	userPtr_(NULL)
 {
 	theBlaster = this;
 
@@ -206,7 +204,7 @@ inline void Blaster::isr() {
 	std::swap(userBuffer_, playBuffer_);
 	void* dst = GetUserBuffer();
 	int fmt = (bits_ == 8 ? 1 : 2);
-	if (userProc_ != nullptr) {
+	if (userProc_ != NULL) {
 		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }}
 
 
@@ -224,7 +222,7 @@ void Blaster::AttachProc(audioproc userProc, void* userPtr) {
 
 
 void Blaster::DetachProc() {
-	userProc_ = nullptr; }
+	userProc_ = NULL; }
 
 
 bool Blaster::IsGood() const {
