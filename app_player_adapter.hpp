@@ -8,40 +8,39 @@ namespace rqdq {
 namespace app {
 
 template<int CAP>
-class ReaderWriterBufferIdx {
+class RingIndex {
 public:
-	ReaderWriterBufferIdx() :rPos_(0), wPos_(0) {}
+	RingIndex() :front_(0), back_(0) {}
 
 	static std::uint32_t Mod(std::uint32_t x) {
 		return x & (CAP-1); }
 
-	bool Empty() {
-		return rPos_ == wPos_; }
+	bool Empty() const {
+		return front_ == back_; }
 
-	std::uint32_t Size() {
-		return wPos_ - rPos_; }
+	std::uint32_t Size() const {
+		return back_ - front_; }
 
-	std::uint32_t Available() {
+	std::uint32_t Available() const {
 		return CAP - Size(); }
 
-	bool Full() {
-		return Size() == CAP; }
+	bool Full() const { return Size() == CAP; }
 
-	int BeginPush() {
-		return Mod(wPos_); }
+	int BackIdx() const {
+		return Mod(back_); }
 
-	void EndPush() {
-		wPos_++; }
+	void PushBack() {
+		back_++; }
 
-	int BeginShift() {
-		return Mod(rPos_); }
+	int FrontIdx() const {
+		return Mod(front_); }
 
-	void EndShift() {
-		rPos_++; }
+	void PopFront() {
+		front_++; }
 
 private:
-	std::uint32_t rPos_;
-	std::uint32_t wPos_; };
+	std::uint32_t front_;
+	std::uint32_t back_; };
 
 
 class PlayerAdapter {
@@ -55,21 +54,21 @@ public:
 private:
 	void BlasterProc(void* out, int fmt, int numChannels, int numSamples);
 
-	void Push(int l, int r) {
-		int idx = rw_.BeginPush();
+	void PushBack(int l, int r) {
+		int idx = rw_.BackIdx();
 		buf_[idx] = l;
 		buf_[idx+4096] = r;
-		rw_.EndPush(); }
+		rw_.PushBack(); }
 
-	void Shift(int& l, int& r) {
-		int idx = rw_.BeginShift();
+	void PopFront(int& l, int& r) {
+		int idx = rw_.FrontIdx();
 		l = buf_[idx];
 		r = buf_[idx+4096];
-		rw_.EndShift(); }
+		rw_.PopFront(); }
 
 private:
 	kb::ModPlayer& player_;
-	ReaderWriterBufferIdx<4096> rw_;
+	RingIndex<4096> rw_;
 	std::int16_t buf_[4096*2];
 	float pbuf_[4096*2]; };
 
