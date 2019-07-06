@@ -24,6 +24,7 @@ public:
 			_go32_dpmi_free_dos_memory(&info_);
 			info_.pm_selector = 0; }}
 
+public:
 	std::uint32_t GetRealAddr() const {
 		return info_.rm_segment * 16; }
 
