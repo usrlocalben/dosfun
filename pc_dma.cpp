@@ -24,7 +24,7 @@ DMABuffer::DMABuffer(std::uint16_t sizeInWords)
 	:realMem_(sizeInWords*2*2),
 	sizeInWords_(sizeInWords) {
 
-	uint32_t phy = realMem_.segment_ * 16;
+	uint32_t phy = realMem_.GetRealAddr();
 	uint32_t rel = phy % 65536;
 	if ((rel + (sizeInWords*2)) > 65536) {
 		// if the start addr would cross

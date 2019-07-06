@@ -19,6 +19,9 @@ public:
 		std::swap(selector_, other.selector_);
 		std::swap(segment_, other.segment_); }
 
+	std::uint32_t GetRealAddr() const {
+		return segment_ * 16; }
+
 public:
 	std::uint16_t selector_;
 	std::uint16_t segment_; };
