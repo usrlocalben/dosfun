@@ -196,7 +196,9 @@ void __interrupt Blaster::isrJmp() {
 
 
 inline void Blaster::isr() {
-	// if (!IsRealIRQ(irqLine_)) { return; }
+	/*if (!irqLine_.IsReal()) {
+		spuriousIRQCnt++;
+		return; }*/
 	ACK();
 	irqLine_.SignalEOI();
 	pc::EnableInterrupts();
