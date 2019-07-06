@@ -31,7 +31,7 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 			int16_t* out = static_cast<int16_t*>(out_);
 			for (int i=0; i<numSamples; i++) {
 				int l, r;
-				Shift(l, r);
+				PopFront(l, r);
 				if (numChannels == 2) {
 					out[i*2+0] = l;
 					out[i*2+1] = r; }
@@ -42,7 +42,7 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 			uint8_t* out = static_cast<uint8_t*>(out_);
 			for (int i=0; i<numSamples; i++) {
 				int l, r;
-				Shift(l, r);
+				PopFront(l, r);
 				if (numChannels == 2) {
 					out[i*2+0] = (l+32767)>>8;
 					out[i*2+1] = (r+32767)>>8; }
@@ -61,7 +61,7 @@ void PlayerAdapter::Refill() {
 		for (int i=0; i<numSamples; i++) {
 			int l = pbuf_[i] * 32767.0;
 			int r = pbuf_[i+4096] * 32767.0;
-			Push(l, r); }}}
+			PushBack(l, r); }}}
 
 
 }  // namespace app
