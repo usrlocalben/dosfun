@@ -52,7 +52,7 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 #ifdef SHOW_TIMING
 //vga::SetRGB(0, 0, 0, 0);
 #endif
-}
+	}
 
 
 void PlayerAdapter::Refill() {
