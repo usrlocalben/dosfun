@@ -1,5 +1,4 @@
 #pragma once
-#include <dos.h>   // enable/disable
 #include <dpmi.h>  // go32_dpmi_seginfo, {get,set}_protected_mode_interrupt_vector
 
 namespace rqdq {
