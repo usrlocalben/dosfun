@@ -78,8 +78,6 @@ public:
 				if (!adapterPtr->Full()) {
 					msgs[msgCnt++] = MSG_SND_BUFFER_LOW; }
 				if (msgCnt == 0) {
-					// this _must_ encode as "sti; hlt;"
-					// without any opcodes in-between
 					pc::Sleep();
 					continue; }}
 
