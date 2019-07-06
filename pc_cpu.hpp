@@ -25,9 +25,9 @@ inline void DisableInterrupts() {
 class CriticalSection {
 public:
 	CriticalSection() {
-		_disable(); }
+		DisableInterrupts(); }
 	~CriticalSection() {
-		_enable(); }
+		EnableInterrupts(); }
 private:
 	CriticalSection& operator=(const CriticalSection&);  // non-copyable
 	CriticalSection(const CriticalSection&); };          // non-copyable
