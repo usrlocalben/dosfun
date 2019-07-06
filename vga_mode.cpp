@@ -12,10 +12,6 @@ using rqdq::pc::OutW;
 namespace rqdq {
 namespace vga {
 
-using pc::InB;
-using pc::OutB;
-using pc::OutW;
-
 /*
  * ModeX 320x240 initialization
  *
