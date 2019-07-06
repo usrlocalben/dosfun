@@ -18,6 +18,8 @@ LD = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++
 HOST_CPP = g++
 
 
+OBJ = obj
+
 DOSBOX = c:\bin\dosbox-x\dosbox-x.exe
 
 run: app.exe

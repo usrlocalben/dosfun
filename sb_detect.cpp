@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+// using std::cout;
+
 namespace rqdq {
 namespace {
 
