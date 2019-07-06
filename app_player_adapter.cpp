@@ -1,5 +1,6 @@
 #include "app_player_adapter.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 
@@ -58,6 +59,7 @@ void PlayerAdapter::Refill() {
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0x30, 0x20, 0x10);
 #endif
+	// int numSamples = std::min(rw_.Available(), 128U);
 	int numSamples = rw_.Available();
 	if (numSamples > 0) {
 		player_.Render(pbuf_, pbuf_+4096, numSamples);

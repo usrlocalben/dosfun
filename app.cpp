@@ -68,7 +68,6 @@ public:
 		const int MSG_VGA_PAGE_LOCKED = 2;
 		const int MSG_SND_BUFFER_LOW = 3;
 		while (!quitSoon_) {
-
 			{
 				pc::CriticalSection section;
 				msgCnt = 0;
@@ -81,12 +80,11 @@ public:
 				if (msgCnt == 0) {
 					// this _must_ encode as "sti; hlt;"
 					// without any opcodes in-between
-					pc::EnableInterrupts();
-					pc::Halt();
+					pc::Sleep();
 					continue; }}
 
 			for (int mi=0; mi<msgCnt; mi++) {
-				auto& msg = msgs[mi];
+				char& msg = msgs[mi];
 				if (msg == MSG_KBD_DATA_AVAILABLE) {
 					pc::Event ke = kbd.GetMessage();
 					if (ke.down) {

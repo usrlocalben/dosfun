@@ -8,8 +8,8 @@ using ISRPtr = _go32_dpmi_seginfo;
 using ISRFunc = void (*)();
 
 
-inline void Halt() {
-	__asm__ __volatile__("hlt"); }
+inline void Sleep() {
+	__asm__ __volatile__("sti; hlt"); }
 
 
 inline void EnableInterrupts() {
