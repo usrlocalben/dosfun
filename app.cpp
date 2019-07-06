@@ -62,25 +62,41 @@ public:
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
 		quitSoon_ = false;
+		char msgs[16];
+		int msgCnt;
+		const int MSG_KBD_DATA_AVAILABLE = 1;
+		const int MSG_VGA_PAGE_LOCKED = 2;
+		const int MSG_SND_BUFFER_LOW = 3;
 		while (!quitSoon_) {
-			if (kbd.IsDataAvailable()) {
-				pc::Event ke = kbd.GetMessage();
-				if (ke.down) {
-					OnKeyDown(ke.scanCode); }
-				continue; }
 
-			vga::AnimationPage animationPage;
-			if (animationPage.IsLocked()) {
-				Draw(animationPage.Get());
-				animationPage.Unlock();
-#ifdef SHOW_TIMING
-vga::SetRGB(0, 0x30, 0x20, 0x10);
-#endif
-				adapterPtr->Refill();
-#ifdef SHOW_TIMING
-vga::SetRGB(0, 0, 0, 0);
-#endif
-				}}}
+			{
+				pc::CriticalSection section;
+				msgCnt = 0;
+				if (kbd.IsDataAvailable()) {
+					msgs[msgCnt++] = MSG_KBD_DATA_AVAILABLE; }
+				if (vga::backLocked) {
+					msgs[msgCnt++] = MSG_VGA_PAGE_LOCKED; }
+				if (!adapterPtr->Full()) {
+					msgs[msgCnt++] = MSG_SND_BUFFER_LOW; }
+				if (msgCnt == 0) {
+					// this _must_ encode as "sti; hlt;"
+					// without any opcodes in-between
+					pc::EnableInterrupts();
+					pc::Halt();
+					continue; }}
+
+			for (int mi=0; mi<msgCnt; mi++) {
+				auto& msg = msgs[mi];
+				if (msg == MSG_KBD_DATA_AVAILABLE) {
+					pc::Event ke = kbd.GetMessage();
+					if (ke.down) {
+						OnKeyDown(ke.scanCode); }}
+				else if (msg == MSG_VGA_PAGE_LOCKED) {
+					vga::AnimationPage animationPage;
+					if (animationPage.IsLocked()) {
+						Draw(animationPage.Get()); }}
+				else if (msg == MSG_SND_BUFFER_LOW) {
+					adapterPtr->Refill(); }}}}
 
 private:
 	void Draw(const vga::VRAMPage& vram) {
@@ -149,4 +165,5 @@ int main() {
 
 	std::printf("measuredRefreshRate: %.2f hz\n", demo.measuredRefreshRateInHz_);
 	std::printf("        avgDrawTime: %.2f ms\n", (ax*1000));
+	// std::printf("        spuriousIRQ: %d occurrences\n", rqdq::snd::spuriousIRQCnt);
 	return 0; }

@@ -26,6 +26,8 @@ const int kSampleSizeInWords = 1;
 
 namespace snd {
 
+int spuriousIRQCnt = 0;
+
 Ports make_ports(int baseAddr) {
 	Ports out;
 	out.reset = baseAddr + 0x06;
@@ -195,7 +197,9 @@ void Blaster::isrJmp() {
 
 
 inline void Blaster::isr() {
-	// if (!IsRealIRQ(irqLine_)) { return; }
+	/*if (!irqLine_.IsReal()) {
+		spuriousIRQCnt++;
+		return; }*/
 	ACK();
 	irqLine_.SignalEOI();
 	pc::EnableInterrupts();

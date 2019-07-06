@@ -55,13 +55,20 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 
 
 void PlayerAdapter::Refill() {
+#ifdef SHOW_TIMING
+vga::SetRGB(0, 0x30, 0x20, 0x10);
+#endif
 	int numSamples = rw_.Available();
 	if (numSamples > 0) {
 		player_.Render(pbuf_, pbuf_+4096, numSamples);
 		for (int i=0; i<numSamples; i++) {
 			int l = pbuf_[i] * 32767.0;
 			int r = pbuf_[i+4096] * 32767.0;
-			PushBack(l, r); }}}
+			PushBack(l, r); }}
+#ifdef SHOW_TIMING
+vga::SetRGB(0, 0, 0, 0);
+#endif
+	}
 
 
 }  // namespace app

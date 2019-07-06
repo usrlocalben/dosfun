@@ -51,6 +51,9 @@ public:
 
 	void Refill();
 
+	bool Full() const {
+		return rw_.Full(); }
+
 private:
 	void BlasterProc(void* out, int fmt, int numChannels, int numSamples);
 
