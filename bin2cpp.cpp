@@ -30,11 +30,11 @@ int main(int argc, char** argv) {
 	cppFd << "#include \"" << hppName.c_str() << "\"\n";
 	cppFd << "#include <cstdint>\n";
 	cppFd << "namespace " << namespaceName << " {\n";
-	cppFd << "uint8_t " << varName << "[] = {\n";
+	cppFd << "std::uint8_t " << varName << "[] = {\n";
 	int n = 0;
 	bool first = true;
 	while (fd.get(ch_)) {
-		auto ch = (uint8_t)ch_;
+		uint8_t ch = (uint8_t)ch_;
 		if (first) {
 			first = false; }
 		else {
