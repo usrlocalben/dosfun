@@ -23,11 +23,6 @@ public:
 	DMABuffer& operator=(const DMABuffer& other) = delete;  // not-copyable
 
 public:
-	/*void Swap(DMABuffer& other) {
-		realMem_.Swap(other.realMem_);
-		std::swap(addr_, other.addr_);
-		std::swap(sizeInWords_, other.sizeInWords_); }*/
-
 	std::uint8_t* Ptr() const {
 		return (std::uint8_t*)addr_; }
 
