@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
 
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
@@ -13,8 +12,8 @@ using std::uint8_t;
 using std::uint16_t;
 using std::int8_t;
 using std::int16_t;
-using rqdq::pc::OutB;
 using rqdq::pc::InB;
+using rqdq::pc::OutB;
 
 #define nullptr (0)
 
@@ -192,7 +191,7 @@ inline void* Blaster::GetUserBuffer() const {
 		return dst; }}
 
 
-static void __interrupt Blaster::isrJmp() {
+void __interrupt Blaster::isrJmp() {
 	theBlaster->isr(); }
 
 

@@ -5,6 +5,10 @@
 #include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
+using rqdq::pc::InB;
+using rqdq::pc::OutB;
+using rqdq::pc::OutW;
+
 namespace rqdq {
 namespace vga {
 

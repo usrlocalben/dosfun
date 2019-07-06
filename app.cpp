@@ -1,6 +1,6 @@
 #include <cmath>
 #include <cstdint>
-#include <iostream>
+#include <cstdio>
 #include <limits>
 #include <memory>
 
@@ -59,6 +59,7 @@ public:
 		                     kAudioWidthInChannels,
 		                     kAudioBufferSizeInSamples);
 		std::auto_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
+		adapterPtr->Refill();
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
 		quitSoon_ = false;
@@ -71,7 +72,16 @@ public:
 
 			vga::AnimationPage animationPage;
 			if (animationPage.IsLocked()) {
-				Draw(animationPage.Get()); }}}
+				Draw(animationPage.Get());
+				animationPage.Unlock();
+#ifdef SHOW_TIMING
+vga::SetRGB(0, 0x30, 0x20, 0x10);
+#endif
+				adapterPtr->Refill();
+#ifdef SHOW_TIMING
+vga::SetRGB(0, 0, 0, 0);
+#endif
+				}}}
 
 private:
 	void Draw(const vga::VRAMPage& vram) {
@@ -114,19 +124,17 @@ public:
 int main() {
 	rqdq::hw::BlasterDetectResult bd = rqdq::hw::DetectBlaster();
 	if (!bd.found) {
-		std::cout << "BLASTER not found\n";
-		std::exit(1); }
+		std::printf("BLASTER not found\n");
+		return 1; }
 
 	rqdq::app::kSoundBlasterIOBaseAddr = bd.value.ioAddr;
 	rqdq::app::kSoundBlasterIRQNum = bd.value.irqNum;
 	rqdq::app::kSoundBlasterDMAChannelNum = bd.value.BestDMA();
 
-	std::cout << "Found BLASTER";
-	std::cout << " addr=0x" << std::hex << rqdq::app::kSoundBlasterIOBaseAddr << std::dec;
-	std::cout << " irq=" << rqdq::app::kSoundBlasterIRQNum;
-	std::cout << " dma=" << rqdq::app::kSoundBlasterDMAChannelNum;
-	std::cout << "\n";
-	// std::exit(0);
+	std::printf("Found BLASTER addr=0x%x irq=%d dma=%d\n",
+	            rqdq::app::kSoundBlasterIOBaseAddr,
+	            rqdq::app::kSoundBlasterIRQNum,
+	            rqdq::app::kSoundBlasterDMAChannelNum);
 
 	rqdq::app::Demo demo;
 	demo.Run();
@@ -136,7 +144,6 @@ int main() {
 		ax += demo.mLst_[i]; }
 	ax /= demo.mCnt_;
 
-	std::cout << "        elapsedTime: " << std::dec << rqdq::vga::GetTime() << " frames\n";
-	std::cout << "measuredRefreshRate:   " << demo.measuredRefreshRateInHz_ << " hz\n";
-	std::cout << "        avgDrawTime:   " << (ax*1000) << " ms\n";
+	std::printf("measuredRefreshRate: %.2f hz\n", demo.measuredRefreshRateInHz_);
+	std::printf("        avgDrawTime: %.2f ms\n", (ax*1000));
 	return 0; }

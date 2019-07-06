@@ -1,7 +1,6 @@
 #include "os_realmem.hpp"
 
 #include <cstdlib>
-#include <iostream>
 #include <i86.h>  // int386
 
 using std::uint16_t;

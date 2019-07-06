@@ -4,6 +4,7 @@
 
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
+#include "pc_pit.hpp"
 #include "vga_reg.hpp"
 
 using std::uint8_t;
