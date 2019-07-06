@@ -15,10 +15,6 @@ private:
 	RealMem(const RealMem& other);             // not copyable
 
 public:
-	void Swap(RealMem& other) {
-		std::swap(selector_, other.selector_);
-		std::swap(segment_, other.segment_); }
-
 	std::uint32_t GetRealAddr() const {
 		return segment_ * 16; }
 
