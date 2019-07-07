@@ -3,6 +3,7 @@
  */
 #pragma once
 #include <cstdint>
+#include <utility>
 #include <go32.h>  // go32_my_cs
 
 #include "pc_bus.hpp"
@@ -10,6 +11,7 @@
 
 namespace rqdq {
 namespace pc {
+
 
 template <int IRQNUM>
 class IRQLineCT {
@@ -49,10 +51,9 @@ public:
 		OutB(maskPort_, (InB(maskPort_)&startMask_)); }
 
 	void SetISR(ISRFunc func) {
-		customISRPtr_.pm_offset = (int)func;
-		customISRPtr_.pm_selector = _go32_my_cs();
-		_go32_dpmi_allocate_iret_wrapper(&customISRPtr_);
-		SetVect(isrNum_, customISRPtr_); }
+		PreparedISR newISR(func);
+		SetVect(isrNum_, newISR);
+		customISR_ = std::move(newISR); }
 
 	ISRPtr GetISR() const {
 		return GetVect(isrNum_); }
@@ -72,7 +73,7 @@ private:
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
 	ISRPtr savedISRPtr_;
-	ISRPtr customISRPtr_; };
+	PreparedISR customISR_; };
 
 
 class IRQLineRT {
@@ -104,10 +105,9 @@ public:
 		OutB(maskPort_, (InB(maskPort_)&startMask_)); }
 
 	void SetISR(ISRFunc func) {
-		customISRPtr_.pm_offset = (int)func;
-		customISRPtr_.pm_selector = _go32_my_cs();
-		_go32_dpmi_allocate_iret_wrapper(&customISRPtr_);
-		SetVect(isrNum_, customISRPtr_); }
+		PreparedISR newISR(func);
+		SetVect(isrNum_, newISR);
+		customISR_ = std::move(newISR); }
 
 	ISRPtr GetISR() const {
 		return GetVect(isrNum_); }
@@ -127,7 +127,7 @@ private:
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
 	ISRPtr savedISRPtr_;
-	ISRPtr customISRPtr_; };
+	PreparedISR customISR_; };
 
 
 }  // namespace pc
