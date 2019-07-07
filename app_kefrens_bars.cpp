@@ -1,7 +1,7 @@
 #include "app_kefrens_bars.hpp"
 
 #include <cmath>
-#include <string>
+#include <cstring>
 
 #include "vga_mode.hpp"
 #include "vga_reg.hpp"

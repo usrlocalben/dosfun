@@ -1,6 +1,9 @@
 app.exe
+*.coff
 *.obj
 *.lib
+*.o
+*.a
 
 # generated source
 ost.hpp
