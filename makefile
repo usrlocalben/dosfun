@@ -9,7 +9,7 @@
 #LIB = wlib -n -q
 
 OBJ = o
-CPPFLAGS = -O3 -ffast-math -DSHOW_TIMING 
+CPPFLAGS = -O3 -ffast-math #-DSHOW_TIMING
 # -Xlinker --allow-multiple-definition
 CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c $(CPPFLAGS)
 #CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O2 -DNDEBUG
@@ -125,7 +125,7 @@ sb_detect.lib:    sb_detect.$(OBJ)
 	$(LIB) $@ $^
 
 kb_tinymod.$(OBJ): kb_tinymod.cpp    kb_tinymod.hpp
-	$(CPP) $<
+	$(CPP) -Wno-multichar $<
 kb_tinymod.lib:    kb_tinymod.$(OBJ)
 	@rm -f $@
 	$(LIB) $@ $^

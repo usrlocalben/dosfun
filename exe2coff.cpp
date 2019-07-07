@@ -51,11 +51,10 @@ void exe2aout(char* exePath) {
 
 	lseek(fdIn, header_offset, 0);
 
-	
-	//*dot = 0;
+
 	char coffPath[1024];
-	int idx;
-	for (idx=0; exePath+idx!=dot; idx++) {
+	int idx = 0;
+	for (; exePath+idx!=dot; idx++) {
 	  coffPath[idx] = exePath[idx]; }
 	coffPath[idx++] = '.';
 	coffPath[idx++] = 'c';
@@ -63,13 +62,13 @@ void exe2aout(char* exePath) {
 	coffPath[idx++] = 'f';
 	coffPath[idx++] = 'f';
 	coffPath[idx++] = 0;
-	printf("output to [%s]\n", coffPath);
+	// printf("output to [%s]\n", coffPath);
 
 	fdOut = open(coffPath, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0666);
 	if (fdOut < 0) {
 		perror(coffPath);
 		return; }
-	
+
 	while ((rbytes=read(fdIn, buf, kBufSizeInBytes)) > 0) {
 		int wb = write(fdOut, buf, rbytes);
 		if (wb < 0) {
