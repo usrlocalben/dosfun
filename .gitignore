@@ -1,9 +1,10 @@
-app_cwsstub.coff
 app_cwsstub.exe
 app.exe
+*.coff
 *.obj
-*.o
 *.lib
+*.o
+*.a
 
 # generated source
 ost.hpp

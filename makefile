@@ -1,36 +1,26 @@
-#OBJ = obj
-##COMMON_FLAGS = -q -bt=dos -mf -3r -fp5 #-dSHOW_TIMING
-#RELEASE_FLAGS = -onatx -d0 -dNDEBUG
-#DEBUG_FLAGS = -od -d3
-#CPP = wpp386.exe -q $(COMMON_FLAGS) $(RELEASE_FLAGS)
-#LFLAGS = SYSTEM dos4g OPTION quiet OPTION map
-#LFLAGS = SYSTEM pmodewi OPTION quiet OPTION map OPTION eliminate
-#LD = wlink.exe $(LFLAGS)
-#LIB = wlib -n -q
-
-OBJ = o
-CPPFLAGS = -O3 -ffast-math #-DSHOW_TIMING
-# -Xlinker --allow-multiple-definition
-CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c $(CPPFLAGS)
-#CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c -O2 -DNDEBUG
-
-#LIB = a
-LIBEXT = a
-LIB = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-ar rcsT
-LD = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++
-
 HOST_CPP = g++
 
-
 OBJ = o
+LIB = a
+
+COMMON_FLAGS = -DSHOW_TIMING
+RELEASE_FLAGS = -O2 -ffast-math -DNDEBUG
+DEBUG_FLAGS = -g
+
+CPPFLAGS = $(COMMON_FLAGS) $(RELEASE_FLAGS)
+CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c $(CPPFLAGS)
+
+AR = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-ar rcsT
+
+LFLAGS =
+LD = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ $(LFLAGS)
 
 DOSBOX = c:\bin\dosbox-x\dosbox-x.exe
 
 run: app.exe
 	$(DOSBOX) -conf build-support\dosbox.conf
 
-app_cwsstub.exe: app.lib
-	#$(LD) -o $@ -s *.o
+app_cwsstub.exe: app.$(LIB)
 	$(LD) -o $@ -s $<
 
 app_cwsstub.coff: app_cwsstub.exe exe2coff.exe
@@ -40,119 +30,119 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_irq.lib vga_reg.lib
+app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB)
 	$(CPP) $<
-app.lib: app.$(OBJ) app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_irq.lib vga_reg.lib
+app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.lib
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB)
 	$(CPP) $<
-app_player_adapter.lib:    app_player_adapter.$(OBJ)                        kb_tinymod.lib
+app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.lib vga_reg.lib
+app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB)
 	$(CPP) $<
-app_kefrens_bars.lib:    app_kefrens_bars.$(OBJ)                      vga_mode.lib vga_reg.lib
+app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-pc_kbd.$(OBJ): pc_kbd.cpp    pc_kbd.hpp pc_pic.lib
+pc_kbd.$(OBJ): pc_kbd.cpp    pc_kbd.hpp pc_pic.$(LIB)
 	$(CPP) $<
-pc_kbd.lib:    pc_kbd.$(OBJ)            pc_pic.lib
+pc_kbd.$(LIB): pc_kbd.$(OBJ)            pc_pic.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-vga_irq.$(OBJ): vga_irq.cpp    vga_irq.hpp vga_reg.lib pc_pit.lib pc_cpu.lib
+vga_irq.$(OBJ): vga_irq.cpp    vga_irq.hpp vga_reg.$(LIB) pc_pit.$(LIB) pc_cpu.$(LIB)
 	$(CPP) $<
-vga_irq.lib:    vga_irq.$(OBJ)             vga_reg.lib pc_pit.lib pc_cpu.lib
+vga_irq.$(LIB): vga_irq.$(OBJ)             vga_reg.$(LIB) pc_pit.$(LIB) pc_cpu.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-vga_mode.$(OBJ): vga_mode.cpp    vga_mode.hpp vga_reg.lib vga_bios.lib pc_bus.lib pc_cpu.lib
+vga_mode.$(OBJ): vga_mode.cpp    vga_mode.hpp vga_reg.$(LIB) vga_bios.$(LIB) pc_bus.$(LIB) pc_cpu.$(LIB)
 	$(CPP) $<
-vga_mode.lib:    vga_mode.$(OBJ)              vga_reg.lib vga_bios.lib pc_bus.lib pc_cpu.lib
+vga_mode.$(LIB): vga_mode.$(OBJ)              vga_reg.$(LIB) vga_bios.$(LIB) pc_bus.$(LIB) pc_cpu.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.lib pc_cpu.lib
+vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB)
 	$(CPP) $<
-vga_reg.lib:    vga_reg.$(OBJ)             pc_bus.lib pc_cpu.lib
+vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-vga_bios.$(OBJ): vga_bios.cpp    vga_bios.hpp pc_bus.lib
+vga_bios.$(OBJ): vga_bios.cpp    vga_bios.hpp pc_bus.$(LIB)
 	$(CPP) $<
-vga_bios.lib:    vga_bios.$(OBJ)              pc_bus.lib
+vga_bios.$(LIB): vga_bios.$(OBJ)              pc_bus.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-sb16.$(OBJ): sb16.cpp    sb16.hpp pc_dma.lib pc_pic.lib pc_cpu.lib pc_bus.lib 
+sb16.$(OBJ): sb16.cpp    sb16.hpp pc_dma.$(LIB) pc_pic.$(LIB) pc_cpu.$(LIB) pc_bus.$(LIB)
 	$(CPP) $<
-sb16.lib:    sb16.$(OBJ)          pc_dma.lib pc_pic.lib pc_cpu.lib pc_bus.lib
+sb16.$(LIB): sb16.$(OBJ)          pc_dma.$(LIB) pc_pic.$(LIB) pc_cpu.$(LIB) pc_bus.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-pc_pit.$(OBJ): pc_pit.cpp    pc_pit.hpp pc_pic.lib pc_cpu.lib
+pc_pit.$(OBJ): pc_pit.cpp    pc_pit.hpp pc_pic.$(LIB) pc_cpu.$(LIB)
 	$(CPP) $<
-pc_pit.lib:    pc_pit.$(OBJ)            pc_pic.lib pc_cpu.lib
+pc_pit.$(LIB): pc_pit.$(OBJ)            pc_pic.$(LIB) pc_cpu.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-pc_dma.$(OBJ): pc_dma.cpp    pc_dma.hpp os_realmem.lib pc_bus.lib
+pc_dma.$(OBJ): pc_dma.cpp    pc_dma.hpp os_realmem.$(LIB) pc_bus.$(LIB)
 	$(CPP) $<
-pc_dma.lib:    pc_dma.$(OBJ)            os_realmem.lib pc_bus.lib
+pc_dma.$(LIB): pc_dma.$(OBJ)            os_realmem.$(LIB) pc_bus.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-vga_pageflip.$(OBJ): vga_pageflip.cpp    vga_pageflip.hpp vga_mode.lib
+vga_pageflip.$(OBJ): vga_pageflip.cpp    vga_pageflip.hpp vga_mode.$(LIB)
 	$(CPP) $<
-vga_pageflip.lib:    vga_pageflip.$(OBJ)                  vga_mode.lib
+vga_pageflip.$(LIB): vga_pageflip.$(OBJ)                  vga_mode.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
-pc_pic.$(OBJ): pc_pic.cpp    pc_pic.hpp pc_bus.lib
+pc_pic.$(OBJ): pc_pic.cpp    pc_pic.hpp pc_bus.$(LIB)
 	$(CPP) $<
-pc_pic.lib:    pc_pic.$(OBJ)            pc_bus.lib
+pc_pic.$(LIB): pc_pic.$(OBJ)            pc_bus.$(LIB)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 sb_detect.$(OBJ): sb_detect.cpp    sb_detect.hpp
 	$(CPP) $<
-sb_detect.lib:    sb_detect.$(OBJ)
+sb_detect.$(LIB): sb_detect.$(OBJ)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 kb_tinymod.$(OBJ): kb_tinymod.cpp    kb_tinymod.hpp
 	$(CPP) -Wno-multichar $<
-kb_tinymod.lib:    kb_tinymod.$(OBJ)
+kb_tinymod.$(LIB): kb_tinymod.$(OBJ)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 pc_cpu.$(OBJ): pc_cpu.cpp    pc_cpu.hpp
 	$(CPP) $<
-pc_cpu.lib:    pc_cpu.$(OBJ)
+pc_cpu.$(LIB): pc_cpu.$(OBJ)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 pc_bus.$(OBJ): pc_bus.cpp    pc_bus.hpp
 	$(CPP) $<
-pc_bus.lib:    pc_bus.$(OBJ)
+pc_bus.$(LIB): pc_bus.$(OBJ)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 os_realmem.$(OBJ): os_realmem.cpp    os_realmem.hpp
 	$(CPP) $<
-os_realmem.lib:    os_realmem.$(OBJ)
+os_realmem.$(LIB): os_realmem.$(OBJ)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 ost.$(OBJ): ost.cpp    ost.hpp
 	$(CPP) $<
-ost.lib:    ost.$(OBJ)
+ost.$(LIB): ost.$(OBJ)
 	@rm -f $@
-	$(LIB) $@ $^
+	$(AR) $@ $^
 
 ost.cpp ost.hpp: urea.mod bin2cpp.exe
 	./bin2cpp $< ost rqdq ostData
@@ -164,12 +154,12 @@ exe2coff.exe: exe2coff.cpp
 	$(HOST_CPP) -o $@ $<
 
 clean:
-	rm *.$(OBJ)
-	rm *.lib
-	rm app*.exe
-	rm app*.coff
-	rm app*.map
-	rm bin2cpp.exe
-	rm exe2coff.exe
-	rm ost.cpp
-	rm ost.hpp
+	@rm -f *.$(OBJ)
+	@rm -f *.$(LIB)
+	@rm -f app*.exe
+	@rm -f app*.coff
+	@rm -f app*.map
+	@rm -f bin2cpp.exe
+	@rm -f exe2coff.exe
+	@rm -f ost.cpp
+	@rm -f ost.hpp
