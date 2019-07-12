@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 
+#include "log.hpp"
 #include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
@@ -39,9 +40,11 @@ public:
 	void Set(int req) {
 		if (req < 256) {
 			bios::SetMode(req);
+			log::info("vga: set BIOS mode %02x", req);
 			curMode_ = req; }
 		else if (req == VM_MODEX) {
 			vga::SetModeX();
+			log::info("vga: set Mode X");
 			curMode_ = VM_MODEX; }
 		else {
 			// xxx throw std::runtime_error("unsupported vga mode");
@@ -49,6 +52,7 @@ public:
 
 	~ModeSetter() {
 		if (curMode_ != oldMode_) {
+			log::info("vga: restoring prior mode %02x", oldMode_);
 			Set(oldMode_); }}
 
 private:

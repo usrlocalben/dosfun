@@ -129,6 +129,11 @@ private:
 	ISRPtr savedISRPtr_;
 	PreparedISR customISR_; };
 
+inline uint16_t GetPICMasks() {
+	uint8_t lo = InB(0x21);
+	uint8_t hi = InB(0xa1);
+	return hi<<8|lo; }
+
 
 }  // namespace pc
 }  // namespace rqdq

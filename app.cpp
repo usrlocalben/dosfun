@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -8,15 +9,17 @@
 #include "app_kefrens_bars.hpp"
 #include "app_player_adapter.hpp"
 #include "kb_tinymod.hpp"
+#include "log.hpp"
 #include "ost.hpp"
+#include "pc_com.hpp"
 #include "pc_kbd.hpp"
 #include "pc_pit.hpp"
 #include "sb16.hpp"
 #include "sb_detect.hpp"
+#include "vga_irq.hpp"
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
-#include "vga_irq.hpp"
 
 using std::uint8_t;
 using std::int16_t;
@@ -39,17 +42,22 @@ class Demo {
 public:
 	Demo()
 		:quitSoon_(false),
+		llp(0),
 		mCnt_(0),
 		paulaPtr_(new kb::Paula()),
 		playerPtr_(new kb::ModPlayer(paulaPtr_.get(), (uint8_t*)ostData)) {}
 
 	void Run() {
+#ifdef TTYCON
+		pc::SerialStream tty(0x2f8, 3, 115200, pc::FLOW_NONE);
+#endif
 		pc::Keyboard kbd;
 
 		vga::ModeSetter modeSetter;
 		modeSetter.Set(vga::VM_MODEX);
 		vga::RetraceIRQ<vga::FlipPages> flipPagesIRQ;
 		measuredRefreshRateInHz_ = flipPagesIRQ.GetHz();
+		log::info("measuredRefreshRate = %4.2f hz", measuredRefreshRateInHz_);
 
 		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
 		                     kSoundBlasterIRQNum,
@@ -61,38 +69,97 @@ public:
 		adapterPtr->Refill();
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
-		quitSoon_ = false;
-		char msgs[16];
-		int msgCnt;
-		const int MSG_KBD_DATA_AVAILABLE = 1;
-		const int MSG_VGA_PAGE_LOCKED = 2;
-		const int MSG_SND_BUFFER_LOW = 3;
-		while (!quitSoon_) {
-			{
-				pc::CriticalSection section;
-				msgCnt = 0;
-				if (kbd.IsDataAvailable()) {
-					msgs[msgCnt++] = MSG_KBD_DATA_AVAILABLE; }
-				if (vga::backLocked) {
-					msgs[msgCnt++] = MSG_VGA_PAGE_LOCKED; }
-				if (!adapterPtr->Full()) {
-					msgs[msgCnt++] = MSG_SND_BUFFER_LOW; }
-				if (msgCnt == 0) {
-					pc::Sleep();
-					continue; }}
+		log::info("system ready.");
 
-			for (int mi=0; mi<msgCnt; mi++) {
-				char& msg = msgs[mi];
-				if (msg == MSG_KBD_DATA_AVAILABLE) {
-					pc::Event ke = kbd.GetMessage();
-					if (ke.down) {
-						OnKeyDown(ke.scanCode); }}
-				else if (msg == MSG_VGA_PAGE_LOCKED) {
-					vga::AnimationPage animationPage;
-					if (animationPage.IsLocked()) {
-						Draw(animationPage.Get()); }}
-				else if (msg == MSG_SND_BUFFER_LOW) {
-					adapterPtr->Refill(); }}}}
+		quitSoon_ = false;
+		std::vector<char> events;
+		const char MSG_KBD_CAN_READ = 1;
+		const char MSG_VGA_CAN_WRITE = 2;
+		const char MSG_TTY_CAN_READ = 3;
+		const char MSG_TTY_CAN_WRITE = 4;
+
+		auto WaitForMultipleObjects = [&](const std::vector<char>& lst) -> int {
+			while (1) {
+				pc::CriticalSection section;
+				for (int idx=0; idx<lst.size(); idx++) {
+					const auto& evt = lst[idx];
+					switch (evt) {
+					case MSG_KBD_CAN_READ:
+						if (kbd.IsDataAvailable()) return idx; break;
+					case MSG_VGA_CAN_WRITE:
+						if (vga::backLocked) return idx; break;
+#ifdef TTYCON
+					case MSG_TTY_CAN_READ:
+						if (tty.CanRead()) return idx; break;
+					case MSG_TTY_CAN_WRITE:
+						if (tty.CanWrite()) return idx; break;
+#endif
+					default:
+						throw std::runtime_error("invalid event"); }}
+				pc::Sleep(); }};
+
+
+		while (!quitSoon_) {
+			events.clear();
+			events.push_back(MSG_VGA_CAN_WRITE);
+			events.push_back(MSG_KBD_CAN_READ);
+#ifdef TTYCON
+			events.push_back(MSG_TTY_CAN_READ);
+			if (log::Loaded()) {
+				events.push_back(MSG_TTY_CAN_WRITE); }
+#endif
+
+			int idx = WaitForMultipleObjects(events);
+			const auto msg = events[idx];
+
+			if (msg == MSG_KBD_CAN_READ) {
+				pc::Event ke = kbd.GetMessage();
+				if (ke.down) {
+					OnKeyDown(ke.scanCode); }}
+#ifdef TTYCON
+			else if (msg == MSG_TTY_CAN_WRITE) {
+				static std::string line;
+				line.assign(log::at(log::FrontIdx()));
+				line += "\r\n";
+				int rem = line.size() - llp;
+				int sent = tty.Write(line.c_str()+llp, rem);
+				if (rem == sent) {
+					llp = 0;
+					log::PopFront(); }
+				else {
+					llp += sent; }}
+			else if (msg == MSG_TTY_CAN_READ) {
+				char tmp[2049];
+				char tmp2[2049];
+				char *out = tmp2;
+
+				int cnt = tty.Read(tmp, 2048);
+				out += sprintf(out, "RX: [");
+				for (int i=0; i<cnt; i++) {
+					char ch = tmp[i];
+					if (ch == '\n') {
+						out += sprintf(out, "\\n"); }
+					else if (ch == '\r') {
+						out += sprintf(out, "\\r"); }
+					else if (ch == '\t') {
+						out += sprintf(out, "\\t"); }
+					else if (('a' <= ch && ch <= 'z') ||
+							 ('A' <= ch && ch <= 'Z') ||
+							 ('0' <= ch && ch <= '9')) {
+						out += sprintf(out, "%c", ch); }
+					else {
+						out += sprintf(out, "\\%02x", ch); }
+					}
+				out += sprintf(out, "]\r\n");
+				// printf(tmp2);
+				tty.Write(tmp2, out-tmp2); }
+#endif
+			else if (msg == MSG_VGA_CAN_WRITE) {
+				vga::AnimationPage animationPage;
+				assert(animationPage.IsLocked());
+				Draw(animationPage.Get());
+				adapterPtr->Refill(); }}}
+
 
 private:
 	void Draw(const vga::VRAMPage& vram) {
@@ -119,6 +186,7 @@ private:
 
 private:
 	bool quitSoon_;
+	int llp;
 	std::unique_ptr<kb::Paula> paulaPtr_;
 	std::unique_ptr<kb::ModPlayer> playerPtr_;
 
@@ -133,13 +201,16 @@ public:
 
 
 int main() {
+	rqdq::log::Reserve();
+	const std::uint16_t before = rqdq::pc::GetPICMasks();
+
 	rqdq::hw::BlasterDetectResult bd = rqdq::hw::DetectBlaster();
 	if (!bd.found) {
 		std::printf("BLASTER not found\n");
 		return 1; }
 
-	rqdq::app::kSoundBlasterIOBaseAddr = bd.value.ioAddr;
 	rqdq::app::kSoundBlasterIRQNum = bd.value.irqNum;
+	rqdq::app::kSoundBlasterIOBaseAddr = bd.value.ioAddr;
 	rqdq::app::kSoundBlasterDMAChannelNum = bd.value.BestDMA();
 
 	std::printf("Found BLASTER addr=0x%x irq=%d dma=%d\n",
@@ -151,15 +222,8 @@ int main() {
 		std::printf("can't enable nearptr.\n");
 		return 1; }
 
-	rqdq::app::Demo demo;
-	demo.Run();
-
-	float ax = 0;
-	for (int i=0; i<demo.mCnt_; i++) {
-		ax += demo.mLst_[i]; }
-	ax /= demo.mCnt_;
-
-	std::printf("measuredRefreshRate: %.2f hz\n", demo.measuredRefreshRateInHz_);
-	std::printf("        avgDrawTime: %.2f ms\n", (ax*1000));
-	// std::printf("        spuriousIRQ: %d occurrences\n", rqdq::snd::spuriousIRQCnt);
+	rqdq::app::Demo().Run();
+	const std::uint16_t after = rqdq::pc::GetPICMasks();
+	std::printf("before: %04x\n", before);
+	std::printf("after:  %04x", after);
 	return 0; }

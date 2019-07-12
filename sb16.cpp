@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <sys/nearptr.h>
 
+#include "log.hpp"
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 #include "pc_dma.hpp"
@@ -64,14 +65,14 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	RESET();
 	good_ = SpinUntilReset();
 	if (!good_) {
+		log::info("sb16: hardware not found");
 		return; }
 
-	/*
 	TX(0xe1);  // get hw version info
 	uint16_t hwInfo;
 	hwInfo = RX() << 8;
 	hwInfo |= RX();
-	*/
+	log::info("sb16: found hardware, version %04x", hwInfo);
 
 	{
 		pc::CriticalSection cs;
@@ -86,7 +87,8 @@ Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz
 	// set output sample rate
 	SetSampleRate();
 	SpeakerOn();
-	StartDMA(); }
+	StartDMA();
+	log::info("sb16: stream started"); }
 
 
 void Blaster::SpeakerOn() {
@@ -146,6 +148,7 @@ Blaster::~Blaster() {
 	{
 		pc::CriticalSection cs;
 		dma_.Stop();
+		irqLine_.Disconnect();
 		irqLine_.RestoreISR(); }
 
 	RESET();

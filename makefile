@@ -3,7 +3,7 @@ HOST_CPP = g++
 OBJ = o
 LIB = a
 
-COMMON_FLAGS = -DSHOW_TIMING
+COMMON_FLAGS = -DSHOW_TIMING -DTTYCON
 RELEASE_FLAGS = -O2 -ffast-math -DNDEBUG
 DEBUG_FLAGS = -g
 
@@ -30,15 +30,15 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB)
+app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB)
 	$(CPP) $<
-app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB)
+app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB)
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) algorithm.$(LIB)
 	$(CPP) $<
-app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB)
+app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) algorithm.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -51,6 +51,12 @@ app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$
 pc_kbd.$(OBJ): pc_kbd.cpp    pc_kbd.hpp pc_pic.$(LIB)
 	$(CPP) $<
 pc_kbd.$(LIB): pc_kbd.$(OBJ)            pc_pic.$(LIB)
+	@rm -f $@
+	$(AR) $@ $^
+
+pc_com.$(OBJ): pc_com.cpp    pc_com.hpp pc_pic.$(LIB) algorithm.$(LIB)
+	$(CPP) $<
+pc_com.$(LIB): pc_com.$(OBJ)            pc_pic.$(LIB) algorithm.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -135,6 +141,18 @@ pc_bus.$(LIB): pc_bus.$(OBJ)
 os_realmem.$(OBJ): os_realmem.cpp    os_realmem.hpp
 	$(CPP) $<
 os_realmem.$(LIB): os_realmem.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+log.$(OBJ): log.cpp    log.hpp algorithm.$(LIB)
+	$(CPP) $<
+log.$(LIB): log.$(OBJ)         algorithm.$(LIB)
+	@rm -f $@
+	$(AR) $@ $^
+
+algorithm.$(OBJ): algorithm.cpp    algorithm.hpp
+	$(CPP) $<
+algorithm.$(LIB): algorithm.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
