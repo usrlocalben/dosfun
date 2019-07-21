@@ -3,11 +3,15 @@
 #include <array>
 #include <cstdio>
 #include <stdexcept>
+#include <string_view>
 
+#include "algorithm.hpp"
 #include "pc_pic.hpp"
 
 namespace rqdq {
 namespace pc {
+
+volatile int txCnt{0};
 
 const float kRxBufDangerPct = 0.80f;
 const float kRxBufSafePct = 0.20f;
@@ -64,16 +68,16 @@ const int LS_THR_EMPTY = 0x20;
 const char XON = 0x11;
 const char XOFF = 0x13;
 
-SerialStream* theHack;
+ComPort* theHack;
 
-SerialStream::SerialStream(int ioBase, int irqNum, int bps, int flowType)
+ComPort::ComPort(int ioBase, int irqNum, int bps, int flowType)
 	:ioBase_(ioBase),
 	irqLine_(irqNum),
 	bps_(bps) {
-		SetDLAB(0);  // force DLAB=0
+		DLAB(0);  // force DLAB=0
 
 		{ pc::CriticalSection section;
-			OutIER(0);  // disable all UART interrupts
+			IER(0);  // disable all UART interrupts
 			irqLine_.SaveISR();
 			theHack = this;
 			irqLine_.SetISR(isrJmp);
@@ -86,76 +90,83 @@ SerialStream::SerialStream(int ioBase, int irqNum, int bps, int flowType)
 		SetFlowControl(flowType);
 		SetThreshold(8);
 
-		OutMCR(MC_DTR|MC_RTS|MC_OUT1|MC_OUT2);
+		MCR(MC_DTR|MC_RTS|MC_OUT1|MC_OUT2);
 
 		int enabled = 0;
 		enabled |= 0x01;  // rx data available
 		// enabled |= 0x02;  // thr empty
 		enabled |= 0x04;  // line status change
 		enabled |= 0x08;  // modem status change
-		OutIER(enabled);
+		IER(enabled);
 
 		irqLine_.Connect(); }
 
 
-SerialStream::~SerialStream() {
+ComPort::~ComPort() {
 	Disable(); }
 
 
-void SerialStream::Disable() {
+void ComPort::Disable() {
 	pc::CriticalSection section;
-	OutIER(0);
-	OutMCR(0);
-	OutFCR(0);
-	for (int i=0; i<16; i++) InRBR();
-	InIIR();
+	IER(0);
+	MCR(0);
+	FCR(0);
+	for (int i=0; i<16; i++) RBR();
+	IIR();
 
-	InLSR(); InIIR();
-	InMSR(); InIIR();
-	InLSR(); InIIR();
+	LSR(); IIR();
+	MSR(); IIR();
+	LSR(); IIR();
 	irqLine_.Disconnect();
 	irqLine_.RestoreISR(); }
 
 
-void SerialStream::isrJmp() {
+void ComPort::isrJmp() {
 	theHack->isr(); }
 
 
-inline void SerialStream::isr() {
+inline void ComPort::isr() {
+#ifdef EARLY_EOI
 	irqLine_.Disconnect();
 	pc::EnableInterrupts();
 	irqLine_.SignalEOI();
+#endif
 
 	bool done = false;
 	while (1) {
-		const int signal = InIIR() & 7;
+		const int signal = IIR() & 7;
 		if (signal == IIR_NO_INTERRUPT_PENDING) {
 			break; }
 		switch (signal) {
 		case IIR_RX_DATA_AVAILABLE:
-			OnDataReadyISR();
+			isr_OnDataAvailable();
 			break;
 		case IIR_LINE_STATUS_CHANGE:
-			OnLineStatusChange();
+			isr_OnLineStatusChanged();
 			break;
 		case IIR_MODEM_STATUS_CHANGE:
-			OnModemStatusChange();
+			isr_OnModemStatusChanged();
 			break;
 		case IIR_THR_EMPTY:
-			OnTXBufferEmpty();
+			isr_OnTXBufferEmpty();
 			break; }}
 
+#ifdef EARLY_EOI
 	{
 		pc::CriticalSection section;
-		irqLine_.Connect(); }}
+		irqLine_.Connect(); }
+#else
+	irqLine_.SignalEOI();
+#endif
+	}
 
 
 /**
  * drain RX bytes from the UART
  */
-void SerialStream::OnDataReadyISR() {
-	while (InLSR() & LS_DATA_READY) {
-		char data = InRBR();
+void ComPort::isr_OnDataAvailable() {
+	while (LSR() & LS_DATA_READY) {
+		char data = RBR();
 
 		/* Handle XON/XOFF flow control (TX) */
 		if (flowControlType_ == FLOW_XONXOFF && (data==XOFF || data==XON)) {
@@ -163,39 +174,39 @@ void SerialStream::OnDataReadyISR() {
 			if (!txFlowing_ && willFlow) {
 				// transition from off to on
 				if (txRing_.Loaded()) {
-					OutIER(InIER() | IE_THR_EMPTY); }}
+					IER(IER() | IE_THR_EMPTY); }}
 			txFlowing_ = willFlow;
 			return; }
-
 
 		if (rxRing_.Full()) {
 			return; }  // no room in buffer
 
 		rxBuf_[rxRing_.BackIdx()] = data;
+		rxBuf_[rxRing_.BackIdx()+kBufferSize] = data;
 		rxRing_.PushBack();
 
 		if (rxFlowing_ && RXBufferDanger()) {
 			rxFlowing_ = false;
 			switch (flowControlType_) {
 			case FLOW_RTSCTS:
-				OutMCR(InMCR() & ~MC_RTS);
+				MCR(MCR() & ~MC_RTS);
 				break;
 			case FLOW_NONE:
 				break;
 			case FLOW_XONXOFF:
-				OutTHR(XOFF);
+				THR(XOFF);
 				break;
 			case FLOW_DTRDSR:
-				OutMCR(InMCR() & ~MC_DTR);
+				MCR(MCR() & ~MC_DTR);
 				break; }}}}
 
 
-void SerialStream::OnLineStatusChange() {
-	lsr_ = InLSR(); }
+void ComPort::isr_OnLineStatusChanged() {
+	lsr_ = LSR(); }
 
 
-void SerialStream::OnModemStatusChange() {
-	msr_ = InMSR();
+void ComPort::isr_OnModemStatusChanged() {
+	msr_ = MSR();
 
 	if (flowControlType_ == FLOW_RTSCTS) {
 		txFlowing_ = (msr_ & MS_CTS) != 0; }
@@ -203,44 +214,49 @@ void SerialStream::OnModemStatusChange() {
 		txFlowing_ = (msr_ & MS_DSR) != 0; }
 	
 	if (txRing_.Loaded() && txFlowing_) {
-		OutIER(InIER() | IE_THR_EMPTY); }}
+		IER(IER() | IE_THR_EMPTY); }}
 
 
-void SerialStream::OnTXBufferEmpty() {
-	while (txFlowing_ && InLSR()&LS_THR_EMPTY && txRing_.Loaded()) {
-		OutTHR(txBuf_[txRing_.FrontIdx()]); txRing_.PopFront(); }
+void ComPort::isr_OnTXBufferEmpty() {
+	for (int cnt=0; cnt<16 && txFlowing_ && txRing_.Loaded(); cnt++) {
+		THR(txBuf_[txRing_.FrontIdx()]); txRing_.PopFront(); }
 	if (txRing_.Empty() || !txFlowing_) {
-		OutIER(InIER() & ~IE_THR_EMPTY); }}
+		IER(IER() & ~IE_THR_EMPTY); }}
 
 
-void SerialStream::SetBaudRate(int bps) {
+void ComPort::SetBaudRate(int bps) {
 	int divisor = BaudDivisor(bps);
-	OutDIV(divisor); }
+	DIV(divisor); }
 
-void SerialStream::SetWordSize(int bits) {
+
+void ComPort::SetWordSize(int bits) {
 	if (5 <= bits && bits <= 8) {
-		OutLCR(InLCR() & 0xfc | (bits-5)); }
+		LCR(LCR() & 0xfc | (bits-5)); }
 	else {
 		throw std::runtime_error("bad data size"); }}
 
-void SerialStream::SetParityMode(char mode) {
+
+void ComPort::SetParityMode(char mode) {
 	if (mode != 'N') {
 		throw std::runtime_error("expected parity N"); }
 	// 11000111
-	OutLCR(InLCR() & 0xc7); }
+	LCR(LCR() & 0xc7); }
 
-void SerialStream::SetStopSize(int bits) {
+
+void ComPort::SetStopSize(int bits) {
 	if (bits != 1) {
 		throw std::runtime_error("expected stop size 1"); }
 	// 11111011
-	OutLCR(InLCR() & 0xfb); }
+	LCR(LCR() & 0xfb); }
 
-void SerialStream::SetFlowControl(int fc) {
+
+void ComPort::SetFlowControl(int fc) {
 	txFlowing_ = true;
 	rxFlowing_ = true;
 	flowControlType_ = fc; }
 
-void SerialStream::SetThreshold(int level) {
+
+void ComPort::SetThreshold(int level) {
 	int enable = 0x01;
 	int rx_reset = 0x02;
 	int tx_reset = 0x04;
@@ -255,110 +271,105 @@ void SerialStream::SetThreshold(int level) {
 	else {
 		level = 0x00; }
 
-	OutFCR(enable | rx_reset | tx_reset | level); }
+	FCR(enable | rx_reset | tx_reset | level); }
 
 
-bool SerialStream::RXBufferDanger() const {
+bool ComPort::RXBufferDanger() const {
 	return rxRing_.Size() > rxRing_.Capacity() * kRxBufDangerPct; }
 
-bool SerialStream::RXBufferSafe() const {
+
+bool ComPort::RXBufferSafe() const {
 	return rxRing_.Size() < rxRing_.Capacity() * kRxBufSafePct; }
 
 
 
-char SerialStream::InRBR() {
+char ComPort::RBR() {
 	return InB(ioBase_+RI_RBR); }
-char SerialStream::InIER() {
+char ComPort::IER() {
 	return InB(ioBase_+RI_IER); }
-char SerialStream::InIIR() {
+char ComPort::IIR() {
 	return InB(ioBase_+RI_IIR); }
-char SerialStream::InLCR() {
+char ComPort::LCR() {
 	return InB(ioBase_+RI_LCR); }
-char SerialStream::InMCR() {
+char ComPort::MCR() {
 	return InB(ioBase_+RI_MCR); }
-char SerialStream::InLSR() {
+char ComPort::LSR() {
 	return InB(ioBase_+RI_LSR); }
-char SerialStream::InMSR() {
+char ComPort::MSR() {
 	return InB(ioBase_+RI_MSR); }
-int SerialStream::InDIV() {
-	SetDLAB(1);
+int ComPort::DIV() {
+	DLAB(1);
 	int value = InW(ioBase_+RI_DLL);
-	SetDLAB(0);
+	DLAB(0);
 	return value; }
 
-void SerialStream::OutTHR(char value) {
+void ComPort::THR(char value) {
 	OutB(ioBase_+RI_THR, value); }
-void SerialStream::OutIER(char value) {
+void ComPort::IER(char value) {
 	OutB(ioBase_+RI_IER, value); }
-void SerialStream::OutFCR(char value) {
+void ComPort::FCR(char value) {
 	OutB(ioBase_+RI_FCR, value); }
-void SerialStream::OutLCR(char value) {
+void ComPort::LCR(char value) {
 	OutB(ioBase_+RI_LCR, value); }
-void SerialStream::OutMCR(char value) {
+void ComPort::MCR(char value) {
 	OutB(ioBase_+RI_MCR, value); }
-void SerialStream::OutDIV(int value) {
-	SetDLAB(1);
+void ComPort::DIV(int value) {
+	DLAB(1);
 	OutW(ioBase_+RI_DLL, value);
-	SetDLAB(0); }
+	DLAB(0); }
 
 
-void SerialStream::SetDLAB(int num) {
+void ComPort::DLAB(int num) {
 	// DLAB bit is LCR bit 7.
 	OutB(ioBase_+RI_LCR, (InB(ioBase_+RI_LCR)&0x7f)|(num<<7)); }
 
 
-void SerialStream::MaybeStartRXFlowing() {
+void ComPort::MaybeStartRXFlowing() {
 	if (!rxFlowing_ && RXBufferSafe()) {
 		rxFlowing_ = true;
 		if (flowControlType_ == FLOW_XONXOFF) {
-			OutTHR(XON); }
+			THR(XON); }
 		else if (flowControlType_ == FLOW_RTSCTS) {
-			OutMCR(InMCR()|MC_RTS); }
+			MCR(MCR()|MC_RTS); }
 		else if (flowControlType_ == FLOW_DTRDSR) {
-			OutMCR(InMCR()|MC_DTR); }}}
+			MCR(MCR()|MC_DTR); }}}
 
 
-bool SerialStream::CanRead() const {
-	return rxRing_.Loaded(); }
+std::string_view ComPort::Peek(int limit) const {
+	int begin = rxRing_.FrontIdx();
+	int size = rxRing_.Size();
+	return { rxBuf_+begin, std::size_t(std::min(limit, size)) }; }
 
 
-bool SerialStream::CanWrite() const {
-	return txFlowing_ && !txRing_.Full(); }
+void ComPort::Ack(std::string_view seg) {
+	rxRing_.PopFront(seg.size()); }
 
 
-int SerialStream::Read(char *buf, int len) {
+int ComPort::Write(std::string_view buf) {
 	pc::CriticalSection section;
-	int idx;
-	for (idx = 0; idx < len && rxRing_.Loaded(); idx++) {
-		buf[idx] = rxBuf_[rxRing_.FrontIdx()];  rxRing_.PopFront(); }
-	MaybeStartRXFlowing();
-	return idx; }
-
-
-int SerialStream::Write(const char *buf, int len) {
-	pc::CriticalSection section;
-	int idx;
-	for (idx = 0; idx < len; idx++) {
+	int many = 0;
+	for (const auto ch : buf) {
 		if (txRing_.Full()) {
 			break; }
-		txBuf_[txRing_.BackIdx()] = buf[idx];
-		txRing_.PushBack(); }
+		txBuf_[txRing_.BackIdx()] = ch;
+		txRing_.PushBack();
+		++many; }
 
 	if (txRing_.Loaded()) {
-		OutIER(InIER() | IE_THR_EMPTY); }
-	return idx; }
+		IER(IER() | IE_THR_EMPTY); }
+	return many; }
 
 
 /*
-SerialStream MakeSerialStream(std::string descr, int baud) {
+ComPort MakeComPort(std::string descr, int baud) {
 	if (descr == "com1") {
-		return SerialStream(0x3f8, 4, baud); }
+		return ComPort(0x3f8, 4, baud); }
 	else if (descr == "com2") {
-		return SerialStream(0x2f8, 3, baud); }
+		return ComPort(0x2f8, 3, baud); }
 	else if (descr == "com3") {
-		return SerialStream(0x3e8, 4, baud); }
+		return ComPort(0x3e8, 4, baud); }
 	else if (descr == "com4") {
-		return SerialStream(0x2e8, 3, baud); }
+		return ComPort(0x2e8, 3, baud); }
 	throw std::runtime_error("bad serial descr"); }
 */
 

@@ -200,18 +200,28 @@ void Blaster::isrJmp() {
 
 
 inline void Blaster::isr() {
-	/*if (!irqLine_.IsReal()) {
+#ifdef DETECT_SURIOUS_IRQ
+	if (!irqLine_.IsReal()) {
 		spuriousIRQCnt++;
-		return; }*/
+		return; }
+#endif
 	ACK();
+
+#ifdef EARLY_EOI
 	irqLine_.SignalEOI();
 	pc::EnableInterrupts();
+#endif
 
 	std::swap(userBuffer_, playBuffer_);
 	void* dst = (char*)GetUserBuffer() + __djgpp_conventional_base;
 	int fmt = (bits_ == 8 ? 1 : 2);
 	if (userProc_ != nullptr) {
-		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }}
+		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }
+
+#ifndef EARLY_EOI
+	irqLine_.SignalEOI();
+#endif
+	}
 
 
 inline void Blaster::ACK() {

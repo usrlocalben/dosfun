@@ -3,10 +3,11 @@ HOST_CPP = g++
 OBJ = o
 LIB = a
 
-COMMON_FLAGS = -DSHOW_TIMING -DTTYCON
+COMMON_FLAGS = -std=gnu++17 -DSHOW_TIMING -DTTYCON -DEARLY_EOI
 RELEASE_FLAGS = -O2 -ffast-math -DNDEBUG
 DEBUG_FLAGS = -g
 
+#CPPFLAGS = $(COMMON_FLAGS) $(DEBUG_FLAGS)
 CPPFLAGS = $(COMMON_FLAGS) $(RELEASE_FLAGS)
 CPP = /usr/local/djgpp/bin/i586-pc-msdosdjgpp-g++ -c $(CPPFLAGS)
 
@@ -30,9 +31,9 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB)
+app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
 	$(CPP) $<
-app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB)
+app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -72,9 +73,9 @@ vga_mode.$(LIB): vga_mode.$(OBJ)              vga_reg.$(LIB) vga_bios.$(LIB) pc_
 	@rm -f $@
 	$(AR) $@ $^
 
-vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB)
+vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB) ivec.$(LIB)
 	$(CPP) $<
-vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB)
+vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB) ivec.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -159,6 +160,18 @@ algorithm.$(LIB): algorithm.$(OBJ)
 ost.$(OBJ): ost.cpp    ost.hpp
 	$(CPP) $<
 ost.$(LIB): ost.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+text.$(OBJ): text.cpp    text.hpp
+	$(CPP) $<
+text.$(LIB): text.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+ivec.$(OBJ): ivec.cpp    ivec.hpp
+	$(CPP) $<
+ivec.$(LIB): ivec.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 

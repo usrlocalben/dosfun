@@ -48,8 +48,8 @@ void SetModeX() {
 	OutW(VP_CRTC, 0xe317);  // turn on byte mode
 
 	// clear ram
-	SelectPlanes(0xf);
-	uint8_t *dst = VGAPTR + __djgpp_conventional_base;
+	Planes(0xf);
+	uint8_t *dst = VRAM_ADDR + __djgpp_conventional_base;
 	for (int i=0; i<65536; i++) {
 		dst[i] = 0; }}
 

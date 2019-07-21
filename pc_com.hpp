@@ -1,11 +1,13 @@
 #pragma once
-#include <string>
+#include <string_view>
 
 #include "algorithm.hpp"
 #include "pc_pic.hpp"
 
 namespace rqdq {
 namespace pc {
+
+extern volatile int txCnt;
 
 const int kBufferSize = 2048;
 
@@ -14,21 +16,25 @@ const int FLOW_RTSCTS = 1;
 const int FLOW_DTRDSR = 2;
 const int FLOW_XONXOFF = 3;
 
-
-class SerialStream {
+class ComPort {
 public:
-	SerialStream(int ioBase, int irqNum, int baudRateInBitsPerSecond, int flowType);
-	~SerialStream();
+	ComPort(int ioBase, int irqNum, int baudRateInBitsPerSecond, int flowType);
+	~ComPort();
 
 private:
 	static void isrJmp();
 	void isr();
-	void OnDataReadyISR();
-	void OnLineStatusChange();
-	void OnModemStatusChange();
-	void OnTXBufferEmpty();
+	void isr_OnDataAvailable();
+	void isr_OnLineStatusChanged();
+	void isr_OnModemStatusChanged();
+	void isr_OnTXBufferEmpty();
 
 	void Disable();
+
+	void MaybeStartRXFlowing();
+	bool RXBufferDanger() const;
+	bool RXBufferSafe() const;
+
 	void SetBaudRate(int bps);
 	void SetWordSize(int bits);
 	void SetParityMode(char mode);
@@ -36,33 +42,29 @@ private:
 	void SetFlowControl(int fc);
 	void SetThreshold(int level);
 		
-	char InRBR();
-	char InIER();
-	char InIIR();
-	char InLCR();
-	char InMCR();
-	char InLSR();
-	char InMSR();
-	int InDIV();
+	void DLAB(int num);
 
-	void OutTHR(char value);
-	void OutIER(char value);
-	void OutFCR(char value);
-	void OutLCR(char value);
-	void OutMCR(char value);
-	void OutDIV(int value);
-
-	void SetDLAB(int num);
-	void MaybeStartRXFlowing();
-
-	bool RXBufferDanger() const;
-	bool RXBufferSafe() const;
+	char RBR();
+	             void THR(char value);
+	char IER();  void IER(char value);
+	char IIR();
+	char LCR();  void LCR(char value);
+	char MCR();  void MCR(char value);
+	char LSR();
+	char MSR();
+	             void FCR(char value);
+	int  DIV();  void DIV(int value);
 
 public:
-	bool CanRead() const;
-	bool CanWrite() const;
-	int Read(char *buf, int len);
-	int Write(const char *buf, int len);
+	bool DataAvailable() const {
+		return rxRing_.Loaded(); }
+	// int Read(char *buf, int len);
+	std::string_view Peek(int limit) const;
+	void Ack(std::string_view seg);
+
+	bool CanWrite() const {
+		return txFlowing_ && !rxRing_.Full(); }
+	int Write(std::string_view buf);
 
 private:
 	int ioBase_;
@@ -73,8 +75,8 @@ private:
 	char lsr_{};
 	char msr_{};
 
-	uint8_t rxBuf_[kBufferSize];
-	uint8_t txBuf_[kBufferSize];
+	char rxBuf_[kBufferSize*2];
+	char txBuf_[kBufferSize];
 	alg::RingIndex<kBufferSize> rxRing_{};
 	alg::RingIndex<kBufferSize> txRing_{};
 	bool rxFlowing_{true};
@@ -82,7 +84,7 @@ private:
 	int flowControlType_; };
 
 
-// SerialStream MakeSerialStream(std::string descr, int baud);
+// ComPort MakeComPort(std::string descr, int baud);
 
 
 }  // namespace pc

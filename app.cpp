@@ -20,6 +20,7 @@
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
+#include "text.hpp"
 
 using std::uint8_t;
 using std::int16_t;
@@ -49,7 +50,7 @@ public:
 
 	void Run() {
 #ifdef TTYCON
-		pc::SerialStream tty(0x2f8, 3, 115200, pc::FLOW_NONE);
+		pc::ComPort tty(0x2f8, 3, 115200, pc::FLOW_NONE);
 #endif
 		pc::Keyboard kbd;
 
@@ -73,9 +74,9 @@ public:
 
 		quitSoon_ = false;
 		std::vector<char> events;
-		const char MSG_KBD_CAN_READ = 1;
+		const char MSG_KBD_DATA_AVAILABLE = 1;
 		const char MSG_VGA_CAN_WRITE = 2;
-		const char MSG_TTY_CAN_READ = 3;
+		const char MSG_TTY_DATA_AVAILABLE = 3;
 		const char MSG_TTY_CAN_WRITE = 4;
 
 		auto WaitForMultipleObjects = [&](const std::vector<char>& lst) -> int {
@@ -84,13 +85,13 @@ public:
 				for (int idx=0; idx<lst.size(); idx++) {
 					const auto& evt = lst[idx];
 					switch (evt) {
-					case MSG_KBD_CAN_READ:
+					case MSG_KBD_DATA_AVAILABLE:
 						if (kbd.IsDataAvailable()) return idx; break;
 					case MSG_VGA_CAN_WRITE:
 						if (vga::backLocked) return idx; break;
 #ifdef TTYCON
-					case MSG_TTY_CAN_READ:
-						if (tty.CanRead()) return idx; break;
+					case MSG_TTY_DATA_AVAILABLE:
+						if (tty.DataAvailable()) return idx; break;
 					case MSG_TTY_CAN_WRITE:
 						if (tty.CanWrite()) return idx; break;
 #endif
@@ -102,9 +103,9 @@ public:
 		while (!quitSoon_) {
 			events.clear();
 			events.push_back(MSG_VGA_CAN_WRITE);
-			events.push_back(MSG_KBD_CAN_READ);
+			events.push_back(MSG_KBD_DATA_AVAILABLE);
 #ifdef TTYCON
-			events.push_back(MSG_TTY_CAN_READ);
+			events.push_back(MSG_TTY_DATA_AVAILABLE);
 			if (log::Loaded()) {
 				events.push_back(MSG_TTY_CAN_WRITE); }
 #endif
@@ -112,7 +113,7 @@ public:
 			int idx = WaitForMultipleObjects(events);
 			const auto msg = events[idx];
 
-			if (msg == MSG_KBD_CAN_READ) {
+			if (msg == MSG_KBD_DATA_AVAILABLE) {
 				pc::Event ke = kbd.GetMessage();
 				if (ke.down) {
 					OnKeyDown(ke.scanCode); }}
@@ -121,38 +122,18 @@ public:
 				static std::string line;
 				line.assign(log::at(log::FrontIdx()));
 				line += "\r\n";
-				int rem = line.size() - llp;
-				int sent = tty.Write(line.c_str()+llp, rem);
-				if (rem == sent) {
+				std::string_view segment{ line.c_str()+llp, line.size() - llp };
+				int sent = tty.Write(segment);
+				llp += sent;
+				if (llp == line.size()) {
 					llp = 0;
-					log::PopFront(); }
-				else {
-					llp += sent; }}
-			else if (msg == MSG_TTY_CAN_READ) {
-				char tmp[2049];
-				char tmp2[2049];
-				char *out = tmp2;
-
-				int cnt = tty.Read(tmp, 2048);
-				out += sprintf(out, "RX: [");
-				for (int i=0; i<cnt; i++) {
-					char ch = tmp[i];
-					if (ch == '\n') {
-						out += sprintf(out, "\\n"); }
-					else if (ch == '\r') {
-						out += sprintf(out, "\\r"); }
-					else if (ch == '\t') {
-						out += sprintf(out, "\\t"); }
-					else if (('a' <= ch && ch <= 'z') ||
-							 ('A' <= ch && ch <= 'Z') ||
-							 ('0' <= ch && ch <= '9')) {
-						out += sprintf(out, "%c", ch); }
-					else {
-						out += sprintf(out, "\\%02x", ch); }
-					}
-				out += sprintf(out, "]\r\n");
-				// printf(tmp2);
-				tty.Write(tmp2, out-tmp2); }
+					log::PopFront(); }}
+			else if (msg == MSG_TTY_DATA_AVAILABLE) {
+				char tmp[2048];
+				auto seg = tty.Peek(128);
+				sprintf(tmp, "tty: received %s", text::JsonStringify(seg).data());
+				tty.Ack(seg);
+				log::info(tmp); }
 #endif
 			else if (msg == MSG_VGA_CAN_WRITE) {
 				vga::AnimationPage animationPage;
@@ -167,7 +148,7 @@ private:
 		int patternNum = playerPtr_->GetCurrentPos();
 		int rowNum = playerPtr_->GetCurrentRow();
 #ifdef SHOW_TIMING
-		vga::SetRGB(0, 0x30, 0x30, 0x30);
+		vga::Color(0, { 0x30, 0x30, 0x30 });
 #endif
 		pc::Stopwatch drawtime;
 		DrawKefrensBars(vram, T, patternNum, rowNum);
@@ -176,7 +157,7 @@ private:
 			if (m > 0) {
 				mLst_[mCnt_++] = m; }}
 #ifdef SHOW_TIMING
-		vga::SetRGB(0, 0,0,0);
+		vga::Color(0, { 0, 0, 0 });
 #endif
 		}
 
@@ -223,7 +204,4 @@ int main() {
 		return 1; }
 
 	rqdq::app::Demo().Run();
-	const std::uint16_t after = rqdq::pc::GetPICMasks();
-	std::printf("before: %04x\n", before);
-	std::printf("after:  %04x", after);
 	return 0; }

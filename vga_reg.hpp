@@ -6,6 +6,7 @@
 
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
+#include "ivec.hpp"
 
 namespace rqdq {
 namespace vga {
@@ -25,41 +26,45 @@ const std::uint8_t CRT_LOW_ADDR = 0x0d;
 
 const std::uint8_t SC_MAP_MASK = 0x02;
 
-std::uint8_t* const VGAPTR = (std::uint8_t*)0xa0000L;
+std::uint8_t* const VRAM_ADDR = (std::uint8_t*)0xa0000L;
 
 
-inline void SetRGB(int idx, int r, int g, int b) {
+inline void Color(int idx, rml::IVec3 c) {
 	pc::OutB(VP_PALETTE_INDEX, idx);
-	pc::OutB(VP_PALETTE_DATA, r);
-	pc::OutB(VP_PALETTE_DATA, g);
-	pc::OutB(VP_PALETTE_DATA, b); }
+	pc::OutB(VP_PALETTE_DATA, c.x);
+	pc::OutB(VP_PALETTE_DATA, c.y);
+	pc::OutB(VP_PALETTE_DATA, c.z); }
 
 
-inline void SetStartAddress(std::uint16_t addr) {
+inline rml::IVec3 Color(int idx) {
+	pc::OutB(VP_PALETTE_INDEX, idx);
+	int r = pc::InB(VP_PALETTE_DATA);
+	int g = pc::InB(VP_PALETTE_DATA);
+	int b = pc::InB(VP_PALETTE_DATA);
+	return { r, g, b }; }
+
+
+inline void StartAddr(std::uint16_t addr) {
 	pc::OutW(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
 	pc::OutW(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
 
 
-inline void SetBitMask(std::uint8_t mask) {
+inline void MergeMask(std::uint8_t mask) {
 	pc::OutW(VP_GFXC, mask<<8|0x08); }
 
 
-inline int GetBitMask() {
+inline int MergeMask() {
 	pc::OutB(VP_GFXC, 0x08);
 	return pc::InB(VP_GFXC+1); }
 
 
-inline void SelectPlanes(std::uint8_t mask) {
+inline void Planes(std::uint8_t mask) {
 	pc::OutW(VP_SEQC, mask<<8|SC_MAP_MASK); }
 
 
-inline int GetPlanes() {
+inline int Planes() {
 	pc::OutB(VP_SEQC, SC_MAP_MASK);
 	return pc::InB(VP_SEQC+1); }
-
-
-inline void SelectAllPlanes() {
-	SelectPlanes(0xf); }
 
 
 /*

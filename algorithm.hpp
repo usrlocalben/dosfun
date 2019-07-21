@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <cstdint>
 
 namespace rqdq {
@@ -38,7 +39,12 @@ public:
 		return Mod(front_); }
 
 	void PopFront() {
+		assert(Size() > 0);
 		front_++; }
+
+	void PopFront(int n) {
+		assert(Size() >= n);
+		front_ += n; }
 
 private:
 	std::uint32_t front_;

@@ -105,11 +105,11 @@ public:
 		 * when execution begins, retrace still hasn't started
 		 */
 #ifdef SHOW_TIMING
-		SetRGB(0, 0x3f,0x3f,0x3f);
+		Color(0, {0x3f,0x2f,0x3f});
 #endif
 		vga::SpinUntilRetracing();
 #ifdef SHOW_TIMING
-		SetRGB(0, 0x0, 0x0, 0x0);
+		Color(0, {0,0,0});
 #endif
 
 		/*

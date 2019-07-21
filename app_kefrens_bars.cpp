@@ -58,7 +58,7 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 
 		// copy row[] to vram planes
 		for (int p=0; p<4; p++) {
-			vga::SelectPlanes(1<<p);
+			vga::Planes(1<<p);
 			std::memcpy(rowPtr, row+p*80, 80); }
 
 		rowPtr += 80; }}

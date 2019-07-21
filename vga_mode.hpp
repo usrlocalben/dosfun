@@ -24,8 +24,8 @@ struct VRAMPage {
 
 
 const vga::VRAMPage modeXPages[2] = {
-	{ 0, vga::VGAPTR, 0 },
-	{ 1, vga::VGAPTR + (320*240/4), 320*240/4 } };
+	{ 0, vga::VRAM_ADDR, 0 },
+	{ 1, vga::VRAM_ADDR + (320*240/4), 320*240/4 } };
 
 
 void SetModeX();
