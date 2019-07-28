@@ -6,7 +6,7 @@
 
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
-#include "ivec.hpp"
+#include "vec.hpp"
 
 namespace rqdq {
 namespace vga {
@@ -14,7 +14,8 @@ namespace vga {
 const int VP_SEQC = 0x3c4;  // sequence controller
 const int VP_CRTC = 0x3d4;  // CRT controller
 const int VP_MISC = 0x3c2;
-const int VP_PALETTE_INDEX = 0x3c8;
+const int VP_PALETTE_READ = 0x3c7;
+const int VP_PALETTE_WRITE = 0x3c8;
 const int VP_PALETTE_DATA = 0x3c9;
 const int VP_GFXC = 0x3ce;  // graphics controller
 const int VP_STA1 = 0x3da;  // Input Status #1 (color mode)
@@ -30,17 +31,26 @@ std::uint8_t* const VRAM_ADDR = (std::uint8_t*)0xa0000L;
 
 
 inline void Color(int idx, rml::IVec3 c) {
-	pc::OutB(VP_PALETTE_INDEX, idx);
+	// pc::OutB(0x3c6, 0xff);
+	pc::OutB(VP_PALETTE_WRITE, idx);
 	pc::OutB(VP_PALETTE_DATA, c.x);
 	pc::OutB(VP_PALETTE_DATA, c.y);
 	pc::OutB(VP_PALETTE_DATA, c.z); }
 
 
 inline rml::IVec3 Color(int idx) {
-	pc::OutB(VP_PALETTE_INDEX, idx);
+	// pc::OutB(0x3c6, 0xff);
+	pc::OutB(VP_PALETTE_READ, idx);
 	int r = pc::InB(VP_PALETTE_DATA);
 	int g = pc::InB(VP_PALETTE_DATA);
 	int b = pc::InB(VP_PALETTE_DATA);
+	return { r, g, b }; }
+
+
+inline rml::Vec3 ToFloat(rml::IVec3 c) {
+	float r = float(c.x) / 0x3f;
+	float g = float(c.y) / 0x3f;
+	float b = float(c.z) / 0x3f;
 	return { r, g, b }; }
 
 

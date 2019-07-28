@@ -3,8 +3,8 @@ HOST_CPP = g++
 OBJ = o
 LIB = a
 
-COMMON_FLAGS = -std=gnu++17 -DSHOW_TIMING -DTTYCON -DEARLY_EOI
-RELEASE_FLAGS = -O2 -ffast-math -DNDEBUG
+COMMON_FLAGS = -std=gnu++17 -DSHOW_TIMING -DTTYCON #-DEARLY_EOI
+RELEASE_FLAGS = -O3 -ffast-math -DNDEBUG
 DEBUG_FLAGS = -g
 
 #CPPFLAGS = $(COMMON_FLAGS) $(DEBUG_FLAGS)
@@ -37,15 +37,15 @@ app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tiny
 	@rm -f $@
 	$(AR) $@ $^
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) algorithm.$(LIB)
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) algorithm.$(LIB) canvas.$(LIB)
 	$(CPP) $<
-app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) algorithm.$(LIB)
+app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) algorithm.$(LIB) canvas.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB)
+app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB) bkg.$(LIB)
 	$(CPP) $<
-app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB)
+app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB) bkg.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -73,9 +73,9 @@ vga_mode.$(LIB): vga_mode.$(OBJ)              vga_reg.$(LIB) vga_bios.$(LIB) pc_
 	@rm -f $@
 	$(AR) $@ $^
 
-vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB) ivec.$(LIB)
+vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB) vec.$(LIB)
 	$(CPP) $<
-vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB) ivec.$(LIB)
+vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB) vec.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -169,14 +169,35 @@ text.$(LIB): text.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-ivec.$(OBJ): ivec.cpp    ivec.hpp
+vec.$(OBJ): vec.cpp    vec.hpp
 	$(CPP) $<
-ivec.$(LIB): ivec.$(OBJ)
+vec.$(LIB): vec.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+canvas.$(OBJ): canvas.cpp    canvas.hpp vec.$(LIB) picopng.$(LIB)
+	$(CPP) $<
+canvas.$(LIB): canvas.$(OBJ)            vec.$(LIB) picopng.$(LIB)
+	@rm -f $@
+	$(AR) $@ $^
+
+picopng.$(OBJ): picopng.cpp    picopng.hpp
+	$(CPP) $<
+picopng.$(LIB): picopng.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+bkg.$(OBJ): bkg.cpp    bkg.hpp
+	$(CPP) $<
+bkg.$(LIB): bkg.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
 ost.cpp ost.hpp: urea.mod bin2cpp.exe
 	./bin2cpp $< ost rqdq ostData
+
+bkg.cpp bkg.hpp: bkg.png bin2cpp.exe
+	./bin2cpp $< bkg rqdq bkgData
 
 bin2cpp.exe: bin2cpp.cpp
 	$(HOST_CPP) -o $@ $<

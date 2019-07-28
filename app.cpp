@@ -60,6 +60,8 @@ public:
 		measuredRefreshRateInHz_ = flipPagesIRQ.GetHz();
 		log::info("measuredRefreshRate = %4.2f hz", measuredRefreshRateInHz_);
 
+		effectPtr_.reset(new KefrensBars());
+
 		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
 		                     kSoundBlasterIRQNum,
 		                     kSoundBlasterDMAChannelNum,
@@ -71,6 +73,7 @@ public:
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
 
 		log::info("system ready.");
+
 
 		quitSoon_ = false;
 		std::vector<char> events;
@@ -151,7 +154,7 @@ private:
 		vga::Color(0, { 0x30, 0x30, 0x30 });
 #endif
 		pc::Stopwatch drawtime;
-		DrawKefrensBars(vram, T, patternNum, rowNum);
+		effectPtr_->Draw(vram, T, patternNum, rowNum);
 		if (mCnt_ < kNumDrawTimeSamples) {
 			float m = drawtime.GetElapsedTimeInSeconds();
 			if (m > 0) {
@@ -170,6 +173,7 @@ private:
 	int llp;
 	std::unique_ptr<kb::Paula> paulaPtr_;
 	std::unique_ptr<kb::ModPlayer> playerPtr_;
+	std::unique_ptr<KefrensBars> effectPtr_;
 
 public:
 	float measuredRefreshRateInHz_;
