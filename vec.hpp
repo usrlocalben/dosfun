@@ -13,10 +13,15 @@ public:
 	IVec2(IVec2&&) = default;
 	IVec2& operator=(IVec2&&) = default;
 
-	bool operator==(IVec2 rhs) const { return x==rhs.x && y==rhs.y; }
-
 	IVec2(int a) :x(a), y(a) {}
 	IVec2(int a, int b) :x(a), y(b) {}
+
+	bool operator==(IVec2 rhs) const { return x==rhs.x && y==rhs.y; }
+
+	IVec2 operator+(IVec2 rhs) const { return { x+rhs.x, y+rhs.y }; }
+	IVec2 operator-(IVec2 rhs) const { return { x-rhs.x, y-rhs.y }; }
+	IVec2 operator*(IVec2 rhs) const { return { x*rhs.x, y*rhs.y }; }
+	IVec2 operator/(IVec2 rhs) const { return { x/rhs.x, y/rhs.y }; }
 
 	std::int32_t x, y; };
 

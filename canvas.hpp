@@ -68,5 +68,9 @@ void Convert(const TrueColorCanvas& src, const std::vector<rml::Vec3>& pal, Inde
 
 std::vector<uint8_t> MakeIndexedBrightnessTable(const std::vector<rml::Vec3>& pal);
 
+void Copy(const IndexCanvas& src, IndexCanvas& dst, rml::IVec2 origin={ 0, 0 });
+
+void PlanarizeLines(IndexCanvas&);
+
 }  // namespace rgl
 }  // namespace rqdq

@@ -95,5 +95,27 @@ std::vector<uint8_t> MakeIndexedBrightnessTable(const std::vector<rml::Vec3>& pa
 	return out; }
 
 
+void Copy(const IndexCanvas& src, IndexCanvas& dst, rml::IVec2 origin) {
+	for (int y=0; y<dst.dim.y; y++) {
+		for (int x=0; x<dst.dim.x; x++) {
+			const auto dstCoord = rml::IVec2{ x, y };
+			const auto srcCoord = dstCoord + origin;
+			dst.at(dstCoord) = src.at(srcCoord); }}}
+
+
+void PlanarizeLines(IndexCanvas& c) {
+	static std::vector<uint8_t> tmp;
+	tmp.resize(c.dim.x);
+	int span = c.dim.x / 4;
+	for (int y=0; y<c.dim.y; y++) {
+		for (int x=0; x<c.dim.x; x++) {
+			const auto px = c.at({ x, y });
+			int pl = x%4;
+			int of = x/4;
+			tmp[pl*span+of] = px; }
+		for (int x=0; x<c.dim.x; x++) {
+			c.at({ x, y }) = tmp[x]; }}}
+
+
 }  // namespace rgl
 }  // namespace rqdq
