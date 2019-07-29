@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <stdexcept>
+
 #include <dpmi.h>  // go32_dpmi_seginfo, {get,set}_protected_mode_interrupt_vector
 #include <go32.h>
 

@@ -2,11 +2,12 @@
  * support for Intel 8237 DMA controllers
  */
 #pragma once
+#include "os_realmem.hpp"
+
 #include <cstdint>
 #include <cstring>  // memset
-#include <sys/nearptr.h>
 
-#include "os_realmem.hpp"
+#include <sys/nearptr.h>
 
 namespace rqdq {
 namespace pc {

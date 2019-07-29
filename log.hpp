@@ -1,10 +1,10 @@
 #pragma once
+#include "algorithm.hpp"
+
 #include <cstdarg>
 #include <cstdio>
 #include <string>
 #include <vector>
-
-#include "algorithm.hpp"
 
 namespace rqdq {
 namespace log {
@@ -36,7 +36,6 @@ inline void Reserve() {
 
 inline void info(const char* fmt, ...) {
 	using namespace std;
-
 	char buf[1024];
 	va_list args;
 	va_start(args, fmt);

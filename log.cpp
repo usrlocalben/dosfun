@@ -1,10 +1,11 @@
 #include "log.hpp"
+
+#include "algorithm.hpp"
+
 #include <cstdarg>
 #include <cstdio>
 #include <string>
 #include <vector>
-
-#include "algorithm.hpp"
 
 namespace rqdq {
 namespace log {

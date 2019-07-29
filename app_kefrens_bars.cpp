@@ -1,17 +1,18 @@
 #include "app_kefrens_bars.hpp"
 
+#include "bkg.hpp"
+#include "canvas.hpp"
+#include "picopng.hpp"
+#include "vec.hpp"
+#include "vga_mode.hpp"
+#include "vga_reg.hpp"
+
 #include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <sys/nearptr.h>
 
-#include "canvas.hpp"
-#include "vec.hpp"
-#include "picopng.hpp"
-#include "vga_mode.hpp"
-#include "vga_reg.hpp"
-#include "bkg.hpp"
+#include <sys/nearptr.h>
 
 using std::uint8_t;
 
@@ -55,7 +56,18 @@ KefrensBars::KefrensBars() {
 	colorMap_ = rgl::MakeIndexedBrightnessTable(vgaPal);
 
 	bkg_.Resize(bkg.dim);
-	rgl::Convert(bkg, vgaPal, bkg_); }
+	rgl::Convert(bkg, vgaPal, bkg_);
+
+	for (int y=0; y<240; y++) {
+		char tmp[320];
+		for (int x=0; x<320; x++) {
+			const auto px = bkg_.at({ x, y });
+			int pl = x%4;
+			int of = x/4;
+			tmp[pl*80+of] = px; }
+		for (int x=0; x<320; x++) {
+			bkg_.at({ x, y }) = tmp[x]; }}
+}
 
 
 void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int rowNum) {
@@ -109,13 +121,12 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 		// copy row[] to vram planes
 		for (int p=0; p<4; p++) {
 			vga::Planes(1<<p);
-			for (int rx=0; rx<80; rx++) {
-				rml::IVec2 coord{ rx*4+p, yyy };
-				auto bPx = bkg_.at(coord);
-				// bPx = colorMap_[ foo*256 + bPx ];
-				auto fPx = row[p*80+rx];
-				auto mask = rowMask[p*80+rx];
-				rowPtr[rx] = (fPx&mask) | (bPx&~mask); }
+			for (int rx=0; rx<80; rx+=4) {
+				uint32_t bPx = *reinterpret_cast<uint32_t*>(bkg_.buf.data() + (yyy * bkg_.stride) + (p*80) + rx);
+				uint32_t fPx = *reinterpret_cast<uint32_t*>(row + (p*80) + rx);
+				uint32_t mask = *reinterpret_cast<uint32_t*>(rowMask + (p*80) + rx);
+				uint32_t merged = (fPx&mask) | (bPx&~mask);
+				*reinterpret_cast<uint32_t*>(rowPtr + rx) = merged; }
 			rowPtr[79] = 0; }
 
 		rowPtr += 80;

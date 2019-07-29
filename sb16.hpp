@@ -1,8 +1,8 @@
 #pragma once
-#include <cstdint>
-
 #include "pc_dma.hpp"
 #include "pc_pic.hpp"
+
+#include <cstdint>
 
 namespace rqdq {
 namespace snd {

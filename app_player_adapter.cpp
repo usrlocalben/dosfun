@@ -1,13 +1,13 @@
 #include "app_player_adapter.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <limits>
-
 #include "kb_tinymod.hpp"
 #ifdef SHOW_TIMING
 #include "vga_reg.hpp"
 #endif
+
+#include <algorithm>
+#include <cstdint>
+#include <limits>
 
 using std::int8_t;
 using std::uint8_t;

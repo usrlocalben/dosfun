@@ -1,13 +1,10 @@
 #pragma once
-#include <cstdint>
-#include <cstdlib>
-
 #include "log.hpp"
 #include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
-using std::uint8_t;
-using std::uint16_t;
+#include <cstdint>
+#include <cstdlib>
 
 namespace rqdq {
 namespace vga {

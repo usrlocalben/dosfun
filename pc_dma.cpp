@@ -1,9 +1,9 @@
 #include "pc_dma.hpp"
 
-#include <cstdint>
-
 #include "os_realmem.hpp"
 #include "pc_bus.hpp"
+
+#include <cstdint>
 
 using std::uint8_t;
 using std::uint16_t;

@@ -1,10 +1,10 @@
 #include "pc_kbd.hpp"
 
-#include <cstdint>
-
 #include "log.hpp"
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
+
+#include <cstdint>
 
 using std::uint8_t;
 

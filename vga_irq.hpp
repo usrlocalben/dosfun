@@ -1,15 +1,12 @@
 #pragma once
-#include <cstdlib>
-#include <cstdint>
-
 #include "log.hpp"
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
 #include "pc_pit.hpp"
 #include "vga_reg.hpp"
 
-using std::uint8_t;
-using std::uint16_t;
+#include <cstdlib>
+#include <cstdint>
 
 namespace rqdq {
 namespace vga {
@@ -33,7 +30,7 @@ typedef void (*vbifunc)();
  * to spin for an entire display period.  Additionally, the
  * wall-clock timer provided by the IRQ would miss a tick.
  */
-const float kJitterPct = 0.025;
+const float kJitterPct = 0.010f;
 
 const int kNumVBISamples = 5;
 

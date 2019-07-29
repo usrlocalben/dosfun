@@ -1,9 +1,9 @@
 #pragma once
+#include "vec.hpp"
+
 #include <cstdint>
 #include <string>
 #include <vector>
-
-#include "vec.hpp"
 
 namespace rqdq {
 namespace rgl {

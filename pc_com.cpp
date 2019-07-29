@@ -1,12 +1,12 @@
 #include "pc_com.hpp"
 
+#include "algorithm.hpp"
+#include "pc_pic.hpp"
+
 #include <array>
 #include <cstdio>
 #include <stdexcept>
 #include <string_view>
-
-#include "algorithm.hpp"
-#include "pc_pic.hpp"
 
 namespace rqdq {
 namespace pc {

@@ -2,11 +2,11 @@
  * VGA register-level tools
  */
 #pragma once
-#include <cstdint>
-
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 #include "vec.hpp"
+
+#include <cstdint>
 
 namespace rqdq {
 namespace vga {

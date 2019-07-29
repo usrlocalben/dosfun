@@ -1,10 +1,10 @@
 #include "picopng.hpp"
 
+#include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <fstream>
 
 namespace picopng {
 

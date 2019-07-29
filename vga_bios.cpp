@@ -1,6 +1,7 @@
 #include "vga_bios.hpp"
 
 #include <cstdint>
+
 #include <dpmi.h>
 
 using std::uint8_t;

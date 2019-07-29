@@ -1,9 +1,9 @@
 #pragma once
-#include <cstdint>
-#include <limits>
-
 #include "algorithm.hpp"
 #include "kb_tinymod.hpp"
+
+#include <cstdint>
+#include <limits>
 
 namespace rqdq {
 namespace app {

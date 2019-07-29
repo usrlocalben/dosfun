@@ -1,11 +1,8 @@
 #pragma once
-#include <cstdint>
-
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
 
-using std::uint8_t;
-using std::uint16_t;
+#include <cstdint>
 
 namespace rqdq {
 namespace pc {

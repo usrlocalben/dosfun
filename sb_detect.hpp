@@ -1,5 +1,4 @@
 #pragma once
-
 namespace rqdq {
 namespace hw {
 

@@ -1,14 +1,16 @@
 #include "sb16.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <sys/nearptr.h>
-
 #include "log.hpp"
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 #include "pc_dma.hpp"
 #include "pc_pic.hpp"
+
+#include <algorithm>
+#include <cstdint>
+
+#include <sys/nearptr.h>
+
 
 using std::uint8_t;
 using std::uint16_t;

@@ -1,11 +1,11 @@
 #include "vga_mode.hpp"
 
-#include <sys/nearptr.h>
-
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 #include "vga_bios.hpp"
 #include "vga_reg.hpp"
+
+#include <sys/nearptr.h>
 
 using rqdq::pc::InB;
 using rqdq::pc::OutB;

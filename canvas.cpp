@@ -1,14 +1,14 @@
 #include "canvas.hpp"
 
+#include "picopng.hpp"
+#include "vec.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <vector>
 #include <unordered_map>
-
-#include "picopng.hpp"
-#include "vec.hpp"
 
 namespace rqdq {
 namespace rgl {

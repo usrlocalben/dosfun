@@ -1,11 +1,3 @@
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <limits>
-#include <memory>
-#include <sys/nearptr.h>
-
 #include "app_kefrens_bars.hpp"
 #include "app_player_adapter.hpp"
 #include "kb_tinymod.hpp"
@@ -16,11 +8,20 @@
 #include "pc_pit.hpp"
 #include "sb16.hpp"
 #include "sb_detect.hpp"
+#include "text.hpp"
 #include "vga_irq.hpp"
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
-#include "text.hpp"
+
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <limits>
+#include <memory>
+
+#include <sys/nearptr.h>
 
 using std::uint8_t;
 using std::int16_t;

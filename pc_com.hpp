@@ -1,8 +1,8 @@
 #pragma once
-#include <string_view>
-
 #include "algorithm.hpp"
 #include "pc_pic.hpp"
+
+#include <string_view>
 
 namespace rqdq {
 namespace pc {
