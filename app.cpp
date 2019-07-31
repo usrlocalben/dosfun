@@ -47,7 +47,7 @@ public:
 		llp(0),
 		mCnt_(0),
 		paulaPtr_(new kb::Paula()),
-		playerPtr_(new kb::ModPlayer(paulaPtr_.get(), (uint8_t*)ostData)) {}
+		playerPtr_(new kb::ModPlayer(paulaPtr_.get(), ostData.data())) {}
 
 	void Run() {
 #ifdef TTYCON

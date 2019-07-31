@@ -23,6 +23,11 @@ public:
 	IVec2 operator*(IVec2 rhs) const { return { x*rhs.x, y*rhs.y }; }
 	IVec2 operator/(IVec2 rhs) const { return { x/rhs.x, y/rhs.y }; }
 
+	IVec2 operator+(std::int32_t rhs) const { return { x+rhs, y+rhs }; }
+	IVec2 operator-(std::int32_t rhs) const { return { x-rhs, y-rhs }; }
+	IVec2 operator*(std::int32_t rhs) const { return { x*rhs, y*rhs }; }
+	IVec2 operator/(std::int32_t rhs) const { return { x/rhs, y/rhs }; }
+
 	std::int32_t x, y; };
 
 

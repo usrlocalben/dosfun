@@ -142,7 +142,13 @@ std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& s
 	std::unordered_map<uint32_t, int> tab;
 	for (int i=0; i<src.buf.size(); i++) {
 		auto px = src.buf[i];
+
+		// VGAize the color
+		px.r >>= 2;
+		px.g >>= 2;
+		px.b >>= 2;
 		px.a = 0;
+
 		int idx;
 		if (auto found = tab.find(px.to_ulong()); found == tab.end()) {
 			idx = seq++;
@@ -156,9 +162,12 @@ std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& s
 	// build VGA palette
 	std::vector<rml::IVec3> newPal(256);
 	for (const auto& item : tab) {
-		newPal[item.second] = rml::IVec3::from_ulong(item.first); }
+		const auto& idx = item.second;
+		const auto& color = item.first;
+		newPal[idx] = rml::IVec3::from_ulong(color); }
 
 	return { out, newPal }; }
+
 
 }  // namespace rgl
 }  // namespace rqdq

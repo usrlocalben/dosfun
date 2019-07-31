@@ -50,10 +50,10 @@ KefrensBars::KefrensBars() {
 	//rgl::TrueColorCanvas tmp = rgl::LoadPNG(rqdq::amyData, 19592);
 
 	std::vector<rml::IVec3> newPal;
-	std::tie(bkg_, newPal) = Reindex(rgl::LoadPNG(rqdq::amyData, 19592));
+	std::tie(bkg_, newPal) = Reindex(rgl::LoadPNG(rqdq::amyData));
 
 	for (int i=0; i<256; i++) {
-		vga::Color(i, { newPal[i].x>>2, newPal[i].y>>2, newPal[i].z>>2 }); }
+		vga::Color(i, { newPal[i].x, newPal[i].y, newPal[i].z }); }
 
 	// rgl::TrueColorCanvas bkg = tmp;
 

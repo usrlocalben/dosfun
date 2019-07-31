@@ -208,11 +208,7 @@ inline void Blaster::isr() {
 		return; }
 #endif
 	ACK();
-
-#ifdef EARLY_EOI
-	irqLine_.SignalEOI();
 	pc::EnableInterrupts();
-#endif
 
 	std::swap(userBuffer_, playBuffer_);
 	void* dst = (char*)GetUserBuffer() + __djgpp_conventional_base;
@@ -220,10 +216,7 @@ inline void Blaster::isr() {
 	if (userProc_ != nullptr) {
 		userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }
 
-#ifndef EARLY_EOI
-	irqLine_.SignalEOI();
-#endif
-	}
+	irqLine_.SignalEOI(); }
 
 
 inline void Blaster::ACK() {

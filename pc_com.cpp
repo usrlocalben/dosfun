@@ -126,11 +126,8 @@ void ComPort::isrJmp() {
 
 
 inline void ComPort::isr() {
-#ifdef EARLY_EOI
 	irqLine_.Disconnect();
 	pc::EnableInterrupts();
-	irqLine_.SignalEOI();
-#endif
 
 	bool done = false;
 	while (1) {
@@ -151,14 +148,10 @@ inline void ComPort::isr() {
 			isr_OnTXBufferEmpty();
 			break; }}
 
-#ifdef EARLY_EOI
 	{
 		pc::CriticalSection section;
-		irqLine_.Connect(); }
-#else
-	irqLine_.SignalEOI();
-#endif
-	}
+		irqLine_.SignalEOI();
+		irqLine_.Connect(); }}
 
 
 /**
