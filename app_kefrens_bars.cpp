@@ -1,6 +1,6 @@
 #include "app_kefrens_bars.hpp"
 
-#include "bkg.hpp"
+#include "amy.hpp"
 #include "canvas.hpp"
 #include "picopng.hpp"
 #include "vec.hpp"
@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <unordered_map>
 
 #include <sys/nearptr.h>
 
@@ -46,35 +47,33 @@ KefrensBars::KefrensBars() {
 			int bv = v4[bi]>>2;
 			vga::Color(i, { rv, gv, bv }); }}
 
-	rgl::TrueColorCanvas tmp;
-	{
-		std::vector<uint8_t> buf;
-		uint32_t wpx, hpx;
-		picopng::Decode(buf, wpx, hpx, rqdq::bkgData, 142476);
-		tmp.Resize({ int(wpx), int(hpx) });
-		std::memcpy(tmp.buf.data(), buf.data(), wpx*hpx*4); }
+	//rgl::TrueColorCanvas tmp = rgl::LoadPNG(rqdq::amyData, 19592);
 
-	// auto big = rgl::LoadPNG("bkg.png");
-	// assert(big.dim.x > 0);
-	// assert(big.dim.y > 0);
+	std::vector<rml::IVec3> newPal;
+	std::tie(bkg_, newPal) = Reindex(rgl::LoadPNG(rqdq::amyData, 19592));
 
-	rgl::TrueColorCanvas bkg = tmp;
-	//bkg.Resize({ 320, 240 });
-	//Resample(tmp, bkg);
+	for (int i=0; i<256; i++) {
+		vga::Color(i, { newPal[i].x>>2, newPal[i].y>>2, newPal[i].z>>2 }); }
 
+	// rgl::TrueColorCanvas bkg = tmp;
+
+	/*
 	std::vector<rml::Vec3> vgaPal;
 	vgaPal.resize(256);
 	for (int i=0; i<256; i++) {
 		vgaPal[i] = rgl::ToLinear(vga::ToFloat(vga::Color(i))); }
+	*/
 
-	colorMap_ = rgl::MakeIndexedBrightnessTable(vgaPal);
+	// colorMap_ = rgl::MakeIndexedBrightnessTable(vgaPal);
 
+	/*
 	rgl::IndexCanvas tmp2;
 	tmp2.Resize(bkg.dim);
 	rgl::Convert(bkg, vgaPal, tmp2);
+	*/
 
-	bkg_.Resize({ 320, 240 });
-	rgl::Copy(tmp2, bkg_, { 0, 0 });
+	// bkg_.Resize({ 320, 240 });
+	// rgl::Copy(tmp2, bkg_, { 0, 0 });
 	rgl::PlanarizeLines(bkg_); }
 
 
@@ -89,7 +88,7 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 		39, 49, 51, 52 };
 
 	std::array<uint8_t, 320> rowData, rowMask;
-	rowData.fill(0);
+	//rowData.fill(0);
 	rowMask.fill(0);
 
 	// int magicIdx = patternNum<<1 | (rowNum>>4&1);
@@ -133,7 +132,7 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 				auto mask = *reinterpret_cast<uint32_t*>(rowMask.data() + (p*80) + rx);
 				*reinterpret_cast<uint32_t*>(rowPtr + rx) = Blend(fPx, bPx, mask); }
 #ifdef SHOW_TIMING
-			rowPtr[79] = 0;
+			rowPtr[79] = 255;
 #endif
 			}
 

@@ -9,8 +9,8 @@ app.exe
 # generated source
 ost.hpp
 ost.cpp
-bkg.hpp
-bkg.cpp
+amy.hpp
+amy.cpp
 
 # build support
 bin2cpp.exe

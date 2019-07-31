@@ -152,7 +152,7 @@ private:
 		int patternNum = playerPtr_->GetCurrentPos();
 		int rowNum = playerPtr_->GetCurrentRow();
 #ifdef SHOW_TIMING
-		vga::Color(0, { 0x30, 0x30, 0x30 });
+		vga::Color(255, { 0x30, 0x30, 0x30 });
 #endif
 		pc::Stopwatch drawtime;
 		effectPtr_->Draw(vram, T, patternNum, rowNum);
@@ -161,7 +161,7 @@ private:
 			if (m > 0) {
 				mLst_[mCnt_++] = m; }}
 #ifdef SHOW_TIMING
-		vga::Color(0, { 0, 0, 0 });
+		vga::Color(255, { 0, 0, 0 });
 #endif
 		}
 

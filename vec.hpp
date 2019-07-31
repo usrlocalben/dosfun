@@ -37,6 +37,13 @@ public:
 	IVec3(int a) :x(a), y(a), z(a) {}
 	IVec3(int a, int b, int c) :x(a), y(b), z(c) {}
 
+	static IVec3 from_ulong(uint32_t value) {
+		int x = value & 0xff;
+		int y = (value>>8) & 0xff;
+		int z = (value>>16) & 0xff;
+		// int w = (value>>24) & 0xff;
+		return { x, y, z }; }
+
 	std::int32_t x, y, z; };
 
 

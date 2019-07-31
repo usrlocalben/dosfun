@@ -61,6 +61,7 @@ inline rml::Vec3 ToSRGB(rml::Vec3 c) {
 
 
 TrueColorCanvas LoadPNG(const std::string& name);
+TrueColorCanvas LoadPNG(const uint8_t* data, int cnt);
 
 void Resample(TrueColorCanvas& src, TrueColorCanvas& dst);
 
@@ -71,6 +72,8 @@ std::vector<uint8_t> MakeIndexedBrightnessTable(const std::vector<rml::Vec3>& pa
 void Copy(const IndexCanvas& src, IndexCanvas& dst, rml::IVec2 origin={ 0, 0 });
 
 void PlanarizeLines(IndexCanvas&);
+
+std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& src);
 
 }  // namespace rgl
 }  // namespace rqdq

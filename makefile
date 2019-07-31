@@ -3,7 +3,7 @@ HOST_CPP = g++
 OBJ = o
 LIB = a
 
-COMMON_FLAGS = -std=gnu++17 #-DSHOW_TIMING -DTTYCON #-DEARLY_EOI
+COMMON_FLAGS = -std=gnu++17 -DSHOW_TIMING -DTTYCON #-DEARLY_EOI
 RELEASE_FLAGS = -O3 -ffast-math -DNDEBUG
 DEBUG_FLAGS = -g
 
@@ -43,9 +43,9 @@ app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_t
 	@rm -f $@
 	$(AR) $@ $^
 
-app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB) bkg.$(LIB)
+app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB) amy.$(LIB)
 	$(CPP) $<
-app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB) bkg.$(LIB)
+app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB) amy.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -187,17 +187,17 @@ picopng.$(LIB): picopng.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-bkg.$(OBJ): bkg.cpp    bkg.hpp
+amy.$(OBJ): amy.cpp    amy.hpp
 	$(CPP) $<
-bkg.$(LIB): bkg.$(OBJ)
+amy.$(LIB): amy.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
 ost.cpp ost.hpp: urea.mod bin2cpp.exe
 	./bin2cpp $< ost rqdq ostData
 
-bkg.cpp bkg.hpp: bkg.png bin2cpp.exe
-	./bin2cpp $< bkg rqdq bkgData
+amy.cpp amy.hpp: amy.png bin2cpp.exe
+	./bin2cpp $< amy rqdq amyData
 
 bin2cpp.exe: bin2cpp.cpp
 	$(HOST_CPP) -o $@ $<

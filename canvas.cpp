@@ -28,6 +28,18 @@ TrueColorCanvas LoadPNG(const std::string& name) {
 	return canvas; }
 
 
+TrueColorCanvas LoadPNG(const uint8_t* data, int cnt) {
+	std::vector<uint8_t> buf;
+	uint32_t widthInPx;
+	uint32_t heightInPx;
+	picopng::Decode(buf, widthInPx, heightInPx, data, cnt);
+
+	TrueColorCanvas canvas;
+	canvas.Resize({ int(widthInPx), int(heightInPx) });
+	std::memcpy(canvas.buf.data(), buf.data(), widthInPx*heightInPx*4);
+	return canvas; }
+
+
 void Resample(TrueColorCanvas& src, TrueColorCanvas& dst) {
 	for (int y=0; y<dst.dim.y; y++) {
 		for (int x=0; x<dst.dim.x; x++) {
@@ -116,6 +128,37 @@ void PlanarizeLines(IndexCanvas& c) {
 		for (int x=0; x<c.dim.x; x++) {
 			c.at({ x, y }) = tmp[x]; }}}
 
+
+/**
+ * convert an indexed-color PNG from picopng's truecolor
+ * back into indexed color with a palette
+ */
+std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& src) {
+	IndexCanvas out;
+	out.Resize(src.dim);
+
+	// build table of unique colors and assign indices
+	int seq = 0;
+	std::unordered_map<uint32_t, int> tab;
+	for (int i=0; i<src.buf.size(); i++) {
+		auto px = src.buf[i];
+		px.a = 0;
+		int idx;
+		if (auto found = tab.find(px.to_ulong()); found == tab.end()) {
+			idx = seq++;
+			tab[px.to_ulong()] = idx; }
+		else {
+			idx = found->second; }
+		out.buf[i] = idx; }
+
+	assert(seq <= 256);
+
+	// build VGA palette
+	std::vector<rml::IVec3> newPal(256);
+	for (const auto& item : tab) {
+		newPal[item.second] = rml::IVec3::from_ulong(item.first); }
+
+	return { out, newPal }; }
 
 }  // namespace rgl
 }  // namespace rqdq
