@@ -72,6 +72,7 @@ public:
 		std::unique_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
 		adapterPtr->Refill();
 		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
+		blaster.Start();
 
 		log::info("system ready.");
 
