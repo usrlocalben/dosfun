@@ -22,9 +22,6 @@ const int kFPS = 50;  // pal
 const float kOutputFreqInHz = 22050.0;
 const int kNumVoices = 4;
 
-inline float int8ToFloat(int8_t value) {
-	return value / 128.0; }
-
 inline void SwapEndian(uint16_t& v) {
 	v = ((v&0xff)<<8)|(v>>8); }
 
@@ -457,7 +454,7 @@ void ModPlayer::Render(int* lb, int* rb, int numSamples) {
 			trCounter_ = tickRate_; }}}
 
 
-void ModPlayer::RenderJmp(void* param, int* lb, int *rb, int len) {
+void ModPlayer::RenderJmp(void* param, int* lb, int* rb, int len) {
 	((ModPlayer*)param)->Render(lb, rb, len); }
 
 

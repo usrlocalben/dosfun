@@ -27,7 +27,7 @@ public:
 
 public:
 	Paula();
-	void Render(int* lb, int *rb, int numSamples); };
+	void Render(int* lb, int* rb, int numSamples); };
 
 
 class ModPlayer {
