@@ -15,8 +15,17 @@ using std::int16_t;
 using std::uint16_t;
 
 namespace rqdq {
-namespace app {
+namespace {
 
+int FP16toS16_fast(int x) {
+	return x >> 1; }
+
+int FP16toS16_slow(int x) {
+	x = std::min(std::max(x, -0xffff), 0xffff);  // clamp
+	return x >> 1; }
+
+}
+namespace app {
 
 void PlayerAdapter::BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self) {
 	static_cast<PlayerAdapter*>(self)->BlasterProc(out, fmt, numChannels, numSamples); }
@@ -64,8 +73,8 @@ vga::Color(255, { 0x30, 0x20, 0x10 });
 	if (numSamples > 0) {
 		player_.Render(pbuf_, pbuf_+4096, numSamples);
 		for (int i=0; i<numSamples; i++) {
-			int l = pbuf_[i] * 32767.0;
-			int r = pbuf_[i+4096] * 32767.0;
+			int l = FP16toS16_fast(pbuf_[i]);
+			int r = FP16toS16_fast(pbuf_[i+4096]);
 			PushBack(l, r); }}
 #ifdef SHOW_TIMING
 vga::Color(255, { 0, 0, 0 });

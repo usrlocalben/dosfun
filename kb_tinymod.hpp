@@ -9,7 +9,7 @@ public:
 	
 	class Voice {
 	public:
-		float pos_;
+		int pos_;  // 16:16 fixed
 		std::int8_t* samplePtr_;
 		int sampleLen_;
 		int loopLen_;
@@ -17,17 +17,17 @@ public:
 		int volume_;  // 0 .. 64
 
 		Voice();
-		void Render(float* buffer, int numSamples);
+		void Render(int* buffer, int numSamples);
 		void Trigger(std::int8_t* samplePtr, int sampleLen, int loopLen, int offs=0); };
 
 	Voice voice_[4];
-	float out_[4096*2];  // left, right
+	int out_[4096*2];  // left, right
 	float masterGain_;
 	// float masterSeparation_;
 
 public:
 	Paula();
-	void Render(float* lb, float *rb, int numSamples); };
+	void Render(int* lb, int *rb, int numSamples); };
 
 
 class ModPlayer {
@@ -113,12 +113,12 @@ public:
 	char name_[21];
 
 	ModPlayer(Paula* paula, std::uint8_t* moddata);
-	void Render(float* lb, float* rb, int numSamples);
+	void Render(int* lb, int* rb, int numSamples);
 	int GetCurrentPos() const {
 		return curPos_; }
 	int GetCurrentRow() const {
 		return curRow_; }
-	static void RenderJmp(void* param, float* lb, float* rb, int len); };
+	static void RenderJmp(void* param, int* lb, int* rb, int len); };
 
 
 }  // namespace kb
