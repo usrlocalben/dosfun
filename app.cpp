@@ -56,16 +56,15 @@ public:
 		                     kAudioSampleRateInHz,
 		                     kAudioWidthInChannels,
 		                     kAudioBufferSizeInSamples);
-		std::auto_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
-		adapterPtr->Refill();
-		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
+		adapterPtr_.reset(new PlayerAdapter(*playerPtr_));
+		adapterPtr_->Refill();
+		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr_.get());
 
 		quitSoon_ = false;
 		char msgs[16];
 		int msgCnt;
 		const int MSG_KBD_DATA_AVAILABLE = 1;
 		const int MSG_VGA_PAGE_LOCKED = 2;
-		const int MSG_SND_BUFFER_LOW = 3;
 		while (!quitSoon_) {
 			{
 				pc::CriticalSection section;
@@ -74,8 +73,6 @@ public:
 					msgs[msgCnt++] = MSG_KBD_DATA_AVAILABLE; }
 				if (vga::backLocked) {
 					msgs[msgCnt++] = MSG_VGA_PAGE_LOCKED; }
-				if (!adapterPtr->Full()) {
-					msgs[msgCnt++] = MSG_SND_BUFFER_LOW; }
 				if (msgCnt == 0) {
 					pc::Sleep();
 					continue; }}
@@ -89,9 +86,7 @@ public:
 				else if (msg == MSG_VGA_PAGE_LOCKED) {
 					vga::AnimationPage animationPage;
 					if (animationPage.IsLocked()) {
-						Draw(animationPage.Get()); }}
-				else if (msg == MSG_SND_BUFFER_LOW) {
-					adapterPtr->Refill(); }}}}
+						Draw(animationPage.Get()); }}}}}
 
 private:
 	void Draw(const vga::VRAMPage& vram) {
@@ -110,7 +105,7 @@ private:
 #ifdef SHOW_TIMING
 		vga::SetRGB(0, 0,0,0);
 #endif
-		}
+		adapterPtr_->Refill(); }
 
 	void OnKeyDown(int scanCode) {
 		if (scanCode == pc::SC_ESC) {
@@ -120,6 +115,7 @@ private:
 	bool quitSoon_;
 	std::auto_ptr<kb::Paula> paulaPtr_;
 	std::auto_ptr<kb::ModPlayer> playerPtr_;
+	std::auto_ptr<PlayerAdapter> adapterPtr_;
 
 public:
 	float measuredRefreshRateInHz_;
