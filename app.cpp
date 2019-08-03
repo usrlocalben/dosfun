@@ -41,6 +41,18 @@ const int kNumDrawTimeSamples = 500;
 
 
 class Demo {
+	class AdapterAttachment {
+	public:
+		AdapterAttachment(snd::Blaster& blaster, PlayerAdapter& adapter) :
+			blaster_(blaster),
+			adapter_(adapter) {
+			blaster_.AttachProc(PlayerAdapter::BlasterJmp, &adapter_); }
+		~AdapterAttachment() {
+			blaster_.DetachProc(); }
+	private:
+		snd::Blaster& blaster_;
+		PlayerAdapter& adapter_; };
+
 public:
 	Demo()
 		:quitSoon_(false),
@@ -71,7 +83,7 @@ public:
 		                     kAudioBufferSizeInSamples);
 		std::unique_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
 		adapterPtr->Refill();
-		blaster.AttachProc(PlayerAdapter::BlasterJmp, adapterPtr.get());
+		AdapterAttachment adapterAttachment(blaster, *adapterPtr);
 		blaster.Start();
 
 		log::info("system ready.");
@@ -103,7 +115,6 @@ public:
 					default:
 						throw std::runtime_error("invalid event"); }}
 				pc::Sleep(); }};
-
 
 		while (!quitSoon_) {
 			events.clear();
