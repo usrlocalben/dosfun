@@ -30,9 +30,9 @@ app.$(OBJ): app.cpp app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib o
 app.lib: app.$(OBJ) app_kefrens_bars.lib app_player_adapter.lib kb_tinymod.lib ost.lib pc_kbd.lib sb16.lib sb_detect.lib vga_mode.lib vga_pageflip.lib vga_reg.lib vga_irq.lib
 	$(LIB) $@ $<
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.lib
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.lib alg_ringindex.lib
 	$(CPP) $[@
-app_player_adapter.lib:    app_player_adapter.$(OBJ)                        kb_tinymod.lib
+app_player_adapter.lib:    app_player_adapter.$(OBJ)                        kb_tinymod.lib alg_ringindex.lib
 	$(LIB) $@ $<
 
 app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.lib vga_reg.lib
@@ -113,6 +113,11 @@ pc_pic.lib:    pc_pic.$(OBJ)            pc_bus.lib
 os_realmem.$(OBJ): os_realmem.cpp    os_realmem.hpp
 	$(CPP) $[@
 os_realmem.lib:    os_realmem.$(OBJ)
+	$(LIB) $@ $<
+
+alg_ringindex.$(OBJ): alg_ringindex.cpp    alg_ringindex.hpp
+	$(CPP) $[@
+alg_ringindex.lib:    alg_ringindex.$(OBJ)
 	$(LIB) $@ $<
 
 ost.$(OBJ): ost.cpp    ost.hpp
