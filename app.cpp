@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <limits>
 #include <memory>
+#include <optional>
 
 #include <sys/nearptr.h>
 
@@ -32,13 +33,17 @@ namespace app {
 
 const int kAudioBufferSizeInSamples = 128;
 const int kAudioSampleRateInHz = 22050;
-const int kAudioWidthInChannels = 1;
+const int kAudioWidthInChannels = 2;
 int kSoundBlasterIOBaseAddr = 0x220;
 int kSoundBlasterIRQNum = 7;         // 760eld == 5
 int kSoundBlasterDMAChannelNum = 5;  // 760eld == 1
 
 const int kNumDrawTimeSamples = 500;
 
+const char MSG_KBD_DATA_AVAILABLE = 1;
+const char MSG_VGA_CAN_WRITE = 2;
+const char MSG_TTY_DATA_AVAILABLE = 3;
+const char MSG_TTY_CAN_WRITE = 4;
 
 class Demo {
 	class AdapterAttachment {
@@ -54,8 +59,7 @@ class Demo {
 		PlayerAdapter& adapter_; };
 
 public:
-	Demo()
-		:quitSoon_(false),
+	Demo():
 		llp(0),
 		mCnt_(0),
 		paulaPtr_(new kb::Paula()),
@@ -63,59 +67,32 @@ public:
 
 	void Run() {
 #ifdef TTYCON
-		pc::ComPort tty(0x2f8, 3, 115200, pc::FLOW_NONE);
+		tty_.reset(new pc::ComPort(0x2f8, 3, 115200, pc::FLOW_NONE));
 #endif
-		pc::Keyboard kbd;
+		kbd_.emplace();
 
-		vga::ModeSetter modeSetter;
-		modeSetter.Set(vga::VM_MODEX);
-		vga::RetraceIRQ<vga::FlipPages> flipPagesIRQ;
-		measuredRefreshRateInHz_ = flipPagesIRQ.GetHz();
+		modeSetter_.emplace();
+		modeSetter_->Set(vga::VM_MODEX);
+
+		flipPagesIRQ_.emplace();
+		measuredRefreshRateInHz_ = flipPagesIRQ_->GetHz();
 		log::info("measuredRefreshRate = %4.2f hz", measuredRefreshRateInHz_);
 
 		effectPtr_.reset(new KefrensBars());
 
-		snd::Blaster blaster(kSoundBlasterIOBaseAddr,
-		                     kSoundBlasterIRQNum,
-		                     kSoundBlasterDMAChannelNum,
-		                     kAudioSampleRateInHz,
-		                     kAudioWidthInChannels,
-		                     kAudioBufferSizeInSamples);
-		std::unique_ptr<PlayerAdapter> adapterPtr(new PlayerAdapter(*playerPtr_));
-		adapterPtr->Refill();
-		AdapterAttachment adapterAttachment(blaster, *adapterPtr);
-		blaster.Start();
-
+		blaster_.reset(new snd::Blaster(kSoundBlasterIOBaseAddr,
+		                                kSoundBlasterIRQNum,
+		                                kSoundBlasterDMAChannelNum,
+		                                kAudioSampleRateInHz,
+		                                kAudioWidthInChannels,
+		                                kAudioBufferSizeInSamples));
+		adapterPtr_.reset(new PlayerAdapter(*playerPtr_));
+		adapterPtr_->Refill();
+		adapterAttachment_.emplace(*blaster_, *adapterPtr_);
+		blaster_->Start();
 		log::info("system ready.");
 
-
-		quitSoon_ = false;
 		std::vector<char> events;
-		const char MSG_KBD_DATA_AVAILABLE = 1;
-		const char MSG_VGA_CAN_WRITE = 2;
-		const char MSG_TTY_DATA_AVAILABLE = 3;
-		const char MSG_TTY_CAN_WRITE = 4;
-
-		auto WaitForMultipleObjects = [&](const std::vector<char>& lst) -> int {
-			while (1) {
-				pc::CriticalSection section;
-				for (int idx=0; idx<lst.size(); idx++) {
-					const auto& evt = lst[idx];
-					switch (evt) {
-					case MSG_KBD_DATA_AVAILABLE:
-						if (kbd.IsDataAvailable()) return idx; break;
-					case MSG_VGA_CAN_WRITE:
-						if (vga::backLocked) return idx; break;
-#ifdef TTYCON
-					case MSG_TTY_DATA_AVAILABLE:
-						if (tty.DataAvailable()) return idx; break;
-					case MSG_TTY_CAN_WRITE:
-						if (tty.CanWrite()) return idx; break;
-#endif
-					default:
-						throw std::runtime_error("invalid event"); }}
-				pc::Sleep(); }};
-
 		while (!quitSoon_) {
 			events.clear();
 			events.push_back(MSG_VGA_CAN_WRITE);
@@ -130,7 +107,7 @@ public:
 			const auto msg = events[idx];
 
 			if (msg == MSG_KBD_DATA_AVAILABLE) {
-				pc::Event ke = kbd.GetMessage();
+				pc::Event ke = kbd_->GetMessage();
 				if (ke.down) {
 					OnKeyDown(ke.scanCode); }}
 #ifdef TTYCON
@@ -139,26 +116,44 @@ public:
 				line.assign(log::at(log::FrontIdx()));
 				line += "\r\n";
 				std::string_view segment{ line.c_str()+llp, line.size() - llp };
-				int sent = tty.Write(segment);
+				int sent = tty_->Write(segment);
 				llp += sent;
 				if (llp == line.size()) {
 					llp = 0;
 					log::PopFront(); }}
 			else if (msg == MSG_TTY_DATA_AVAILABLE) {
 				char tmp[2048];
-				auto seg = tty.Peek(128);
+				auto seg = tty_->Peek(128);
 				sprintf(tmp, "tty: received %s", text::JsonStringify(seg).data());
-				tty.Ack(seg);
+				tty_->Ack(seg);
 				log::info(tmp); }
 #endif
 			else if (msg == MSG_VGA_CAN_WRITE) {
 				vga::AnimationPage animationPage;
 				assert(animationPage.IsLocked());
-				Draw(animationPage.Get());
-				adapterPtr->Refill(); }}}
-
+				Draw(animationPage.Get()); }}}
 
 private:
+	int WaitForMultipleObjects(const std::vector<char>& lst) {
+		while (1) {
+			pc::CriticalSection section;
+			for (int idx=0; idx<lst.size(); idx++) {
+				const auto& evt = lst[idx];
+				switch (evt) {
+				case MSG_KBD_DATA_AVAILABLE:
+					if (kbd_->IsDataAvailable()) return idx; break;
+				case MSG_VGA_CAN_WRITE:
+					if (vga::backLocked) return idx; break;
+#ifdef TTYCON
+				case MSG_TTY_DATA_AVAILABLE:
+					if (tty_->DataAvailable()) return idx; break;
+				case MSG_TTY_CAN_WRITE:
+					if (tty_->CanWrite()) return idx; break;
+#endif
+				default:
+					throw std::runtime_error("invalid event"); }}
+			pc::Sleep(); }}
+
 	void Draw(const vga::VRAMPage& vram) {
 		float T = vga::GetTime() / measuredRefreshRateInHz_;
 		int patternNum = playerPtr_->GetCurrentPos();
@@ -175,18 +170,25 @@ private:
 #ifdef SHOW_TIMING
 		vga::Color(255, { 0, 0, 0 });
 #endif
-		}
+		adapterPtr_->Refill(); }
 
 	void OnKeyDown(int scanCode) {
 		if (scanCode == pc::SC_ESC) {
 			quitSoon_ = true; }}
 
 private:
-	bool quitSoon_;
+	bool quitSoon_{false};
 	int llp;
 	std::unique_ptr<kb::Paula> paulaPtr_;
 	std::unique_ptr<kb::ModPlayer> playerPtr_;
 	std::unique_ptr<KefrensBars> effectPtr_;
+	std::unique_ptr<pc::ComPort> tty_;
+	std::optional<pc::Keyboard> kbd_;
+	std::optional<vga::ModeSetter> modeSetter_;
+	std::optional<vga::RetraceIRQ<vga::FlipPages>> flipPagesIRQ_;
+	std::unique_ptr<snd::Blaster> blaster_;
+	std::unique_ptr<PlayerAdapter> adapterPtr_;
+	std::optional<AdapterAttachment> adapterAttachment_;
 
 public:
 	float measuredRefreshRateInHz_;
