@@ -17,12 +17,18 @@ using std::uint16_t;
 namespace rqdq {
 namespace {
 
-int FP16toS16_fast(int x) {
-	return x >> 1; }
+inline std::int16_t FP16toS16(int x) {
+	x >>= 1;
+	x = std::min(std::max(x, -32768), 32767);
+	return x; }
 
-int FP16toS16_slow(int x) {
-	x = std::min(std::max(x, -0xffff), 0xffff);  // clamp
-	return x >> 1; }
+
+inline std::uint8_t FP16toU8(int x) {
+	x >>= 9;
+	x += 128;
+	x = std::min(std::max(x, 0), 255);
+	return x; }
+
 
 }
 namespace app {
@@ -43,21 +49,21 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 				int l, r;
 				PopFront(l, r);
 				if (numChannels == 2) {
-					out[i*2+0] = l;
-					out[i*2+1] = r; }
+					out[i*2+0] = FP16toS16(l);
+					out[i*2+1] = FP16toS16(r); }
 				else {
-					out[i] = (l+r)>>1; }}}
+					out[i] = FP16toS16((l+r)>>1); }}}
 		else {
-			// 8-bit signed PCM
+			// 8-bit unsigned PCM
 			uint8_t* out = static_cast<uint8_t*>(out_);
 			for (int i=0; i<numSamples; i++) {
 				int l, r;
 				PopFront(l, r);
 				if (numChannels == 2) {
-					out[i*2+0] = (l+32767)>>8;
-					out[i*2+1] = (r+32767)>>8; }
+					out[i*2+0] = FP16toU8(l);
+					out[i*2+1] = FP16toU8(r); }
 				else {
-					out[i] = (l+r+65536)>>9; }}}}
+					out[i] = FP16toU8((l+r)>>1); }}}}
 #ifdef SHOW_TIMING
 //vga::SetRGB(0, 0, 0, 0);
 #endif
@@ -73,8 +79,8 @@ vga::SetRGB(0, 0x30, 0x20, 0x10);
 	if (numSamples > 0) {
 		player_.Render(pbuf_, pbuf_+4096, numSamples);
 		for (int i=0; i<numSamples; i++) {
-			int l = FP16toS16_fast(pbuf_[i]);
-			int r = FP16toS16_fast(pbuf_[i+4096]);
+			int l = pbuf_[i];
+			int r = pbuf_[i+4096];
 			PushBack(l, r); }}
 #ifdef SHOW_TIMING
 vga::SetRGB(0, 0, 0, 0);

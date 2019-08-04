@@ -39,7 +39,7 @@ private:
 private:
 	kb::ModPlayer& player_;
 	alg::RingIndex<4096> rw_;
-	std::int16_t buf_[4096*2];
+	std::int32_t buf_[4096*2];
 	int pbuf_[4096*2]; };
 
 

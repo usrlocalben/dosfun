@@ -14,7 +14,7 @@ public:
 		int sampleLen_;
 		int loopLen_;
 		int period_;  // 124 .. 65535
-		int volume_;  // 0 .. 64
+		char volume_;  // 0 .. 64
 
 		Voice();
 		void Render(int* buffer, int numSamples);
@@ -72,7 +72,7 @@ class ModPlayer {
 		int period;
 		int sampleNum;
 		int fineTune;
-		int volume;
+		char volume;
 		int fxBuf[16];
 		int fxBuf14[16];
 		int loopStart;

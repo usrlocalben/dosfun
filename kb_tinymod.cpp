@@ -16,13 +16,10 @@ using std::uint32_t;
 namespace {
 
 const float kPi = 3.1415926;
-const int kPaulaPalHz = 3546895;
+const float kPaulaPalHz = 3546895.0f;
 const int kFPS = 50;  // pal
 const float kOutputFreqInHz = 22050.0;
 const int kNumVoices = 4;
-
-inline float int8ToFloat(int8_t value) {
-	return value / 128.0; }
 
 inline void SwapEndian(uint16_t& v) {
 	v = ((v&0xff)<<8)|(v>>8); }
@@ -51,22 +48,16 @@ void Paula::Voice::Render(int* buffer, int numSamples) {
 
 	int speed = 3546895 / period_ / kOutputFreqInHz * 65536.0f;
 
-	int8_t* smp = samplePtr_;
 	for (int i=0; i<numSamples; i++) {
-		int p1 = pos_>>16;
-		int frac = pos_&0xffff;
+		int s;
+		s = samplePtr_[pos_>>16];  //  25:7
+		s = s * volume_;           // 19:13
+		s = s << 3;                // 16:16
+		buffer[i] += s;
+
 		pos_ += speed;
 		if (pos_ >= sampleLen_<<16) {
-			pos_ -= loopLen_<<16; }
-		int p2 = pos_>>16;
-		int smp1 = smp[p1];
-		int smp2 = smp[p2];
-
-		// int cur = smp1 * 65536;  // cur is 16:16 [-128, 127]
-		int s = smp1*(0x10000-frac) + smp2*frac;
-		s = s*volume_ >> 6;  // s is unchanged
-		s = s >> 7;          // s is 16:16 [-1,   1]
-		buffer[i] += s; }}
+			pos_ -= loopLen_<<16; }}}
 
 
 void Paula::Voice::Trigger(int8_t* samplePtr, int sampleLen, int loopLen, int offs) {
@@ -76,14 +67,14 @@ void Paula::Voice::Trigger(int8_t* samplePtr, int sampleLen, int loopLen, int of
 	pos_ = std::min(offs, sampleLen-1) << 16; }
 
 
-Paula::Paula() :masterGain_(0.25f) {}
+Paula::Paula() :masterGain_(1.00f) {}
 
 
 void Paula::Render(int* lb, int* rb, int numSamples) {
 	// const float pan = 0.5f + 0.5f * masterSeparation_;
 	// const float vm0 = masterGain_ * sqrt(pan);
 	// const float vm1 = masterGain_ * sqrt(1-pan);
-	const int mg = masterGain_ * 65536.0f;
+	const int mg = masterGain_ * 256.0f;
 
 	for (int i=0; i<numSamples; i++) {
 		out_[i] = 0;
@@ -92,8 +83,8 @@ void Paula::Render(int* lb, int* rb, int numSamples) {
 		int* dst = (vi==1||vi==2) ? out_ + 4096 : out_;
 		voice_[vi].Render(dst, numSamples); }
 	for (int s=0; s<numSamples; s++) {
-		*lb++ = out_[s]     *mg >> 16;
-		*rb++ = out_[s+4096]*mg >> 16; }}
+		*lb++ = out_[s]      * mg >> 8;
+		*rb++ = out_[s+4096] * mg >> 8; }}
 
 
 void ModPlayer::Sample::Prepare() {
