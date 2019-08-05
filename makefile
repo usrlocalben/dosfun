@@ -36,9 +36,9 @@ app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tiny
 	@rm -f $@
 	$(AR) $@ $^
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB)
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) alg_ringindex.$(LIB)
 	$(CPP) $<
-app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB)
+app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) alg_ringindex.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -135,6 +135,12 @@ pc_bus.$(LIB): pc_bus.$(OBJ)
 os_realmem.$(OBJ): os_realmem.cpp    os_realmem.hpp
 	$(CPP) $<
 os_realmem.$(LIB): os_realmem.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+alg_ringindex.$(OBJ): alg_ringindex.cpp    alg_ringindex.hpp
+	$(CPP) $<
+alg_ringindex.$(LIB): alg_ringindex.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
