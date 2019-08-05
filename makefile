@@ -84,9 +84,33 @@ sb16.$(LIB): sb16.$(OBJ)          pc_dma.$(LIB) pc_pic.$(LIB) pc_cpu.$(LIB) pc_b
 	@rm -f $@
 	$(AR) $@ $^
 
+sb_detect.$(OBJ): sb_detect.cpp    sb_detect.hpp
+	$(CPP) $<
+sb_detect.$(LIB): sb_detect.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+kb_tinymod.$(OBJ): kb_tinymod.cpp    kb_tinymod.hpp
+	$(CPP) -Wno-multichar $<
+kb_tinymod.$(LIB): kb_tinymod.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
 pc_pit.$(OBJ): pc_pit.cpp    pc_pit.hpp pc_pic.$(LIB) pc_cpu.$(LIB)
 	$(CPP) $<
 pc_pit.$(LIB): pc_pit.$(OBJ)            pc_pic.$(LIB) pc_cpu.$(LIB)
+	@rm -f $@
+	$(AR) $@ $^
+
+pc_cpu.$(OBJ): pc_cpu.cpp    pc_cpu.hpp
+	$(CPP) $<
+pc_cpu.$(LIB): pc_cpu.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+pc_bus.$(OBJ): pc_bus.cpp    pc_bus.hpp
+	$(CPP) $<
+pc_bus.$(LIB): pc_bus.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -105,30 +129,6 @@ vga_pageflip.$(LIB): vga_pageflip.$(OBJ)                  vga_mode.$(LIB)
 pc_pic.$(OBJ): pc_pic.cpp    pc_pic.hpp pc_bus.$(LIB)
 	$(CPP) $<
 pc_pic.$(LIB): pc_pic.$(OBJ)            pc_bus.$(LIB)
-	@rm -f $@
-	$(AR) $@ $^
-
-sb_detect.$(OBJ): sb_detect.cpp    sb_detect.hpp
-	$(CPP) $<
-sb_detect.$(LIB): sb_detect.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
-kb_tinymod.$(OBJ): kb_tinymod.cpp    kb_tinymod.hpp
-	$(CPP) -Wno-multichar $<
-kb_tinymod.$(LIB): kb_tinymod.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
-pc_cpu.$(OBJ): pc_cpu.cpp    pc_cpu.hpp
-	$(CPP) $<
-pc_cpu.$(LIB): pc_cpu.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
-pc_bus.$(OBJ): pc_bus.cpp    pc_bus.hpp
-	$(CPP) $<
-pc_bus.$(LIB): pc_bus.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 

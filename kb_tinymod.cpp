@@ -65,7 +65,7 @@ void Paula::Voice::Trigger(int8_t* samplePtr, int sampleLen, int loopLen, int of
 	samplePtr_ = samplePtr;
 	sampleLen_ = sampleLen;
 	loopLen_ = loopLen;
-	pos_ = std::min(offs, sampleLen-1); }
+	pos_ = std::min(offs, sampleLen-1) << 16; }
 
 
 Paula::Paula() :masterGain_(1.00f) {}
