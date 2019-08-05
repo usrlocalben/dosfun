@@ -31,23 +31,23 @@ inline uint32_t Blend(uint32_t a, uint32_t b, uint32_t sel) {
 	return b^(a^b)&sel; }
 
 
+const int goodLookingColorMagic[] = {
+	0, 1, 2, 3, 4,
+	6, 15, 18, 19, 21,
+	24, 30, 33, 34, 36,
+	39, 49, 51, 52 };
+
+
+std::array<char, 19*16> glcm2;
+
+
 }  // namespace
 namespace app {
 
 KefrensBars::KefrensBars() {
-	if (false) {
-		std::array<int, 8> v8 = { { 0x00, 0x24, 0x49, 0x6d, 0x92, 0xb6, 0xdb, 0xff } };
-		std::array<int, 4> v4 = { {    0x00,       0x55,       0xaa,       0xff    } };
-		for (int i=0; i<256; i++) {
-			int ri = i>>5;
-			int gi = (i>>2) & 7;
-			int bi = i & 3;
-			int rv = v8[ri]>>2;
-			int gv = v8[gi]>>2;
-			int bv = v4[bi]>>2;
-			vga::Color(i, { rv, gv, bv }); }}
-
-	//rgl::TrueColorCanvas tmp = rgl::LoadPNG(rqdq::amyData, 19592);
+	std::vector<rml::Vec3> vgaPal(256);
+	for (int i=0; i<256; i++) {
+		vgaPal[i] = rgl::ToLinear(vga::ToFloat(vga::Color(i))); }
 
 	std::vector<rml::IVec3> newPal;
 	std::tie(bkg_, newPal) = Reindex(rgl::LoadPNG(rqdq::amyData));
@@ -55,25 +55,21 @@ KefrensBars::KefrensBars() {
 	for (int i=0; i<256; i++) {
 		vga::Color(i, { newPal[i].x, newPal[i].y, newPal[i].z }); }
 
-	// rgl::TrueColorCanvas bkg = tmp;
+	for (int i=0; i<19; i++) {
+		for (int c=-4; c<=4; c++) {
+			int idx = ((goodLookingColorMagic[i]*17) + c) & 0xff;
+			const auto oldColor = vgaPal[idx];
 
-	/*
-	std::vector<rml::Vec3> vgaPal;
-	vgaPal.resize(256);
-	for (int i=0; i<256; i++) {
-		vgaPal[i] = rgl::ToLinear(vga::ToFloat(vga::Color(i))); }
-	*/
+			float minDist = 9999999.0f;
+			int minIdx = -1;
+			for (int pi=0; pi<255; pi++) {
+				auto testColor = rgl::ToLinear(vga::ToFloat(newPal[pi]));
+				auto dist = Length(testColor - oldColor);
+				if (dist < minDist) {
+					minDist = dist;
+					minIdx = pi; }}
+			glcm2[i * 16 + c + 4] = minIdx; }}
 
-	// colorMap_ = rgl::MakeIndexedBrightnessTable(vgaPal);
-
-	/*
-	rgl::IndexCanvas tmp2;
-	tmp2.Resize(bkg.dim);
-	rgl::Convert(bkg, vgaPal, tmp2);
-	*/
-
-	// bkg_.Resize({ 320, 240 });
-	// rgl::Copy(tmp2, bkg_, { 0, 0 });
 	rgl::PlanarizeLines(bkg_); }
 
 
@@ -81,11 +77,6 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 	int whole = T;
 	float frac = T - whole;
 
-	const int goodLookingColorMagic[] = {
-		0, 1, 2, 3, 4,
-		6, 15, 18, 19, 21,
-		24, 30, 33, 34, 36,
-		39, 49, 51, 52 };
 
 	std::array<uint8_t, 320> rowData, rowMask;
 	//rowData.fill(0);
@@ -93,7 +84,7 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 
 	// int magicIdx = patternNum<<1 | (rowNum>>4&1);
 	int magicIdx = patternNum;
-	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
+	uint8_t colorpos = magicIdx%19;
 #define SIN std::sin
 
 	uint8_t* rowPtr = dst.addr + __djgpp_conventional_base;
@@ -120,7 +111,7 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 			if (0 <= ox && ox < 320) {
 				int plane = ox&3;
 				int ofs = ox>>2;
-				rowData[plane*80+ofs] = colorpos+wx;
+				rowData[plane*80+ofs] = glcm2[colorpos*16 + wx + 4];
 				rowMask[plane*80+ofs] = 0xff; }}
 
 		// copy row[] to vram planes
@@ -136,16 +127,7 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 #endif
 			}
 
-		rowPtr += 80; }
-
-	if(false) for (int xxx=0; xxx<256; xxx++) {
-		int p = xxx%4;
-		vga::Planes(1<<p);
-		int ofs = xxx/4;
-		uint8_t* rowPtr = dst.addr + __djgpp_conventional_base;
-		for (int yyy=0; yyy<64; yyy++) {
-			rowPtr[ofs] = colorMap_[yyy*256+xxx];
-			rowPtr += 80; }}}
+		rowPtr += 80; }}
 
 
 }  // namespace app
