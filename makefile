@@ -31,21 +31,21 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
+app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
 	$(CPP) $<
-app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
+app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) algorithm.$(LIB) canvas.$(LIB)
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) alg_ringindex.$(LIB) canvas.$(LIB)
 	$(CPP) $<
-app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) algorithm.$(LIB) canvas.$(LIB)
+app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) alg_ringindex.$(LIB) canvas.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB) amy.$(LIB)
+app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB) data_amy.$(LIB)
 	$(CPP) $<
-app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB) amy.$(LIB)
+app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB) data_amy.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -55,9 +55,9 @@ pc_kbd.$(LIB): pc_kbd.$(OBJ)            pc_pic.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-pc_com.$(OBJ): pc_com.cpp    pc_com.hpp pc_pic.$(LIB) algorithm.$(LIB)
+pc_com.$(OBJ): pc_com.cpp    pc_com.hpp pc_pic.$(LIB) alg_ringindex.$(LIB)
 	$(CPP) $<
-pc_com.$(LIB): pc_com.$(OBJ)            pc_pic.$(LIB) algorithm.$(LIB)
+pc_com.$(LIB): pc_com.$(OBJ)            pc_pic.$(LIB) alg_ringindex.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -145,21 +145,21 @@ os_realmem.$(LIB): os_realmem.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-log.$(OBJ): log.cpp    log.hpp algorithm.$(LIB)
+log.$(OBJ): log.cpp    log.hpp alg_ringindex.$(LIB)
 	$(CPP) $<
-log.$(LIB): log.$(OBJ)         algorithm.$(LIB)
+log.$(LIB): log.$(OBJ)         alg_ringindex.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-algorithm.$(OBJ): algorithm.cpp    algorithm.hpp
+alg_ringindex.$(OBJ): alg_ringindex.cpp    alg_ringindex.hpp
 	$(CPP) $<
-algorithm.$(LIB): algorithm.$(OBJ)
+alg_ringindex.$(LIB): alg_ringindex.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-ost.$(OBJ): ost.cpp    ost.hpp
+data_ost.$(OBJ): data_ost.cpp    data_ost.hpp
 	$(CPP) $<
-ost.$(LIB): ost.$(OBJ)
+data_ost.$(LIB): data_ost.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -187,17 +187,17 @@ picopng.$(LIB): picopng.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-amy.$(OBJ): amy.cpp    amy.hpp
+data_amy.$(OBJ): data_amy.cpp    data_amy.hpp
 	$(CPP) $<
-amy.$(LIB): amy.$(OBJ)
+data_amy.$(LIB): data_amy.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-ost.cpp ost.hpp: urea.mod bin2cpp.exe
-	./bin2cpp $< ost rqdq ostData
+data_ost.cpp data_ost.hpp: urea.mod bin2cpp.exe
+	./bin2cpp $< data_ost data ost
 
-amy.cpp amy.hpp: amy.png bin2cpp.exe
-	./bin2cpp $< amy rqdq amyData
+data_amy.cpp data_amy.hpp: amy.png bin2cpp.exe
+	./bin2cpp $< data_amy data amy
 
 bin2cpp.exe: bin2cpp.cpp
 	$(HOST_CPP) -o $@ $<
@@ -213,5 +213,4 @@ clean:
 	@rm -f app*.map
 	@rm -f bin2cpp.exe
 	@rm -f exe2coff.exe
-	@rm -f ost.cpp
-	@rm -f ost.hpp
+	@rm -f data_*.{cpp,hpp}

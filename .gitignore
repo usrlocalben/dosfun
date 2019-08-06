@@ -7,10 +7,8 @@ app.exe
 *.a
 
 # generated source
-ost.hpp
-ost.cpp
-amy.hpp
-amy.cpp
+data_*.cpp
+data_*.hpp
 
 # build support
 bin2cpp.exe

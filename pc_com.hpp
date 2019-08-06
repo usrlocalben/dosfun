@@ -1,5 +1,5 @@
 #pragma once
-#include "algorithm.hpp"
+#include "alg_ringindex.hpp"
 #include "pc_pic.hpp"
 
 #include <string_view>

@@ -1,6 +1,6 @@
 #include "log.hpp"
 
-#include "algorithm.hpp"
+#include "alg_ringindex.hpp"
 
 #include <cstdarg>
 #include <cstdio>

@@ -1,6 +1,6 @@
 #include "pc_com.hpp"
 
-#include "algorithm.hpp"
+#include "alg_ringindex.hpp"
 #include "pc_pic.hpp"
 
 #include <array>
