@@ -55,10 +55,14 @@ int spuriousIRQCnt = 0;
 class Blaster::impl {
 public:
 	impl(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples) :
-		port_(make_ports(baseAddr)),
 		irqLine_(irqNum),
 		dma_(dmaChannelNum),
 		bits_(dmaChannelNum < 4 ? 8 : 16),
+		resetPort_(baseAddr + 0x06),
+		readPort_(baseAddr + 0x0a),
+		writePort_(baseAddr + 0x0c),
+		pollPort_(baseAddr + 0x0e),
+		ackPort_(bits_ == 8 ? pollPort_ : baseAddr + 0x0f),
 		sampleRateInHz_(sampleRateInHz),
 		numChannels_(numChannels),
 		bufferSizeInSamples_(bufferSizeInSamples),
@@ -166,22 +170,22 @@ public:
 
 private:
 	inline void SpinUntilReadyForWrite() {
-		while (InB(port_.write) & 0x80); }
+		while (InB(writePort_) & 0x80); }
 
 	inline void SpinUntilReadyForRead() {
-		while (!(InB(port_.poll) & 0x80)); }
+		while (!(InB(pollPort_) & 0x80)); }
 
 	void TX(uint8_t value) {
 		SpinUntilReadyForWrite();
-		OutB(port_.write, value); }
+		OutB(writePort_, value); }
 
 	uint8_t RX() {
 		SpinUntilReadyForRead();
-		return InB(port_.read); }
+		return InB(readPort_); }
 
 	void RESET() {
-		OutB(port_.reset, 1);
-		OutB(port_.reset, 0); }
+		OutB(resetPort_, 1);
+		OutB(resetPort_, 0); }
 
 	bool SpinUntilReset() {
 		int attempts = 100;
@@ -207,7 +211,6 @@ private:
 			spuriousIRQCnt++;
 			return; }
 #endif
-		ACK();
 		pc::EnableInterrupts();
 
 		std::swap(userBuffer_, playBuffer_);
@@ -216,13 +219,12 @@ private:
 		if (userProc_ != nullptr) {
 			userProc_(dst, fmt, numChannels_, bufferSizeInSamples_, userPtr_); }
 
+		pc::DisableInterrupts();
+		ACK();
 		irqLine_.SignalEOI(); }
 
 	inline void ACK() {
-		if (bits_ == 8) {
-			InB(port_.poll); }
-		else {
-			InB(port_.ack16); }}
+		InB(ackPort_); }
 
 public:
 	void AttachProc(audioproc userProc, void* userPtr) {
@@ -240,10 +242,14 @@ public:
 		if (runningInstance == this) {
 			Stop(); }}
 private:
-	const Ports port_;
 	pc::IRQLineRT irqLine_;
 	const pc::DMAChannel dma_;
 	const int bits_;
+	const std::int16_t resetPort_;
+	const std::int16_t readPort_;
+	const std::int16_t writePort_;
+	const std::int16_t pollPort_;
+	const std::int16_t ackPort_;
 	const int sampleRateInHz_;
 	const int numChannels_;
 	const int bufferSizeInSamples_;

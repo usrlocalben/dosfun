@@ -148,10 +148,9 @@ inline void ComPort::isr() {
 			isr_OnTXBufferEmpty();
 			break; }}
 
-	{
-		pc::CriticalSection section;
-		irqLine_.SignalEOI();
-		irqLine_.Connect(); }}
+	pc::DisableInterrupts();
+	irqLine_.SignalEOI();
+	irqLine_.Connect(); }
 
 
 /**
