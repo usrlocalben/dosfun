@@ -146,16 +146,20 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 		rowPtr += 80; }
 	*/
 
-	int a = T*2.75f;
+	int a = T*15.75f;
 	uint8_t* rowPtr = dst.addr;
 	for (int ty=0; ty<7; ty++) {
 		for (int tx=0; tx<10; tx++) {
-			std::memset(rgl::tileColor.data(), 0, 32*32);
-			std::memset(rgl::tileDepth.data(), 0, 32*32*2);
-			for (int i=0; i<32*32; i++) {
+			std::memset(rgl::tileColor.data(), ty+tx+a, 32*32);
+			// std::memset(rgl::tileDepth.data(), 0, 32*32*2);
+			/*for (int i=0; i<32*32; i++) {
 				rgl::tileDepth[i]++;
 				rgl::tileColor[i] = ty+tx+a; }
-			rgl::StoreTile({ tx*32, ty*32 }, rgl::tileColor.data(), dst); }
+			for (int i=0; i<32*32; i++) {
+				rgl::tileDepth[i]++;
+				rgl::tileColor[i] = ty+tx+a; }*/
+			rgl::StoreTile({ tx*32, ty*32 }, rgl::tileColor.data(), dst);
+			}
 #ifdef SHOW_TIMING
 		vga::Planes(0xf);
 		for (int ry=0; ry<32; ry++) {
@@ -164,6 +168,12 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 #endif
 		}
 
+#ifdef SHOW_TIMING
+		vga::Planes(0xf);
+		for (int ry=0; ry<16; ry++) {
+			rowPtr[79] = 255;
+			rowPtr += 80; }
+#endif
 	}
 
 
