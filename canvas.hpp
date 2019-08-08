@@ -1,6 +1,8 @@
 #pragma once
 #include "vec.hpp"
+#include "vga_mode.hpp"
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -69,6 +71,11 @@ void PlanarizeLines(IndexCanvas&);
 
 std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& src);
 
+void StoreTile(const rml::IVec2 tileOrigin, const std::uint8_t* src, std::uint8_t* dst);
+void StoreTile(const rml::IVec2 tileOrigin, const std::uint8_t* src, const vga::VRAMPage& page);
+
+extern std::array<std::uint16_t, 32*32> tileDepth;
+extern std::array<std::uint8_t, 32*32> tileColor;
 
 }  // namespace rgl
 }  // namespace rqdq

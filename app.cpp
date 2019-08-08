@@ -111,7 +111,9 @@ public:
 			else if (msg == MSG_VGA_CAN_WRITE) {
 				vga::AnimationPage animationPage;
 				assert(animationPage.IsLocked());
-				Draw(animationPage.Get()); }}}
+				auto pagex = animationPage.Get();
+				const vga::VRAMPage pagey{ pagex.num, pagex.addr + __djgpp_conventional_base, pagex.vgaAddr };
+				Draw(pagey); }}}
 
 private:
 	int WaitForMultipleObjects(const std::vector<char>& lst) {

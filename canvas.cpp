@@ -2,6 +2,8 @@
 
 #include "picopng.hpp"
 #include "vec.hpp"
+#include "vga_mode.hpp"
+#include "vga_reg.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -12,6 +14,9 @@
 
 namespace rqdq {
 namespace rgl {
+
+std::array<std::uint16_t, 32*32> tileDepth;
+std::array<std::uint8_t, 32*32> tileColor;
 
 TrueColorCanvas LoadPNG(const std::string& name) {
 	std::vector<uint8_t> data;
@@ -167,6 +172,44 @@ std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& s
 		newPal[idx] = rml::IVec3::from_ulong(color); }
 
 	return { out, newPal }; }
+
+
+/**
+ * copy a 32x32 tile of pixels to an unchained screen buffer
+ */
+void StoreTile(const rml::IVec2 tileOrigin, const std::uint8_t* src, std::uint8_t* dst) {
+	assert(tileOrigin.y%32==0 && tileOrigin.x%32==0);
+	auto dstLeft = dst + tileOrigin.y*320 + tileOrigin.x/4;
+	for (int y=0; y<32; ++y) {
+		auto dst32 = reinterpret_cast<uint32_t*>(dstLeft);
+		for (int x=0; x<32; x+=16) {
+			dst32[ 0] = src[0] | src[4]<<8 | src[ 8]<<16 | src[12]<<24;
+			dst32[20] = src[1] | src[5]<<8 | src[ 9]<<16 | src[13]<<24;
+			dst32[40] = src[2] | src[6]<<8 | src[10]<<16 | src[14]<<24;
+			dst32[60] = src[3] | src[7]<<8 | src[11]<<16 | src[15]<<24;
+			dst32 += 1;
+			src += 16; }
+		dstLeft += 320; }}
+
+
+/**
+ * copy a 32x32 tile of pixels to unchained vga vram
+ */
+void StoreTile(const rml::IVec2 tileOrigin, const std::uint8_t* src, const vga::VRAMPage& page) {
+	assert(tileOrigin.y%32==0 && tileOrigin.x%32==0);
+	auto dstTopLeft = page.addr + tileOrigin.y*80 + tileOrigin.x/4;
+	auto srcTop = src;
+	for (int p=0; p<4; p++) {
+		vga::Planes(1<<p);
+		auto dstLeft = dstTopLeft;
+		auto srcx = src;
+		for (int y=0; y<32; y++) {
+			auto dst32 = reinterpret_cast<uint32_t*>(dstLeft);
+			*dst32 = srcx[12]<<24 | srcx[ 8]<<16 | srcx[ 4]<<8 | srcx[ 0];  dst32++;
+			*dst32 = srcx[28]<<24 | srcx[24]<<16 | srcx[20]<<8 | srcx[16];
+			srcx += 32;
+			dstLeft += 80; }
+		src++; }}
 
 
 }  // namespace rgl

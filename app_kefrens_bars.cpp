@@ -13,8 +13,6 @@
 #include <cstring>
 #include <unordered_map>
 
-#include <sys/nearptr.h>
-
 using std::uint8_t;
 
 namespace rqdq {
@@ -40,6 +38,7 @@ const int goodLookingColorMagic[] = {
 
 std::array<char, 19*16> glcm2;
 
+std::array<uint8_t, 32*32> tileData;
 
 }  // namespace
 namespace app {
@@ -70,6 +69,20 @@ KefrensBars::KefrensBars() {
 					minIdx = pi; }}
 			glcm2[i * 16 + c + 4] = minIdx; }}
 
+	for (int y=0; y<32; y++) {
+		for (int x=0; x<32; x++) {
+			rml::Vec3 color{ (y+1)/32.0f, (x+1)/32.0f, 0.5f };
+
+			float minDist = 9999999.0f;
+			int minIdx = -1;
+			for (int pi=0; pi<254; pi++) {
+				auto testColor = rgl::ToLinear(vga::ToFloat(newPal[pi]));
+				auto dist = Length(testColor - color);
+				if (dist < minDist) {
+					minDist = dist;
+					minIdx = pi; }}
+			tileData[y*32+x] = minIdx; }}
+
 	rgl::PlanarizeLines(bkg_); }
 
 
@@ -78,6 +91,7 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 	float frac = T - whole;
 
 
+	/*
 	std::array<uint8_t, 320> rowData, rowMask;
 	//rowData.fill(0);
 	rowMask.fill(0);
@@ -87,7 +101,9 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 	uint8_t colorpos = magicIdx%19;
 #define SIN std::sin
 
-	uint8_t* rowPtr = dst.addr + __djgpp_conventional_base;
+	// rgl::StoreTile({ 64, 64 }, tileData.data(), bkg_.buf.data());
+
+	uint8_t* rowPtr = dst.addr;
 	for (int yyy=0; yyy<240; yyy++) {
 		// animate
 		int pos;
@@ -127,7 +143,28 @@ void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int row
 #endif
 			}
 
-		rowPtr += 80; }}
+		rowPtr += 80; }
+	*/
+
+	int a = T*2.75f;
+	uint8_t* rowPtr = dst.addr;
+	for (int ty=0; ty<7; ty++) {
+		for (int tx=0; tx<10; tx++) {
+			std::memset(rgl::tileColor.data(), 0, 32*32);
+			std::memset(rgl::tileDepth.data(), 0, 32*32*2);
+			for (int i=0; i<32*32; i++) {
+				rgl::tileDepth[i]++;
+				rgl::tileColor[i] = ty+tx+a; }
+			rgl::StoreTile({ tx*32, ty*32 }, rgl::tileColor.data(), dst); }
+#ifdef SHOW_TIMING
+		vga::Planes(0xf);
+		for (int ry=0; ry<32; ry++) {
+			rowPtr[79] = 255;
+			rowPtr += 80; }
+#endif
+		}
+
+	}
 
 
 }  // namespace app
