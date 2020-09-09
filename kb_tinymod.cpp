@@ -17,13 +17,10 @@ using std::uint32_t;
 namespace {
 
 const float kPi = 3.1415926;
-const int kPaulaPalHz = 3546895;
+const float kPaulaPalHz = 3546895.0f;
 const int kFPS = 50;  // pal
 const float kOutputFreqInHz = 22050.0;
 const int kNumVoices = 4;
-
-inline float int8ToFloat(int8_t value) {
-	return value / 128.0; }
 
 inline void SwapEndian(uint16_t& v) {
 	v = ((v&0xff)<<8)|(v>>8); }
@@ -46,52 +43,49 @@ Paula::Voice::Voice()
 	volume_(0) {}
 
 
-void Paula::Voice::Render(float* buffer, int numSamples) {
+void Paula::Voice::Render(int* buffer, int numSamples) {
 	if (samplePtr_ == nullptr) {
 		return; }
 
-	const float gain = (volume_ == 0) ? 0.0f : volume_ / 64.0;
+	int speed = 3546895 / period_ / kOutputFreqInHz * 65536.0f;
 
-	float speed = (3546895 / period_ / kOutputFreqInHz);
-	int8_t* smp = samplePtr_;
 	for (int i=0; i<numSamples; i++) {
-		int p1 = int(pos_);
-		float frac = pos_ - p1;
-		pos_ += speed;
-		if (pos_ >= sampleLen_) {
-			pos_ -= loopLen_; }
-		int p2 = int(pos_);
-		float smp1 = int8ToFloat(smp[p1]);
-		float smp2 = int8ToFloat(smp[p2]);
-		float cur = smp1*(1.0-frac) + smp2*frac;
+		int s;
+		s = samplePtr_[pos_>>16];  //  25:7
+		s = s * volume_;           // 19:13
+		s = s << 3;                // 16:16
+		buffer[i] += s;
 
-		buffer[i] += cur * gain; }}
+		pos_ += speed;
+		if (pos_ >= sampleLen_<<16) {
+			pos_ -= loopLen_<<16; }}}
 
 
 void Paula::Voice::Trigger(int8_t* samplePtr, int sampleLen, int loopLen, int offs) {
 	samplePtr_ = samplePtr;
 	sampleLen_ = sampleLen;
 	loopLen_ = loopLen;
-	pos_ = std::min(offs, sampleLen-1); }
+	pos_ = std::min(offs, sampleLen-1) << 16; }
 
 
-Paula::Paula() :masterGain_(0.5f) {}
+Paula::Paula() :masterGain_(1.00f) {}
 
 
-void Paula::Render(float* lb, float* rb, int numSamples) {
+void Paula::Render(int* lb, int* rb, int numSamples) {
 	// const float pan = 0.5f + 0.5f * masterSeparation_;
 	// const float vm0 = masterGain_ * sqrt(pan);
 	// const float vm1 = masterGain_ * sqrt(1-pan);
+	const int mg = masterGain_ * 256.0f;
 
 	for (int i=0; i<numSamples; i++) {
 		out_[i] = 0;
 		out_[i+4096] = 0; }
 	for (int vi=0; vi<kNumVoices; vi++) {
-		float* dst = (vi==1||vi==2) ? out_ + 4096 : out_;
+		int* dst = (vi==1||vi==2) ? out_ + 4096 : out_;
 		voice_[vi].Render(dst, numSamples); }
 	for (int s=0; s<numSamples; s++) {
-		*lb++ = out_[s]      * masterGain_;
-		*rb++ = out_[s+4096] * masterGain_; }}
+		*lb++ = out_[s]      * mg >> 8;
+		*rb++ = out_[s+4096] * mg >> 8; }}
 
 
 void ModPlayer::Sample::Prepare() {
@@ -440,7 +434,7 @@ ModPlayer::ModPlayer(Paula* p, uint8_t* moddata) :paula_(p) {
 	Reset(); }
 
 
-void ModPlayer::Render(float* lb, float* rb, int numSamples) {
+void ModPlayer::Render(int* lb, int* rb, int numSamples) {
 	while (numSamples) {
 		int todo = std::min(numSamples, trCounter_);
 		if (todo) {
@@ -454,7 +448,7 @@ void ModPlayer::Render(float* lb, float* rb, int numSamples) {
 			trCounter_ = tickRate_; }}}
 
 
-void ModPlayer::RenderJmp(void* param, float* lb, float *rb, int len) {
+void ModPlayer::RenderJmp(void* param, int* lb, int* rb, int len) {
 	((ModPlayer*)param)->Render(lb, rb, len); }
 
 

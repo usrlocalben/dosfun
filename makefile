@@ -36,9 +36,9 @@ app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tiny
 	@rm -f $@
 	$(AR) $@ $^
 
-app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB)
+app_player_adapter.$(OBJ): app_player_adapter.cpp    app_player_adapter.hpp kb_tinymod.$(LIB) alg_ringindex.$(LIB)
 	$(CPP) $<
-app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB)
+app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_tinymod.$(LIB) alg_ringindex.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -84,9 +84,33 @@ sb16.$(LIB): sb16.$(OBJ)          pc_dma.$(LIB) pc_pic.$(LIB) pc_cpu.$(LIB) pc_b
 	@rm -f $@
 	$(AR) $@ $^
 
+sb_detect.$(OBJ): sb_detect.cpp    sb_detect.hpp
+	$(CPP) $<
+sb_detect.$(LIB): sb_detect.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+kb_tinymod.$(OBJ): kb_tinymod.cpp    kb_tinymod.hpp
+	$(CPP) -Wno-multichar $<
+kb_tinymod.$(LIB): kb_tinymod.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
 pc_pit.$(OBJ): pc_pit.cpp    pc_pit.hpp pc_pic.$(LIB) pc_cpu.$(LIB)
 	$(CPP) $<
 pc_pit.$(LIB): pc_pit.$(OBJ)            pc_pic.$(LIB) pc_cpu.$(LIB)
+	@rm -f $@
+	$(AR) $@ $^
+
+pc_cpu.$(OBJ): pc_cpu.cpp    pc_cpu.hpp
+	$(CPP) $<
+pc_cpu.$(LIB): pc_cpu.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+pc_bus.$(OBJ): pc_bus.cpp    pc_bus.hpp
+	$(CPP) $<
+pc_bus.$(LIB): pc_bus.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -108,33 +132,15 @@ pc_pic.$(LIB): pc_pic.$(OBJ)            pc_bus.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
-sb_detect.$(OBJ): sb_detect.cpp    sb_detect.hpp
-	$(CPP) $<
-sb_detect.$(LIB): sb_detect.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
-kb_tinymod.$(OBJ): kb_tinymod.cpp    kb_tinymod.hpp
-	$(CPP) -Wno-multichar $<
-kb_tinymod.$(LIB): kb_tinymod.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
-pc_cpu.$(OBJ): pc_cpu.cpp    pc_cpu.hpp
-	$(CPP) $<
-pc_cpu.$(LIB): pc_cpu.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
-pc_bus.$(OBJ): pc_bus.cpp    pc_bus.hpp
-	$(CPP) $<
-pc_bus.$(LIB): pc_bus.$(OBJ)
-	@rm -f $@
-	$(AR) $@ $^
-
 os_realmem.$(OBJ): os_realmem.cpp    os_realmem.hpp
 	$(CPP) $<
 os_realmem.$(LIB): os_realmem.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+alg_ringindex.$(OBJ): alg_ringindex.cpp    alg_ringindex.hpp
+	$(CPP) $<
+alg_ringindex.$(LIB): alg_ringindex.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
