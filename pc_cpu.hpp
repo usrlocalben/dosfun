@@ -25,7 +25,8 @@ public:
 	PreparedISR(const PreparedISR&) = delete;
 	PreparedISR& operator=(const PreparedISR&) = delete;
 	PreparedISR& operator=(PreparedISR&& other) {
-		std::swap(ptr_, other.ptr_); }
+		std::swap(ptr_, other.ptr_);
+		return *this; }
 	PreparedISR(PreparedISR&& other) {
 		ptr_.pm_offset = 0;
 		std::swap(ptr_, other.ptr_); }
