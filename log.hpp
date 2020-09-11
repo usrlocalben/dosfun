@@ -14,27 +14,33 @@ extern alg::RingIndex<1024> ring;
 extern std::vector<std::string> lines;
 
 
-inline int FrontIdx() {
+inline
+auto FrontIdx() -> int {
 	return ring.FrontIdx(); }
 
 
-inline void PopFront() {
+inline
+void PopFront() {
 	ring.PopFront(); }
 
 	
-inline std::string at(int idx) {
+inline
+auto at(int idx) -> std::string {
 	return lines[idx]; }
 
 
-inline bool Loaded() {
+inline
+auto Loaded() -> bool {
 	return ring.Loaded(); }
 
 
-inline void Reserve() {
+inline
+void Reserve() {
 	for (auto& line : lines) {
 		line.reserve(80); }}
 
-inline void info(const char* fmt, ...) {
+inline
+void info(const char* fmt, ...) {
 	using namespace std;
 	char buf[1024];
 	va_list args;

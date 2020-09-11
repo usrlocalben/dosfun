@@ -4,7 +4,7 @@
 namespace rqdq {
 namespace text {
 
-std::string_view JsonStringify(std::string_view text);
+auto JsonStringify(std::string_view text) -> std::string_view;
 
 
 }  // namespace text

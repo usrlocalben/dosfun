@@ -30,14 +30,17 @@ typedef void (*vbifunc)();
  * to spin for an entire display period.  Additionally, the
  * wall-clock timer provided by the IRQ would miss a tick.
  */
-const float kJitterPct = 0.010f;
+constexpr float kJitterPct = 0.010f;
 
-const int kNumVBISamples = 5;
+constexpr int kNumVBISamples = 5;
 
 extern int irqSleepTimeInTicks;
 
 template <typename VBIPROC>
 class RetraceIRQ {
+
+	uint16_t frameDurationInTicks_;
+
 public:
 	/**
 	 * Install the IRQ system.
@@ -46,7 +49,8 @@ public:
 	 * time for a VGA frame using the PIT.  Then, the ISR is
 	 * installed and triggered on the following frame.
 	 */
-	RetraceIRQ() :frameDurationInTicks_(0) {
+	RetraceIRQ() :
+		frameDurationInTicks_(0) {
 		int ax = 0;
 		for (int si=0; si<kNumVBISamples; si++) {
 			SpinUntilNextRetraceBegins();
@@ -82,7 +86,7 @@ private:
 	RetraceIRQ(const RetraceIRQ&);          // non-copyable
 
 public:
-	float GetHz() const {
+	auto GetHz() const -> float {
 		return pc::ticksToHz(frameDurationInTicks_); }
 
 	/**
@@ -97,12 +101,13 @@ public:
 	 *
 	 * See also kJitterPct
 	 */
-	static void vblank_isr() {
+	static
+	void vblank_isr() {
 		/*
 		 * when execution begins, retrace still hasn't started
 		 */
 #ifdef SHOW_TIMING
-		Color(255, {0x3f,0x2f,0x3f});
+		Color(255, {0xff,0x7f,0xff});
 #endif
 		vga::SpinUntilRetracing();
 #ifdef SHOW_TIMING
@@ -115,10 +120,7 @@ public:
 		 */
 		pc::StartCountdown(irqSleepTimeInTicks);
 		VBIPROC()();
-		pc::pitIRQLine.SignalEOI(); }
-
-private:
-	uint16_t frameDurationInTicks_; };
+		pc::pitIRQLine.SignalEOI(); }};
 
 
 }  // namespace vga

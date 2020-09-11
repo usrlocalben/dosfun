@@ -19,8 +19,8 @@ namespace vga {
  *
  * This is taken directly from M.Abrash's Mode-X .asm code
  */
-void SetModeX() {
-	bios::SetMode(0x13);
+void ModeX() {
+	bios::Mode(0x13);
 	SpinUntilNextRetraceBegins();
 
 	OutW(VP_SEQC, 0x604);  // disable chain4

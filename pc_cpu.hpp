@@ -14,6 +14,8 @@ using ISRFunc = void (*)();
 extern int cscnt;
 
 class PreparedISR {
+	_go32_dpmi_seginfo ptr_;
+
 public:
 	PreparedISR() {
 		ptr_.pm_offset = 0; }
@@ -34,9 +36,7 @@ public:
 		ptr_.pm_offset = 0;
 		std::swap(ptr_, other.ptr_); }
 	const ISRPtr& Ptr() const {
-		return ptr_; }
-private:
-	_go32_dpmi_seginfo ptr_; };
+		return ptr_; }};
 
 
 inline void Sleep() {

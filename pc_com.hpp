@@ -17,6 +17,23 @@ const int FLOW_DTRDSR = 2;
 const int FLOW_XONXOFF = 3;
 
 class ComPort {
+
+	int ioBase_;
+	pc::IRQLineRT irqLine_;
+	int bps_;
+
+	char ier_{};
+	char lsr_{};
+	char msr_{};
+
+	char rxBuf_[kBufferSize*2];
+	char txBuf_[kBufferSize];
+	alg::RingIndex<kBufferSize> rxRing_{};
+	alg::RingIndex<kBufferSize> txRing_{};
+	bool rxFlowing_{true};
+	bool txFlowing_{true};
+	int flowControlType_;
+
 public:
 	ComPort(int ioBase, int irqNum, int baudRateInBitsPerSecond, int flowType);
 	~ComPort();
@@ -64,24 +81,7 @@ public:
 
 	bool CanWrite() const {
 		return txFlowing_ && !rxRing_.Full(); }
-	int Write(std::string_view buf);
-
-private:
-	int ioBase_;
-	pc::IRQLineRT irqLine_;
-	int bps_;
-
-	char ier_{};
-	char lsr_{};
-	char msr_{};
-
-	char rxBuf_[kBufferSize*2];
-	char txBuf_[kBufferSize];
-	alg::RingIndex<kBufferSize> rxRing_{};
-	alg::RingIndex<kBufferSize> txRing_{};
-	bool rxFlowing_{true};
-	bool txFlowing_{true};
-	int flowControlType_; };
+	int Write(std::string_view buf); };
 
 
 // ComPort MakeComPort(std::string descr, int baud);

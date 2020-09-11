@@ -31,9 +31,10 @@ void PlayerAdapter::BlasterJmp(void* out, int fmt, int numChannels, int numSampl
 	static_cast<PlayerAdapter*>(self)->BlasterProc(out, fmt, numChannels, numSamples); }
 
 
-inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSamples) {
+inline
+void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSamples) {
 #ifdef SHOW_TIMING
-//vga::Color(255, { 0x20, 0x3f, 0x10 });
+//vga::Color(255, { 0x80, 0xfc, 0x40 });
 #endif
 	if (rw_.Size() >= numSamples) {
 		if (fmt == 2) {
@@ -66,15 +67,15 @@ inline void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int
 
 void PlayerAdapter::Refill() {
 #ifdef SHOW_TIMING
-vga::Color(255, { 0x30, 0x20, 0x10 });
+vga::Color(255, { 0xc0, 0x40, 0x20 });
 #endif
 	// int numSamples = std::min(rw_.Available(), 128U);
 	int numSamples = rw_.Available();
 	if (numSamples > 0) {
-		player_.Render(pbuf_, pbuf_+4096, numSamples);
+		player_.Render(pbuf_, pbuf_+capacity, numSamples);
 		for (int i=0; i<numSamples; i++) {
 			int l = pbuf_[i];
-			int r = pbuf_[i+4096];
+			int r = pbuf_[i+capacity];
 			PushBack(l, r); }}
 #ifdef SHOW_TIMING
 vga::Color(255, { 0, 0, 0 });

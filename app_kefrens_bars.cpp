@@ -47,17 +47,17 @@ namespace app {
 KefrensBars::KefrensBars() {
 	std::vector<rml::Vec3> vgaPal(256);
 	for (int i=0; i<256; i++) {
-		vgaPal[i] = rgl::ToLinear(vga::ToFloat(vga::Color(i))); }
+		vgaPal[i] = vga::Color(i).Vec3(); }
 
-	std::vector<rml::IVec3> newPal;
+	std::vector<rgl::TrueColorPixel> newPal;
 	std::tie(bkg_, newPal) = Reindex(rgl::LoadPNG(data::amy));
 
 	for (int i=0; i<256; i++) {
-		vga::Color(i, { newPal[i].x, newPal[i].y, newPal[i].z }); }
+		vga::Color(i, newPal[i]); }
 
 	std::vector<rml::Vec3> tmp(256);
 	for (int i=0; i<256; ++i) {
-		tmp[i] = rgl::ToLinear(vga::ToFloat(newPal[i])); }
+		tmp[i] = newPal[i].Vec3(); }
 
 	auto NearestColor = [&tmp](rml::Vec3 c) {
 		float minDist = 9999999.0f;

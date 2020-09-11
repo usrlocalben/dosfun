@@ -7,6 +7,8 @@ namespace rml {
 
 class IVec2 {
 public:
+	std::int32_t x, y;
+
 	IVec2() = default;
 	IVec2(const IVec2&) = default;
 	IVec2& operator=(const IVec2&) = default;
@@ -26,13 +28,13 @@ public:
 	IVec2 operator+(std::int32_t rhs) const { return { x+rhs, y+rhs }; }
 	IVec2 operator-(std::int32_t rhs) const { return { x-rhs, y-rhs }; }
 	IVec2 operator*(std::int32_t rhs) const { return { x*rhs, y*rhs }; }
-	IVec2 operator/(std::int32_t rhs) const { return { x/rhs, y/rhs }; }
-
-	std::int32_t x, y; };
+	IVec2 operator/(std::int32_t rhs) const { return { x/rhs, y/rhs }; }};
 
 
 class IVec3 {
 public:
+	std::int32_t x, y, z;
+
 	IVec3() = default;
 	IVec3(const IVec3&) = default;
 	IVec3& operator=(const IVec3&) = default;
@@ -47,13 +49,13 @@ public:
 		int y = (value>>8) & 0xff;
 		int z = (value>>16) & 0xff;
 		// int w = (value>>24) & 0xff;
-		return { x, y, z }; }
-
-	std::int32_t x, y, z; };
+		return { x, y, z }; } };
 
 
 class Vec2 {
 public:
+	float x, y;
+
 	Vec2() = default;
 	Vec2(const Vec2&) = default;
 	Vec2& operator=(const Vec2&) = default;
@@ -68,12 +70,13 @@ public:
 	Vec2 operator+(Vec2 rhs) const { return { x+rhs.x, y+rhs.y }; }
 	Vec2 operator-(Vec2 rhs) const { return { x-rhs.x, y-rhs.y }; }
 	Vec2 operator*(Vec2 rhs) const { return { x*rhs.x, y*rhs.y }; }
-	Vec2 operator/(Vec2 rhs) const { return { x/rhs.x, y/rhs.y }; }
+	Vec2 operator/(Vec2 rhs) const { return { x/rhs.x, y/rhs.y }; }};
 
-	float x, y; };
 
 class Vec3 {
 public:
+	float x, y, z;
+
 	Vec3() = default;
 	Vec3(const Vec3&) = default;
 	Vec3& operator=(const Vec3&) = default;
@@ -84,26 +87,24 @@ public:
 	Vec3(float a, float b, float c) :x(a), y(b), z(c) {}
 
 	Vec3 operator-(Vec3 rhs) const { return { x-rhs.x, y-rhs.y, z-rhs.z }; }
-	Vec3 operator*(Vec3 rhs) const { return { x*rhs.x, y*rhs.y, z*rhs.z }; }
-
-	float x, y, z; };
+	Vec3 operator*(Vec3 rhs) const { return { x*rhs.x, y*rhs.y, z*rhs.z }; }};
 
 
-inline Vec2 itof(IVec2 a) { return Vec2{ float(a.x), float(a.y) }; }
-inline Vec3 itof(IVec3 a) { return Vec3{ float(a.x), float(a.y), float(a.z) }; }
-inline IVec2 ftoi(Vec2 a) { return IVec2{ int(a.x), int(a.y) }; }
-inline IVec3 ftoi(Vec3 a) { return IVec3{ int(a.x), int(a.y), int(a.z) }; }
+inline auto itof(IVec2 a) -> Vec2 { return { float(a.x), float(a.y) }; }
+inline auto itof(IVec3 a) -> Vec3 { return { float(a.x), float(a.y), float(a.z) }; }
+inline auto ftoi(Vec2 a) -> IVec2 { return { int(a.x), int(a.y) }; }
+inline auto ftoi(Vec3 a) -> IVec3 { return { int(a.x), int(a.y), int(a.z) }; }
 
-inline Vec2 operator+(Vec2 lhs, IVec2 rhs) { return { lhs + itof(rhs) }; }
-inline Vec2 operator-(Vec2 lhs, IVec2 rhs) { return { lhs - itof(rhs) }; }
-inline Vec2 operator*(Vec2 lhs, IVec2 rhs) { return { lhs * itof(rhs) }; }
-inline Vec2 operator/(Vec2 lhs, IVec2 rhs) { return { lhs / itof(rhs) }; }
+inline auto operator+(Vec2 lhs, IVec2 rhs) -> Vec2 { return { lhs + itof(rhs) }; }
+inline auto operator-(Vec2 lhs, IVec2 rhs) -> Vec2 { return { lhs - itof(rhs) }; }
+inline auto operator*(Vec2 lhs, IVec2 rhs) -> Vec2 { return { lhs * itof(rhs) }; }
+inline auto operator/(Vec2 lhs, IVec2 rhs) -> Vec2 { return { lhs / itof(rhs) }; }
 
-inline float Dot(Vec2 a, Vec2 b) { return a.x*b.x + a.y*b.y; }
-inline float Dot(Vec3 a, Vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+inline auto Dot(Vec2 a, Vec2 b) -> float { return a.x*b.x + a.y*b.y; }
+inline auto Dot(Vec3 a, Vec3 b) -> float { return a.x*b.x + a.y*b.y + a.z*b.z; }
 
-inline float Length(Vec2 a) { return std::sqrt(Dot(a, a)); }
-inline float Length(Vec3 a) { return std::sqrt(Dot(a, a)); }
+inline auto Length(Vec2 a) -> float { return std::sqrt(Dot(a, a)); }
+inline auto Length(Vec3 a) -> float { return std::sqrt(Dot(a, a)); }
 
 
 }  // namespace rml

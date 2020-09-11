@@ -9,9 +9,9 @@
 namespace rqdq {
 namespace vga {
 
-const int VM_TEXT = 0x03;
-const int VM_MODE13 = 0x13;
-const int VM_MODEX = 0x100;
+constexpr int VM_TEXT = 0x03;
+constexpr int VM_MODE13 = 0x13;
+constexpr int VM_MODEX = 0x100;
 
 
 struct VRAMPage {
@@ -25,22 +25,22 @@ const vga::VRAMPage modeXPages[2] = {
 	{ 1, vga::VRAM_ADDR + (320*240/4), 320*240/4 } };
 
 
-void SetModeX();
+void ModeX();
 
 
 class ModeSetter {
 public:
 	ModeSetter()
-		:oldMode_(bios::GetMode()),
+		:oldMode_(bios::Mode()),
 		curMode_(oldMode_) {}
 
 	void Set(int req) {
 		if (req < 256) {
-			bios::SetMode(req);
+			bios::Mode(req);
 			log::info("vga: set BIOS mode %02x", req);
 			curMode_ = req; }
 		else if (req == VM_MODEX) {
-			vga::SetModeX();
+			vga::ModeX();
 			log::info("vga: set Mode X");
 			curMode_ = VM_MODEX; }
 		else {

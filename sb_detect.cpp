@@ -5,7 +5,7 @@
 namespace rqdq {
 namespace {
 
-int hexToDec(char ch) {
+auto hexToDec(char ch) -> int {
 	if ('0' <= ch && ch <= '9') {
 		return ch - '0'; }
 	/*if ('a' <= ch && ch <= 'f') {
@@ -15,7 +15,7 @@ int hexToDec(char ch) {
 	std::exit(1); }
 
 
-char toupper(char ch) {
+auto toupper(char ch) -> char {
 	if ('a' <= ch && ch <= 'z') {
 		return 'A' + (ch - 'a'); }
 	return ch; }
@@ -25,8 +25,8 @@ char toupper(char ch) {
 
 namespace hw {
 
-BlasterSerializer::BlasterSerializer(const char *data)
-	:params_(-1,-1,-1,-1), valid_(-1), curField_(0), ax_(0), base_(10) {
+BlasterSerializer::BlasterSerializer(const char *data) :
+	params_(-1,-1,-1,-1), valid_(-1), curField_(0), ax_(0), base_(10) {
 	if (data != nullptr) {
 		Deserialize(data); }}
 
@@ -70,7 +70,7 @@ void BlasterSerializer::MaybeSaveCurrentField() {
 	base_ = 10; }
 
 
-bool BlasterSerializer::IsValid() {
+auto BlasterSerializer::IsValid() -> bool {
 	if (valid_ != -1) {
 // cout << "already validated, valid_==" << valid_ << "\n";
 		return valid_ == 1; }
@@ -105,7 +105,7 @@ bool BlasterSerializer::IsValid() {
 	return true; }
 
 
-BlasterDetectResult DetectBlaster() {
+auto DetectBlaster() -> BlasterDetectResult {
 	char* blasterStr = std::getenv("BLASTER");
 	if (blasterStr != nullptr) {
 // cout << "blaster is \"" << blasterStr << "\"\n";

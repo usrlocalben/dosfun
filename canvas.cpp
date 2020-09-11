@@ -3,6 +3,7 @@
 #include "picopng.hpp"
 #include "vec.hpp"
 
+#include <iostream>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -13,7 +14,7 @@
 namespace rqdq {
 namespace rgl {
 
-TrueColorCanvas LoadPNG(const std::string& name) {
+auto LoadPNG(const std::string& name) -> TrueColorCanvas {
 	std::vector<uint8_t> data;
 	picopng::LoadFile(data, name);
 
@@ -28,7 +29,7 @@ TrueColorCanvas LoadPNG(const std::string& name) {
 	return canvas; }
 
 
-TrueColorCanvas LoadPNG(const uint8_t* data, int cnt) {
+auto LoadPNG(const uint8_t* data, int cnt) -> TrueColorCanvas {
 	std::vector<uint8_t> buf;
 	uint32_t widthInPx;
 	uint32_t heightInPx;
@@ -63,17 +64,17 @@ void Convert(const TrueColorCanvas& src, const std::vector<rml::Vec3>& pal, Inde
 			auto c = src.at(coord);
 
 			uint8_t idx;
-			if (auto cached = tab.find(c.to_ulong()); cached != end(tab)) {
+			if (auto cached = tab.find(c.ui); cached != end(tab)) {
 				idx = cached->second; }
 			else {
 				float minDist = 999999.0f;
 				int minIdx = -1;
 				for (int pi=16; pi<pal.size(); pi++) {
-					if (float dist = Length(pal[pi] - ToLinear(c.to_vec3())); dist < minDist) {
+					if (float dist = Length(pal[pi] - c.Vec3()); dist < minDist) {
 						minIdx = pi;
 						minDist = dist; }}
 				assert(0 <= minIdx && minIdx < pal.size());
-				tab[c.to_ulong()] = minIdx;
+				tab[c.ui] = minIdx;
 				idx = minIdx; }
 
 			dst.at(coord) = idx; }}}
@@ -82,7 +83,7 @@ void Convert(const TrueColorCanvas& src, const std::vector<rml::Vec3>& pal, Inde
 /**
  * make a Quake-style color/brightness LUT
  */
-std::vector<uint8_t> MakeIndexedBrightnessTable(const std::vector<rml::Vec3>& pal) {
+auto MakeIndexedBrightnessTable(const std::vector<rml::Vec3>& pal) -> std::vector<uint8_t> {
 	const auto findNearestColorTo = [&](rml::Vec3 c) {
 		float minDist = 9999999.0f;
 		int minIdx = -1;
@@ -133,7 +134,7 @@ void PlanarizeLines(IndexCanvas& c) {
  * convert an indexed-color PNG from picopng's truecolor
  * back into indexed color with a palette
  */
-std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& src) {
+auto Reindex(const TrueColorCanvas& src) -> std::pair<IndexCanvas, std::vector<rgl::TrueColorPixel>> {
 	IndexCanvas out;
 	out.Resize(src.dim);
 
@@ -144,15 +145,15 @@ std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& s
 		auto px = src.buf[i];
 
 		// VGAize the color
-		px.r >>= 2;
-		px.g >>= 2;
-		px.b >>= 2;
+		px.r &= 0xfc;
+		px.g &= 0xfc;
+		px.b &= 0xfc;
 		px.a = 0;
 
 		int idx;
-		if (auto found = tab.find(px.to_ulong()); found == tab.end()) {
+		if (auto found = tab.find(px.ui); found == tab.end()) {
 			idx = seq++;
-			tab[px.to_ulong()] = idx; }
+			tab[px.ui] = idx; }
 		else {
 			idx = found->second; }
 		out.buf[i] = idx; }
@@ -160,11 +161,13 @@ std::pair<IndexCanvas, std::vector<rml::IVec3>> Reindex(const TrueColorCanvas& s
 	assert(seq <= 256);
 
 	// build VGA palette
-	std::vector<rml::IVec3> newPal(256);
+	std::vector<rgl::TrueColorPixel> newPal(256);
 	for (const auto& item : tab) {
 		const auto& idx = item.second;
-		const auto& color = item.first;
-		newPal[idx] = rml::IVec3::from_ulong(color); }
+		const auto& ui = item.first;
+		TrueColorPixel px;
+		px.ui = ui;
+		newPal[idx] = px; }
 
 	return { out, newPal }; }
 

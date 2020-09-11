@@ -41,19 +41,6 @@ public:
 
 
 class DMAChannel {
-public:
-	DMAChannel(int dmaChannelNum);
-	~DMAChannel();
-	void Setup(const DMABuffer& buf) const;
-
-	void Stop() const;
-private:
-	void ClearFlipFlop() const;
-	void SetMode() const;
-	void SetMemoryAddr(const DMABuffer& buf) const;
-	void SetMemorySize(const DMABuffer& buf) const;
-	void Start() const;
-
 	const int controllerNum_;
 	const int channelNum_;
 	const int ioBase_;
@@ -68,7 +55,20 @@ private:
 
 	const int stopMask_;
 	const int startMask_;
-	const int mode_;  };
+	const int mode_;
+
+public:
+	DMAChannel(int dmaChannelNum);
+	~DMAChannel();
+	void Setup(const DMABuffer& buf) const;
+
+	void Stop() const;
+private:
+	void ClearFlipFlop() const;
+	void SetMode() const;
+	void SetMemoryAddr(const DMABuffer& buf) const;
+	void SetMemorySize(const DMABuffer& buf) const;
+	void Start() const; };
 
 
 }  // namespace pc

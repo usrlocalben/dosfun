@@ -11,7 +11,6 @@
 
 #include <sys/nearptr.h>
 
-
 using std::uint8_t;
 using std::uint16_t;
 using std::int8_t;
@@ -53,6 +52,25 @@ namespace snd {
 int spuriousIRQCnt = 0;
 
 class Blaster::impl {
+
+	pc::IRQLineRT irqLine_;
+	const pc::DMAChannel dma_;
+	const int bits_;
+	const std::int16_t resetPort_;
+	const std::int16_t readPort_;
+	const std::int16_t writePort_;
+	const std::int16_t pollPort_;
+	const std::int16_t ackPort_;
+	const int sampleRateInHz_;
+	const int numChannels_;
+	const int bufferSizeInSamples_;
+	int userBuffer_;
+	int playBuffer_;
+	const pc::DMABuffer dmaBuffer_;
+	bool good_;
+	audioproc userProc_;
+	void* userPtr_;
+
 public:
 	impl(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples) :
 		irqLine_(irqNum),
@@ -71,7 +89,8 @@ public:
 		dmaBuffer_(bufferSizeInSamples_*numChannels_ * (bits_ == 16 ? 2 : 1)),
 		good_(false),
 		userProc_(nullptr),
-		userPtr_(nullptr) {}
+		userPtr_(nullptr)
+		{}
 
 	void Start() {
 		assert(runningInstance = nullptr);
@@ -169,17 +188,19 @@ public:
 		SpinUntilReset(); }
 
 private:
-	inline void SpinUntilReadyForWrite() {
+	inline
+	void SpinUntilReadyForWrite() {
 		while (InB(writePort_) & 0x80); }
 
-	inline void SpinUntilReadyForRead() {
+	inline
+	void SpinUntilReadyForRead() {
 		while (!(InB(pollPort_) & 0x80)); }
 
 	void TX(uint8_t value) {
 		SpinUntilReadyForWrite();
 		OutB(writePort_, value); }
 
-	uint8_t RX() {
+	auto RX() -> uint8_t {
 		SpinUntilReadyForRead();
 		return InB(readPort_); }
 
@@ -187,12 +208,13 @@ private:
 		OutB(resetPort_, 1);
 		OutB(resetPort_, 0); }
 
-	bool SpinUntilReset() {
+	auto SpinUntilReset() -> bool {
 		int attempts = 100;
 		while ((RX() != 0xaa) && attempts--);
 		return attempts != 0; }
 
-	inline void* GetUserBuffer() const {
+	inline
+	auto GetUserBuffer() const -> void* {
 		if (bits_ == 8) {
 			int8_t* dst = (int8_t*)dmaBuffer_.Ptr16();
 			dst += userBuffer_*bufferSizeInSamples_*numChannels_;
@@ -202,10 +224,12 @@ private:
 			dst += userBuffer_*bufferSizeInSamples_*numChannels_;
 			return dst; }}
 
-	static void isrJmp() {
+	static
+	void isrJmp() {
 		static_cast<impl*>(runningInstance)->isr(); }
 
-	inline void isr() {
+	inline
+	void isr() {
 #ifdef DETECT_SURIOUS_IRQ
 		if (!irqLine_.IsReal()) {
 			spuriousIRQCnt++;
@@ -223,7 +247,8 @@ private:
 		ACK();
 		irqLine_.SignalEOI(); }
 
-	inline void ACK() {
+	inline
+	void ACK() {
 		InB(ackPort_); }
 
 public:
@@ -235,34 +260,17 @@ public:
 	void DetachProc() {
 		userProc_ = nullptr; }
 
-	bool IsGood() const {
+	auto IsGood() const -> bool {
 		return good_; }
 
 	~impl() {
 		if (runningInstance == this) {
-			Stop(); }}
-private:
-	pc::IRQLineRT irqLine_;
-	const pc::DMAChannel dma_;
-	const int bits_;
-	const std::int16_t resetPort_;
-	const std::int16_t readPort_;
-	const std::int16_t writePort_;
-	const std::int16_t pollPort_;
-	const std::int16_t ackPort_;
-	const int sampleRateInHz_;
-	const int numChannels_;
-	const int bufferSizeInSamples_;
-	int userBuffer_;
-	int playBuffer_;
-	const pc::DMABuffer dmaBuffer_;
-	bool good_;
-	audioproc userProc_;
-	void* userPtr_; };
+			Stop(); }}};
 
 
 Blaster::Blaster(int baseAddr, int irqNum, int dmaChannelNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples) :
 	impl_(std::make_unique<impl>(baseAddr, irqNum, dmaChannelNum, sampleRateInHz, numChannels, bufferSizeInSamples)) {}
+
 Blaster::~Blaster() = default;
 
 void Blaster::Start() {

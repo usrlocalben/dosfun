@@ -8,6 +8,8 @@ namespace rqdq {
 namespace os {
 
 class RealMem {
+	_go32_dpmi_seginfo info_;
+
 public:
 	RealMem() {
 		info_.pm_selector = 0; }
@@ -25,12 +27,8 @@ public:
 			_go32_dpmi_free_dos_memory(&info_);
 			info_.pm_selector = 0; }}
 
-public:
 	std::uint32_t GetRealAddr() const {
-		return info_.rm_segment * 16; }
-
-private:
-	_go32_dpmi_seginfo info_; };
+		return info_.rm_segment * 16; }};
 
 
 }  // namespace os

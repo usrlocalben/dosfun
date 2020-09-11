@@ -31,9 +31,9 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp    app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
+app.$(OBJ): app.cpp    ryg.$(LIB) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
 	$(CPP) $<
-app.$(LIB): app.$(OBJ) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
+app.$(LIB): app.$(OBJ) ryg.$(LIB) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -73,9 +73,9 @@ vga_mode.$(LIB): vga_mode.$(OBJ)              vga_reg.$(LIB) vga_bios.$(LIB) pc_
 	@rm -f $@
 	$(AR) $@ $^
 
-vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB) vec.$(LIB)
+vga_reg.$(OBJ): vga_reg.cpp    vga_reg.hpp pc_bus.$(LIB) pc_cpu.$(LIB) pixel.$(LIB)
 	$(CPP) $<
-vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB) vec.$(LIB)
+vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB) pixel.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -175,9 +175,21 @@ vec.$(LIB): vec.$(OBJ)
 	@rm -f $@
 	$(AR) $@ $^
 
-canvas.$(OBJ): canvas.cpp    canvas.hpp vec.$(LIB) picopng.$(LIB)
+canvas.$(OBJ): canvas.cpp    canvas.hpp vec.$(LIB) picopng.$(LIB) pixel.$(LIB)
 	$(CPP) $<
-canvas.$(LIB): canvas.$(OBJ)            vec.$(LIB) picopng.$(LIB)
+canvas.$(LIB): canvas.$(OBJ)            vec.$(LIB) picopng.$(LIB) pixel.$(LIB)
+	@rm -f $@
+	$(AR) $@ $^
+
+ryg.$(OBJ): ryg.cpp    ryg.hpp
+	$(CPP) $<
+ryg.$(LIB): ryg.$(OBJ)
+	@rm -f $@
+	$(AR) $@ $^
+
+pixel.$(OBJ): pixel.cpp    pixel.hpp ryg.$(LIB) vec.$(LIB)
+	$(CPP) $<
+pixel.$(LIB): pixel.$(OBJ)           ryg.$(LIB) vec.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 

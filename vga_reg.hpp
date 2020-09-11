@@ -4,7 +4,7 @@
 #pragma once
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
-#include "vec.hpp"
+#include "pixel.hpp"
 
 #include <cstdint>
 
@@ -30,28 +30,24 @@ const std::uint8_t SC_MAP_MASK = 0x02;
 std::uint8_t* const VRAM_ADDR = (std::uint8_t*)0xa0000L;
 
 
-inline void Color(int idx, rml::IVec3 c) {
+inline
+void Color(int idx, rgl::TrueColorPixel c) {
 	// pc::OutB(0x3c6, 0xff);
 	pc::OutB(VP_PALETTE_WRITE, idx);
-	pc::OutB(VP_PALETTE_DATA, c.x);
-	pc::OutB(VP_PALETTE_DATA, c.y);
-	pc::OutB(VP_PALETTE_DATA, c.z); }
+	pc::OutB(VP_PALETTE_DATA, c.r>>2);
+	pc::OutB(VP_PALETTE_DATA, c.g>>2);
+	pc::OutB(VP_PALETTE_DATA, c.b>>2); }
 
 
-inline rml::IVec3 Color(int idx) {
+inline
+auto Color(int idx) -> rgl::TrueColorPixel {
 	// pc::OutB(0x3c6, 0xff);
 	pc::OutB(VP_PALETTE_READ, idx);
-	int r = pc::InB(VP_PALETTE_DATA);
-	int g = pc::InB(VP_PALETTE_DATA);
-	int b = pc::InB(VP_PALETTE_DATA);
-	return { r, g, b }; }
-
-
-inline rml::Vec3 ToFloat(rml::IVec3 c) {
-	float r = float(c.x) / 0x3f;
-	float g = float(c.y) / 0x3f;
-	float b = float(c.z) / 0x3f;
-	return { r, g, b }; }
+	rgl::TrueColorPixel px;
+	px.r = pc::InB(VP_PALETTE_DATA) << 2;
+	px.g = pc::InB(VP_PALETTE_DATA) << 2;
+	px.b = pc::InB(VP_PALETTE_DATA) << 2;
+	return px; }
 
 
 inline void StartAddr(std::uint16_t addr) {
@@ -117,15 +113,17 @@ inline void SpinWhileHorizontalRetrace() {
 
 
 class SequencerDisabledSection {
+	const class pc::CriticalSection& cs;
 public:
-	SequencerDisabledSection(const pc::CriticalSection& cs) :cs(cs) {
+	SequencerDisabledSection(const pc::CriticalSection& cs) :
+		cs(cs) {
 		pc::OutW(VP_SEQC, 0x100); }  // clear bit 1, starting reset
 	~SequencerDisabledSection() {
 		pc::OutW(VP_SEQC, 0x300); }  // undo reset / restart sequencer)
-private:
-	SequencerDisabledSection& operator=(const SequencerDisabledSection&);  // non-copyable
-	SequencerDisabledSection(const SequencerDisabledSection&);             // non-copyable
-	const class pc::CriticalSection& cs; };
+
+	// non-copyable
+	auto operator=(const SequencerDisabledSection&) -> SequencerDisabledSection& = delete;
+	SequencerDisabledSection(const SequencerDisabledSection&) = delete; };
 
 
 }  // namespace vga

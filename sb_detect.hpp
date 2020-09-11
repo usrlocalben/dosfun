@@ -3,18 +3,26 @@ namespace rqdq {
 namespace hw {
 
 struct BlasterParams {
-	BlasterParams(int a=-1, int b=-1, int c=-1, int d=-1)
-		:ioAddr(a), irqNum(b), dmaLow(c), dmaHigh(d) {}
 	int ioAddr;
 	int irqNum;
 	int dmaLow;
 	int dmaHigh;
+
+	BlasterParams(int a=-1, int b=-1, int c=-1, int d=-1) :
+		ioAddr(a),irqNum(b), dmaLow(c), dmaHigh(d) {}
 
 	int BestDMA() const {
 		return dmaHigh != -1 ? dmaHigh : dmaLow; }};
 
 
 class BlasterSerializer {
+public:
+	BlasterParams params_;
+	int valid_;
+	int curField_;
+	int ax_;
+	int base_;
+
 public:
 	BlasterSerializer(const char* data=nullptr);
 	BlasterParams Save() const {
@@ -23,23 +31,18 @@ public:
 
 private:
 	void Deserialize(const char* text);
-	void MaybeSaveCurrentField();
-
-public:
-	BlasterParams params_;
-	int valid_;
-	int curField_;
-	int ax_;
-	int base_; };
+	void MaybeSaveCurrentField(); };
 
 
 struct BlasterDetectResult {
-	BlasterDetectResult(bool a, BlasterParams b) :found(a), value(b) {}
 	bool found;
-	BlasterParams value; };
+	BlasterParams value;
+
+	BlasterDetectResult(bool a, BlasterParams b) :
+		found(a), value(b) {} };
 
 
-BlasterDetectResult DetectBlaster();
+auto DetectBlaster() -> BlasterDetectResult;
 
 
 }  // namespace hw

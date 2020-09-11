@@ -15,6 +15,17 @@ namespace pc {
 
 template <int IRQNUM>
 class IRQLineCT {
+
+	const int irqNum_;
+	const int controllerNum_;
+	const int rotatePort_;
+	const int maskPort_;
+	const std::uint8_t isrNum_;
+	const std::uint8_t stopMask_;
+	const std::uint8_t startMask_;
+	ISRPtr savedISRPtr_;
+	PreparedISR customISR_;
+
 public:
 	IRQLineCT()
 		:irqNum_(IRQNUM),
@@ -62,9 +73,11 @@ public:
 		savedISRPtr_ = GetISR(); }
 
 	void RestoreISR() {
-		SetVect(isrNum_, savedISRPtr_); }
+		SetVect(isrNum_, savedISRPtr_); }};
 
-private:
+
+class IRQLineRT {
+
 	const int irqNum_;
 	const int controllerNum_;
 	const int rotatePort_;
@@ -73,10 +86,8 @@ private:
 	const std::uint8_t stopMask_;
 	const std::uint8_t startMask_;
 	ISRPtr savedISRPtr_;
-	PreparedISR customISR_; };
+	PreparedISR customISR_;
 
-
-class IRQLineRT {
 public:
 	IRQLineRT(int irqNum);
 
@@ -116,22 +127,13 @@ public:
 		savedISRPtr_ = GetISR(); }
 
 	void RestoreISR() {
-		SetVect(isrNum_, savedISRPtr_); }
+		SetVect(isrNum_, savedISRPtr_); }};
 
-private:
-	const int irqNum_;
-	const int controllerNum_;
-	const int rotatePort_;
-	const int maskPort_;
-	const std::uint8_t isrNum_;
-	const std::uint8_t stopMask_;
-	const std::uint8_t startMask_;
-	ISRPtr savedISRPtr_;
-	PreparedISR customISR_; };
 
-inline uint16_t GetPICMasks() {
-	uint8_t lo = InB(0x21);
-	uint8_t hi = InB(0xa1);
+inline
+auto GetPICMasks() -> std::uint16_t {
+	std::uint8_t lo = InB(0x21);
+	std::uint8_t hi = InB(0xa1);
 	return hi<<8|lo; }
 
 

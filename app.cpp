@@ -13,6 +13,7 @@
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
 #include "vga_reg.hpp"
+#include "ryg.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -140,7 +141,7 @@ private:
 		int patternNum = player_->GetCurrentPos();
 		int rowNum = player_->GetCurrentRow();
 #ifdef SHOW_TIMING
-		vga::Color(255, { 0x30, 0x30, 0x30 });
+		vga::Color(255, { 0xc0, 0xc0, 0xc0 });
 #endif
 		pc::Stopwatch drawtime;
 		effect_->Draw(vram, T, patternNum, rowNum);
@@ -174,6 +175,7 @@ private:
 
 
 int main() {
+	ryg::Init();
 	rqdq::log::Reserve();
 	const std::uint16_t before = rqdq::pc::GetPICMasks();
 

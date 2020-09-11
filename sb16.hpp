@@ -15,6 +15,8 @@ typedef void (*audioproc)(void* dest, int fmt, int numChannels, int numSamples, 
 class Blaster {
 	class impl;
 
+	std::unique_ptr<impl> impl_;
+
 public:
 	Blaster(int baseAddr, int irqNum, int dmaNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
 	Blaster(Blaster&&) = default;
@@ -22,16 +24,13 @@ public:
 	Blaster& operator=(const Blaster&) = delete;
 	Blaster(const Blaster&) = delete;
 
-	bool IsGood() const;
+	auto IsGood() const -> bool;
 	void AttachProc(audioproc userProc, void* userPtr);
 	void DetachProc();
 	void Start();
 	void Stop();
 
-	~Blaster();
-
-private:
-	std::unique_ptr<impl> impl_; };
+	~Blaster(); };
 
 
 }  // namespace snd

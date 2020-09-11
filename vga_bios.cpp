@@ -11,14 +11,14 @@ namespace vga {
 
 namespace bios {
 
-void SetMode(uint8_t modeNum) {
+void Mode(uint8_t modeNum) {
 	__dpmi_regs r;
 	r.h.ah = 0;  // set video mode
 	r.h.al = modeNum;
 	__dpmi_int(0x10, &r); }
 
 
-std::uint8_t GetMode() {
+auto Mode() -> std::uint8_t {
 	__dpmi_regs r;
 	r.h.ah = 0x0f;  // get current video mode
 	__dpmi_int(0x10, &r);

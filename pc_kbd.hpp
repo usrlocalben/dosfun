@@ -4,17 +4,16 @@
 namespace rqdq {
 namespace pc {
 
-const int SC_ESC = 1;
+constexpr int SC_ESC = 1;
 
 struct Event {
 	int scanCode;
 	bool down; };
 
-
 void InstallKeyboard();
 void UninstallKeyboard();
-bool IsKeyboardDataAvailable();
-Event GetKeyboardMessage();
+auto IsKeyboardDataAvailable() -> bool;
+auto GetKeyboardMessage() -> Event;
 
 
 class Keyboard {
@@ -26,9 +25,9 @@ private:
 	Keyboard(const Keyboard&);             // not copyable
 
 public:
-	bool IsDataAvailable() {
+	auto IsDataAvailable() -> bool {
 		return IsKeyboardDataAvailable(); }
-	Event GetMessage() {
+	auto GetMessage() -> Event {
 		return GetKeyboardMessage(); }};
 
 

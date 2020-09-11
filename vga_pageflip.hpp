@@ -18,6 +18,9 @@ struct FlipPages {
 
 
 class AnimationPage {
+
+	bool locked_; 
+
 public:
 	AnimationPage() {
 		locked_ = backLocked; }
@@ -26,10 +29,10 @@ private:
 	AnimationPage& operator=(const AnimationPage&);  // not copyable
 
 public:
-	const VRAMPage& Get() const {
+	auto Get() const -> const VRAMPage& {
 		return modeXPages[backPage]; }
 
-	bool IsLocked() const {
+	auto IsLocked() const -> bool {
 		return locked_; }
 
 	void Unlock() {
@@ -39,12 +42,11 @@ public:
 			backLocked = false; }}
 
 	~AnimationPage() {
-		Unlock(); }
-private:
-	bool locked_; };
+		Unlock(); }};
 
 
-inline int GetTime() {
+inline
+auto GetTime() -> int {
 	return timeInFrames; }
 
 

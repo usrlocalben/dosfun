@@ -6,9 +6,9 @@ namespace vga {
 
 namespace bios {
 
-void SetMode(std::uint8_t modeNum);
+void Mode(std::uint8_t modeNum);
 
-std::uint8_t GetMode();
+auto Mode() -> std::uint8_t;
 
 
 }  // namespace bios

@@ -8,34 +8,42 @@ namespace alg {
 template<int CAP>
 class RingIndex {
 public:
-	RingIndex() :front_(0), back_(0) {}
-
-	static std::uint32_t Mod(std::uint32_t x) {
+	static
+	std::uint32_t Mod(std::uint32_t x) {
 		return x & (CAP-1); }
 
-	bool Empty() const {
+private:
+	std::uint32_t front_{0}, back_{0};
+
+public:
+	RingIndex() = default;
+
+	auto Empty() const -> bool {
 		return front_ == back_; }
 
-	std::uint32_t Size() const {
-		return back_ - front_; }
+	auto Size() const -> int {
+		return static_cast<int>(back_ - front_); }
 
-	std::uint32_t Available() const {
-		return CAP - Size(); }
+	auto Available() const -> int {
+		return static_cast<int>(CAP - Size()); }
 
-	const int Capacity() const {
+	constexpr
+	auto Capacity() const -> int {
 		return CAP; }
 
-	bool Loaded() const { return Size() > 0; }
+	auto Loaded() const -> bool {
+		return Size() > 0; }
 
-	bool Full() const { return Size() == CAP; }
+	auto Full() const -> bool {
+		return Size() == CAP; }
 
-	int BackIdx() const {
+	auto BackIdx() const -> int {
 		return Mod(back_); }
 
 	void PushBack() {
 		back_++; }
 
-	int FrontIdx() const {
+	auto FrontIdx() const -> int {
 		return Mod(front_); }
 
 	void PopFront() {
@@ -44,11 +52,7 @@ public:
 
 	void PopFront(int n) {
 		assert(Size() >= n);
-		front_ += n; }
-
-private:
-	std::uint32_t front_;
-	std::uint32_t back_; };
+		front_ += n; }};
 
 
 }  // namespace alg

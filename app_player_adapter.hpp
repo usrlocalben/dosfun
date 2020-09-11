@@ -9,16 +9,26 @@ namespace app {
 
 class PlayerAdapter {
 public:
-	PlayerAdapter(kb::ModPlayer& p) :player_(p), rw_() {}
+	constexpr static int capacity = 4096;
 
-	static void BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self);
+	static
+	void BlasterJmp(void* out, int fmt, int numChannels, int numSamples, void* self);
+
+private:
+	kb::ModPlayer& player_;
+	alg::RingIndex<capacity> rw_;
+	std::int32_t buf_[capacity*2];
+	int pbuf_[capacity*2];
+
+public:
+	PlayerAdapter(kb::ModPlayer& p) :player_(p), rw_() {}
 
 	void Refill();
 
-	bool Full() const {
+	auto Full() const -> bool {
 		return rw_.Full(); }
 
-	bool Low() const {
+	auto Low() const -> bool {
 		return rw_.Size() < (rw_.Capacity() / 3); }
 
 private:
@@ -27,20 +37,14 @@ private:
 	void PushBack(int l, int r) {
 		int idx = rw_.BackIdx();
 		buf_[idx] = l;
-		buf_[idx+4096] = r;
+		buf_[idx+capacity] = r;
 		rw_.PushBack(); }
 
 	void PopFront(int& l, int& r) {
 		int idx = rw_.FrontIdx();
 		l = buf_[idx];
-		r = buf_[idx+4096];
-		rw_.PopFront(); }
-
-private:
-	kb::ModPlayer& player_;
-	alg::RingIndex<4096> rw_;
-	std::int32_t buf_[4096*2];
-	int pbuf_[4096*2]; };
+		r = buf_[idx+capacity];
+		rw_.PopFront(); }};
 
 
 }  // namespace app
