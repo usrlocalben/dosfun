@@ -1,14 +1,12 @@
 #pragma once
-#include <cstdlib>
-#include <cstdint>
-
+#include "log.hpp"
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
 #include "pc_pit.hpp"
 #include "vga_reg.hpp"
 
-using std::uint8_t;
-using std::uint16_t;
+#include <cstdlib>
+#include <cstdint>
 
 namespace rqdq {
 namespace vga {
@@ -32,9 +30,9 @@ typedef void (*vbifunc)();
  * to spin for an entire display period.  Additionally, the
  * wall-clock timer provided by the IRQ would miss a tick.
  */
-const float kJitterPct = 0.025;
+const float kJitterPct = 0.010f;
 
-const int kNumVBISamples = 50;
+const int kNumVBISamples = 5;
 
 extern int irqSleepTimeInTicks;
 
@@ -56,6 +54,7 @@ public:
 			SpinUntilNextRetraceBegins();
 			ax += pc::EndMeasuring(); }
 		frameDurationInTicks_ = ax / kNumVBISamples;
+		log::info("vga: measured refresh period = %d ticks", frameDurationInTicks_);
 
 		irqSleepTimeInTicks =
 			frameDurationInTicks_ * (1.0 - kJitterPct);
@@ -66,14 +65,17 @@ public:
 		{
 			pc::CriticalSection cs;
 			SpinUntilRetracing();
-			pc::StartCountdown(irqSleepTimeInTicks); }}
+			pc::StartCountdown(irqSleepTimeInTicks); }
+
+		log::info("vga: RetraceIRQ installed"); }
 
 	/**
 	 * Restore the BIOS timer ISR and interval
 	 */
 	~RetraceIRQ() {
 		pc::pitIRQLine.RestoreISR();
-		pc::StartSquareWave(0); }
+		pc::StartSquareWave(0);
+		log::info("vga: RetraceIRQ uninstalled, PIT restored"); }
 
 private:
 	RetraceIRQ& operator=(const RetraceIRQ&);  // non-copyable
@@ -100,11 +102,11 @@ public:
 		 * when execution begins, retrace still hasn't started
 		 */
 #ifdef SHOW_TIMING
-		SetRGB(0, 0x3f,0x3f,0x3f);
+		Color(255, {0x3f,0x2f,0x3f});
 #endif
 		vga::SpinUntilRetracing();
 #ifdef SHOW_TIMING
-		SetRGB(0, 0x0, 0x0, 0x0);
+		Color(255, {0,0,0});
 #endif
 
 		/*

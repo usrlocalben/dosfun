@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <string>
 
 using namespace std;
@@ -13,6 +14,11 @@ int main(int argc, char** argv) {
 
 	ifstream fd(argv[1], ios::in|ios::binary);
 
+	fd.ignore(numeric_limits<streamsize>::max());
+	auto length = fd.gcount();
+	fd.clear();
+	fd.seekg(0, ios_base::beg);
+
 	string hppName = string(outputFilePrefix) + ".hpp";
 	string cppName = string(outputFilePrefix) + ".cpp";
 
@@ -22,15 +28,15 @@ int main(int argc, char** argv) {
 	char ch_;
 
 	hppFd << "#pragma once\n";
-	cppFd << "#include <cstdint>\n";
+	hppFd << "#include <array>\n";
+	hppFd << "#include <cstdint>\n";
 	hppFd << "namespace " << namespaceName << " {\n";
-	hppFd << "extern std::uint8_t " << varName << "[];\n";
+	hppFd << "extern std::array<std::uint8_t, " << length << "> " << varName << ";\n";
 	hppFd << "}";
 
 	cppFd << "#include \"" << hppName.c_str() << "\"\n";
-	cppFd << "#include <cstdint>\n";
 	cppFd << "namespace " << namespaceName << " {\n";
-	cppFd << "std::uint8_t " << varName << "[] = {\n";
+	cppFd << "std::array<std::uint8_t, " << length << "> " << varName << " = { {\n";
 	int n = 0;
 	bool first = true;
 	while (fd.get(ch_)) {
@@ -43,7 +49,7 @@ int main(int argc, char** argv) {
 		n++;
 		if (n % 30 == 0) {
 			cppFd << "\n"; }}
-	cppFd << "};\n";
+	cppFd << "} };\n";
 	cppFd << "}";
 
 	cout << "bin2cpp " << n << " bytes\n"; }

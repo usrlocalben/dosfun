@@ -2,10 +2,11 @@
  * VGA register-level tools
  */
 #pragma once
-#include <cstdint>
-
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
+#include "vec.hpp"
+
+#include <cstdint>
 
 namespace rqdq {
 namespace vga {
@@ -13,7 +14,8 @@ namespace vga {
 const int VP_SEQC = 0x3c4;  // sequence controller
 const int VP_CRTC = 0x3d4;  // CRT controller
 const int VP_MISC = 0x3c2;
-const int VP_PALETTE_INDEX = 0x3c8;
+const int VP_PALETTE_READ = 0x3c7;
+const int VP_PALETTE_WRITE = 0x3c8;
 const int VP_PALETTE_DATA = 0x3c9;
 const int VP_GFXC = 0x3ce;  // graphics controller
 const int VP_STA1 = 0x3da;  // Input Status #1 (color mode)
@@ -25,41 +27,54 @@ const std::uint8_t CRT_LOW_ADDR = 0x0d;
 
 const std::uint8_t SC_MAP_MASK = 0x02;
 
-std::uint8_t* const VGAPTR = (std::uint8_t*)0xa0000L;
+std::uint8_t* const VRAM_ADDR = (std::uint8_t*)0xa0000L;
 
 
-inline void SetRGB(int idx, int r, int g, int b) {
-	pc::OutB(VP_PALETTE_INDEX, idx);
-	pc::OutB(VP_PALETTE_DATA, r);
-	pc::OutB(VP_PALETTE_DATA, g);
-	pc::OutB(VP_PALETTE_DATA, b); }
+inline void Color(int idx, rml::IVec3 c) {
+	// pc::OutB(0x3c6, 0xff);
+	pc::OutB(VP_PALETTE_WRITE, idx);
+	pc::OutB(VP_PALETTE_DATA, c.x);
+	pc::OutB(VP_PALETTE_DATA, c.y);
+	pc::OutB(VP_PALETTE_DATA, c.z); }
 
 
-inline void SetStartAddress(std::uint16_t addr) {
+inline rml::IVec3 Color(int idx) {
+	// pc::OutB(0x3c6, 0xff);
+	pc::OutB(VP_PALETTE_READ, idx);
+	int r = pc::InB(VP_PALETTE_DATA);
+	int g = pc::InB(VP_PALETTE_DATA);
+	int b = pc::InB(VP_PALETTE_DATA);
+	return { r, g, b }; }
+
+
+inline rml::Vec3 ToFloat(rml::IVec3 c) {
+	float r = float(c.x) / 0x3f;
+	float g = float(c.y) / 0x3f;
+	float b = float(c.z) / 0x3f;
+	return { r, g, b }; }
+
+
+inline void StartAddr(std::uint16_t addr) {
 	pc::OutW(VP_CRTC, CRT_HIGH_ADDR | (addr & 0xff00));
 	pc::OutW(VP_CRTC, CRT_LOW_ADDR | (addr << 8)); }
 
 
-inline void SetBitMask(std::uint8_t mask) {
+inline void MergeMask(std::uint8_t mask) {
 	pc::OutW(VP_GFXC, mask<<8|0x08); }
 
 
-inline int GetBitMask() {
+inline int MergeMask() {
 	pc::OutB(VP_GFXC, 0x08);
 	return pc::InB(VP_GFXC+1); }
 
 
-inline void SelectPlanes(std::uint8_t mask) {
+inline void Planes(std::uint8_t mask) {
 	pc::OutW(VP_SEQC, mask<<8|SC_MAP_MASK); }
 
 
-inline int GetPlanes() {
+inline int Planes() {
 	pc::OutB(VP_SEQC, SC_MAP_MASK);
 	return pc::InB(VP_SEQC+1); }
-
-
-inline void SelectAllPlanes() {
-	SelectPlanes(0xf); }
 
 
 /*

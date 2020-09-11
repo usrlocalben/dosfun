@@ -1,9 +1,10 @@
 #include "pc_kbd.hpp"
 
-#include <cstdint>
-
+#include "log.hpp"
 #include "pc_cpu.hpp"
 #include "pc_pic.hpp"
+
+#include <cstdint>
 
 using std::uint8_t;
 
@@ -34,11 +35,13 @@ void keyboard_isr() {
 
 void InstallKeyboard() {
 	kbdIRQLine.SaveISR();
-	kbdIRQLine.SetISR(keyboard_isr); }
+	kbdIRQLine.SetISR(keyboard_isr);
+	log::info("kbd installed"); }
 
 
 void UninstallKeyboard() {
-	kbdIRQLine.RestoreISR(); }
+	kbdIRQLine.RestoreISR();
+	log::info("kbd released"); }
 
 
 bool IsKeyboardDataAvailable() {

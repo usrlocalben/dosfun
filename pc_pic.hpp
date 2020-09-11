@@ -2,16 +2,16 @@
  * "driver" for Intel 8259 PIC
  */
 #pragma once
-#include <cstdint>
-#include <utility>
-#include <go32.h>  // go32_my_cs
-
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 
+#include <cstdint>
+#include <utility>
+
+#include <go32.h>  // go32_my_cs
+
 namespace rqdq {
 namespace pc {
-
 
 template <int IRQNUM>
 class IRQLineCT {
@@ -128,6 +128,11 @@ private:
 	const std::uint8_t startMask_;
 	ISRPtr savedISRPtr_;
 	PreparedISR customISR_; };
+
+inline uint16_t GetPICMasks() {
+	uint8_t lo = InB(0x21);
+	uint8_t hi = InB(0xa1);
+	return hi<<8|lo; }
 
 
 }  // namespace pc

@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <cstdint>
 
 namespace rqdq {
@@ -24,6 +25,8 @@ public:
 	const int Capacity() const {
 		return CAP; }
 
+	bool Loaded() const { return Size() > 0; }
+
 	bool Full() const { return Size() == CAP; }
 
 	int BackIdx() const {
@@ -36,7 +39,12 @@ public:
 		return Mod(front_); }
 
 	void PopFront() {
+		assert(Size() > 0);
 		front_++; }
+
+	void PopFront(int n) {
+		assert(Size() >= n);
+		front_ += n; }
 
 private:
 	std::uint32_t front_;

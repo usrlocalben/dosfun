@@ -1,38 +1,99 @@
 #include "app_kefrens_bars.hpp"
 
-#include <cmath>
-#include <cstring>
-#include <sys/nearptr.h>
-
+#include "data_amy.hpp"
+#include "canvas.hpp"
+#include "picopng.hpp"
+#include "vec.hpp"
 #include "vga_mode.hpp"
 #include "vga_reg.hpp"
+
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <unordered_map>
+
+#include <sys/nearptr.h>
 
 using std::uint8_t;
 
 namespace rqdq {
+namespace {
+
+/**
+ * select bits in a where selector=1 else b
+ * out[n] = sel[n] ? a[n] : b[n]
+ */
+inline uint32_t Blend(uint32_t a, uint32_t b, uint32_t sel) {
+	// neither clang nor msvc will
+	// optimize this into xor/xor/and
+	// return (a&sel)|(b&~sel);
+	return b^(a^b)&sel; }
+
+
+const int goodLookingColorMagic[] = {
+	0, 1, 2, 3, 4,
+	6, 15, 18, 19, 21,
+	24, 30, 33, 34, 36,
+	39, 49, 51, 52 };
+
+
+std::array<char, 19*16> glcm2;
+
+
+}  // namespace
 namespace app {
 
-void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNum) {
+KefrensBars::KefrensBars() {
+	std::vector<rml::Vec3> vgaPal(256);
+	for (int i=0; i<256; i++) {
+		vgaPal[i] = rgl::ToLinear(vga::ToFloat(vga::Color(i))); }
+
+	std::vector<rml::IVec3> newPal;
+	std::tie(bkg_, newPal) = Reindex(rgl::LoadPNG(data::amy));
+
+	for (int i=0; i<256; i++) {
+		vga::Color(i, { newPal[i].x, newPal[i].y, newPal[i].z }); }
+
+	std::vector<rml::Vec3> tmp(256);
+	for (int i=0; i<256; ++i) {
+		tmp[i] = rgl::ToLinear(vga::ToFloat(newPal[i])); }
+
+	auto NearestColor = [&tmp](rml::Vec3 c) {
+		float minDist = 9999999.0f;
+		int bestIdx = -1;
+		for (int i=0; i<255; ++i) {
+			auto dist = Length(tmp[i] - c);
+			if (Length(tmp[i] - c) < minDist) {
+				minDist = dist;
+				bestIdx = i; }}
+		return bestIdx; };
+
+	for (int i=0; i<19; i++) {
+		for (int c=-4; c<=4; c++) {
+			int idx = ((goodLookingColorMagic[i]*17) + c) & 0xff;
+			glcm2[i*16 + c + 4] = NearestColor(vgaPal[idx]); }}
+
+	rgl::PlanarizeLines(bkg_); }
+
+
+void KefrensBars::Draw(const vga::VRAMPage dst, float T, int patternNum, int rowNum) {
 	int whole = T;
 	float frac = T - whole;
 
-	const int goodLookingColorMagic[] = {
-		0, 1, 2, 3, 4,
-		6, 15, 18, 19, 21,
-		24, 30, 33, 34, 36,
-		39, 49, 51, 52 };
 
-	uint8_t row[320];
-	std::memset(row, 0, 320);
+	std::array<uint8_t, 320> rowData, rowMask;
+	//rowData.fill(0);
+	rowMask.fill(0);
 
 	// int magicIdx = patternNum<<1 | (rowNum>>4&1);
 	int magicIdx = patternNum;
-	uint8_t colorpos = goodLookingColorMagic[magicIdx%19] * 17;
+	uint8_t colorpos = magicIdx%19;
+#define SIN std::sin
 
 	uint8_t* rowPtr = dst.addr + __djgpp_conventional_base;
 	for (int yyy=0; yyy<240; yyy++) {
 		// animate
-#define SIN std::sin
 		int pos;
 		switch (patternNum%4) {
 		case 0:
@@ -54,12 +115,21 @@ void DrawKefrensBars(const vga::VRAMPage dst, float T, int patternNum, int rowNu
 			if (0 <= ox && ox < 320) {
 				int plane = ox&3;
 				int ofs = ox>>2;
-				row[plane*80+ofs] = colorpos+wx; }}
+				rowData[plane*80+ofs] = glcm2[colorpos*16 + wx + 4];
+				rowMask[plane*80+ofs] = 0xff; }}
 
 		// copy row[] to vram planes
 		for (int p=0; p<4; p++) {
-			vga::SelectPlanes(1<<p);
-			std::memcpy(rowPtr, row+p*80, 80); }
+			vga::Planes(1<<p);
+			for (int rx=0; rx<80; rx+=4) {
+				auto bPx = *reinterpret_cast<uint32_t*>(bkg_.buf.data() + (yyy * bkg_.stride) + (p*80) + rx);
+				auto fPx = *reinterpret_cast<uint32_t*>(rowData.data() + (p*80) + rx);
+				auto mask = *reinterpret_cast<uint32_t*>(rowMask.data() + (p*80) + rx);
+				*reinterpret_cast<uint32_t*>(rowPtr + rx) = Blend(fPx, bPx, mask); }
+#ifdef SHOW_TIMING
+			rowPtr[79] = 255;
+#endif
+			}
 
 		rowPtr += 80; }}
 

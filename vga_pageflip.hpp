@@ -34,7 +34,7 @@ public:
 
 	void Unlock() {
 		if (locked_) {
-			SetStartAddress(Get().vgaAddr);
+			StartAddr(Get().vgaAddr);
 			locked_ = false;
 			backLocked = false; }}
 

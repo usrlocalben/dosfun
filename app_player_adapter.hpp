@@ -1,8 +1,8 @@
 #pragma once
-#include <cstdint>
-
 #include "alg_ringindex.hpp"
 #include "kb_tinymod.hpp"
+
+#include <cstdint>
 
 namespace rqdq {
 namespace app {

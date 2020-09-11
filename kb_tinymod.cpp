@@ -2,9 +2,9 @@
 #include "kb_tinymod.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <cmath>
 #include <cstring>
 
 using std::int8_t;

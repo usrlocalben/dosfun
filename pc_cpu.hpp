@@ -1,5 +1,7 @@
 #pragma once
 #include <algorithm>
+#include <stdexcept>
+
 #include <dpmi.h>  // go32_dpmi_seginfo, {get,set}_protected_mode_interrupt_vector
 #include <go32.h>
 
@@ -9,6 +11,7 @@ namespace pc {
 using ISRPtr = _go32_dpmi_seginfo;
 using ISRFunc = void (*)();
 
+extern int cscnt;
 
 class PreparedISR {
 public:
@@ -51,8 +54,16 @@ inline void DisableInterrupts() {
 class CriticalSection {
 public:
 	CriticalSection() {
+#if 0
+		if (cscnt > 0) {
+			throw std::runtime_error("nested critical section"); }
+		cscnt++;
+#endif
 		DisableInterrupts(); }
 	~CriticalSection() {
+#if 0
+		cscnt--;
+#endif
 		EnableInterrupts(); }
 private:
 	CriticalSection& operator=(const CriticalSection&);  // non-copyable
