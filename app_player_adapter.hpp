@@ -3,7 +3,6 @@
 #include "kb_tinymod.hpp"
 
 #include <cstdint>
-#include <limits>
 
 namespace rqdq {
 namespace app {
