@@ -55,20 +55,24 @@ KefrensBars::KefrensBars() {
 	for (int i=0; i<256; i++) {
 		vga::Color(i, { newPal[i].x, newPal[i].y, newPal[i].z }); }
 
+	std::vector<rml::Vec3> tmp(256);
+	for (int i=0; i<256; ++i) {
+		tmp[i] = rgl::ToLinear(vga::ToFloat(newPal[i])); }
+
+	auto NearestColor = [&tmp](rml::Vec3 c) {
+		float minDist = 9999999.0f;
+		int bestIdx = -1;
+		for (int i=0; i<255; ++i) {
+			auto dist = Length(tmp[i] - c);
+			if (Length(tmp[i] - c) < minDist) {
+				minDist = dist;
+				bestIdx = i; }}
+		return bestIdx; };
+
 	for (int i=0; i<19; i++) {
 		for (int c=-4; c<=4; c++) {
 			int idx = ((goodLookingColorMagic[i]*17) + c) & 0xff;
-			const auto oldColor = vgaPal[idx];
-
-			float minDist = 9999999.0f;
-			int minIdx = -1;
-			for (int pi=0; pi<255; pi++) {
-				auto testColor = rgl::ToLinear(vga::ToFloat(newPal[pi]));
-				auto dist = Length(testColor - oldColor);
-				if (dist < minDist) {
-					minDist = dist;
-					minIdx = pi; }}
-			glcm2[i * 16 + c + 4] = minIdx; }}
+			glcm2[i*16 + c + 4] = NearestColor(vgaPal[idx]); }}
 
 	rgl::PlanarizeLines(bkg_); }
 
