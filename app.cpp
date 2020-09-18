@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -47,13 +48,30 @@ const char MSG_TTY_CAN_WRITE = 4;
 
 
 class Demo {
+
+	bool quitSoon_;
+	std::unique_ptr<kb::Paula> paula_;
+	std::unique_ptr<kb::ModPlayer> player_;
+	std::unique_ptr<PlayerAdapter> adapter_;
+#ifdef TTYCON
+	std::unique_ptr<pc::ComPort> tty_;
+	int llp_;
+#endif
+	pc::Keyboard kbd_;
+	vga::ModeSetter modeSetter_;
+	std::unique_ptr<KefrensBars> effect_;
+	std::optional<vga::RetraceIRQ<vga::FlipPages>> flipPagesIRQ_;
+	std::unique_ptr<snd::Blaster> blaster_;
+
 public:
-	Demo():
+	Demo() :
+		quitSoon_(false),
 		paula_(make_unique<kb::Paula>()),
 		player_(make_unique<kb::ModPlayer>(paula_.get(), data::ost.data())),
 		adapter_(make_unique<PlayerAdapter>(*player_)),
 #ifdef TTYCON
 		tty_(make_unique<pc::ComPort>(0x2f8, 3, 115200, pc::FLOW_NONE)),
+		llp_(0),
 #endif
 		kbd_(),
 		modeSetter_() {}
@@ -61,7 +79,7 @@ public:
 	void Run() {
 		modeSetter_.Set(vga::VM_MODEX);
 		flipPagesIRQ_.emplace();
-		log::info("measuredRefreshRate = %4.2f hz", flipPagesIRQ_->GetHz());
+		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
 
 		effect_ = make_unique<KefrensBars>();
 
@@ -69,7 +87,7 @@ public:
 		blaster_ = make_unique<snd::Blaster>(kSoundBlasterIOBaseAddr, kSoundBlasterIRQNum, kSoundBlasterDMAChannelNum,
 		                                     kAudioSampleRateInHz, kAudioWidthInChannels, kAudioBufferSizeInSamples);
 		blaster_->AttachProc(PlayerAdapter::BlasterJmp, adapter_.get());
-		blaster_->Start();
+		// blaster_->Start();
 
 		log::info("system ready.");
 
@@ -88,19 +106,19 @@ public:
 			const auto msg = events[idx];
 
 			if (msg == MSG_KBD_DATA_AVAILABLE) {
-				pc::Event ke = kbd_.GetMessage();
+				pc::KeyEvent ke = kbd_.GetMessage();
 				if (ke.down) {
-					OnKeyDown(ke.scanCode); }}
+					OnKeyDown(ke.code); }}
 #ifdef TTYCON
 			else if (msg == MSG_TTY_CAN_WRITE) {
 				static std::string line;
 				line.assign(log::at(log::FrontIdx()));
 				line += "\r\n";
-				std::string_view segment{ line.c_str()+llp, line.size() - llp };
+				std::string_view segment{ line.c_str()+llp_, line.size() - llp_ };
 				int sent = tty_->Write(segment);
-				llp += sent;
-				if (llp == line.size()) {
-					llp = 0;
+				llp_ += sent;
+				if (llp_ == line.size()) {
+					llp_ = 0;
 					log::PopFront(); }}
 			else if (msg == MSG_TTY_DATA_AVAILABLE) {
 				char tmp[2048];
@@ -150,24 +168,9 @@ private:
 #endif
 		adapter_->Refill(); }
 
-	void OnKeyDown(int scanCode) {
-		if (scanCode == pc::SC_ESC) {
-			quitSoon_ = true; }}
-
-private:
-	bool quitSoon_{false};
-	int llp{0};
-	std::unique_ptr<kb::Paula> paula_;
-	std::unique_ptr<kb::ModPlayer> player_;
-	std::unique_ptr<PlayerAdapter> adapter_;
-	std::unique_ptr<KefrensBars> effect_;
-#ifdef TTYCON
-	std::unique_ptr<pc::ComPort> tty_;
-#endif
-	pc::Keyboard kbd_;
-	vga::ModeSetter modeSetter_;
-	std::optional<vga::RetraceIRQ<vga::FlipPages>> flipPagesIRQ_;
-	std::unique_ptr<snd::Blaster> blaster_; };
+	void OnKeyDown(int code) {
+		if (code == pc::SC_ESC) {
+			quitSoon_ = true; }}};
 
 
 }  // namespace app
@@ -198,4 +201,10 @@ int main() {
 		return 1; }
 
 	rqdq::app::Demo().Run();
+
+	while (rqdq::log::Loaded()) {
+		auto ll = rqdq::log::at(rqdq::log::FrontIdx());
+		std::cerr << ll << "\n";
+		rqdq::log::PopFront(); }
+
 	return 0; }

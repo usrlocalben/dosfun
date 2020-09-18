@@ -5,6 +5,7 @@
 #include "pc_pic.hpp"
 
 #include <cstdint>
+#include <iostream>
 
 using std::uint8_t;
 
@@ -23,12 +24,12 @@ IRQLineCT<1> kbdIRQLine;
 
 
 void keyboard_isr() {
-	uint8_t scanCode = InB(KBD_B_DATA);
+	uint8_t code = InB(KBD_B_DATA);
 	uint8_t status = InB(KBD_B_CONTROL);
 	OutB(KBD_B_CONTROL, status | KBD_IRQ_RESET);
 	OutB(KBD_B_CONTROL, status);
 
-	inputBuffer[bufTail++] = scanCode;
+	inputBuffer[bufTail++] = code;
 	kbdIRQLine.SignalEOI(); }
 
 
@@ -48,13 +49,21 @@ bool IsKeyboardDataAvailable() {
 	return !(bufHead == bufTail); }
 
 
-Event GetKeyboardMessage() {
+auto GetKeyboardMessage() -> KeyEvent {
 	uint8_t sc = inputBuffer[bufHead++];
-	Event ke;
+	KeyEvent ke;
 	ke.down = (sc&0x80) == 0;
-	ke.scanCode = sc&0x7f;
+	ke.code = sc&0x7f;
 	return ke; }
 
+
+Keyboard::Keyboard() {
+	InstallKeyboard(); }
+
+
+Keyboard::~Keyboard() {
+	std::cerr << "Keyboard::dtor\n";
+	UninstallKeyboard(); }
 
 }  // namespace pc
 }  // namespace rqdq

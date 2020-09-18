@@ -6,28 +6,28 @@ namespace pc {
 
 constexpr int SC_ESC = 1;
 
-struct Event {
-	int scanCode;
+struct KeyEvent {
+	int code;
 	bool down; };
 
 void InstallKeyboard();
 void UninstallKeyboard();
 auto IsKeyboardDataAvailable() -> bool;
-auto GetKeyboardMessage() -> Event;
+auto GetKeyboardMessage() -> KeyEvent;
 
 
 class Keyboard {
 public:
-	Keyboard() { InstallKeyboard(); }
-	~Keyboard() { UninstallKeyboard(); }
-private:
-	Keyboard& operator=(const Keyboard&);  // not copyable
-	Keyboard(const Keyboard&);             // not copyable
+	Keyboard();
+	~Keyboard();
+	// not copyable
+	auto operator=(const Keyboard&) -> Keyboard& = delete;
+	Keyboard(const Keyboard&);
 
 public:
 	auto IsDataAvailable() -> bool {
 		return IsKeyboardDataAvailable(); }
-	auto GetMessage() -> Event {
+	auto GetMessage() -> KeyEvent {
 		return GetKeyboardMessage(); }};
 
 
