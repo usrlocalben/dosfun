@@ -3,7 +3,7 @@ HOST_CPP = g++
 OBJ = o
 LIB = a
 
-COMMON_FLAGS = -std=gnu++17 -DSHOW_TIMING -DTTYCON #-DEARLY_EOI
+COMMON_FLAGS = -std=gnu++17 -DSHOW_TIMING #-DTTYCON #-DEARLY_EOI
 RELEASE_FLAGS = -O3 -ffast-math -DNDEBUG
 DEBUG_FLAGS = -g
 
@@ -49,9 +49,9 @@ app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$
 	@rm -f $@
 	$(AR) $@ $^
 
-pc_kbd.$(OBJ): pc_kbd.cpp    pc_kbd.hpp pc_pic.$(LIB)
+pc_kbd.$(OBJ): pc_kbd.cpp    pc_kbd.hpp pc_pic.$(LIB) alg_ringindex.$(LIB)
 	$(CPP) $<
-pc_kbd.$(LIB): pc_kbd.$(OBJ)            pc_pic.$(LIB)
+pc_kbd.$(LIB): pc_kbd.$(OBJ)            pc_pic.$(LIB) alg_ringindex.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 

@@ -27,8 +27,8 @@ class IRQLineCT {
 	PreparedISR customISR_;
 
 public:
-	IRQLineCT()
-		:irqNum_(IRQNUM),
+	IRQLineCT() :
+		irqNum_(IRQNUM),
 		savedISRPtr_(),
 		controllerNum_(IRQNUM < 8 ? 1 : 2),
 		rotatePort_(IRQNUM < 8 ? 0x20 : 0xa0),
@@ -44,7 +44,7 @@ public:
 			OutB(0xa0, 0x20); }
 		OutB(0x20, 0x20); }
 
-	bool IsReal() const {
+	auto IsReal() const -> bool {
 		if (IRQNUM == 7) {
 			OutB(0x20, 0x0b);  // read ISR
 			std::uint8_t isr = InB(0x20);
@@ -52,7 +52,7 @@ public:
 				return false; }}
 		return true; }
 
-	int GetISRNum() const {
+	auto GetISRNum() const -> int {
 		return isrNum_; }
 
 	void Disconnect() const {
@@ -66,7 +66,7 @@ public:
 		SetVect(isrNum_, newISR);
 		customISR_ = std::move(newISR); }
 
-	ISRPtr GetISR() const {
+	auto GetISR() const -> ISRPtr {
 		return GetVect(isrNum_); }
 
 	void SaveISR() {
@@ -98,7 +98,7 @@ public:
 			OutB(0xa0, 0x20); }
 		OutB(0x20, 0x20); }
 
-	bool IsReal() const {
+	auto IsReal() const -> bool {
 		if (irqNum_ == 7) {
 			OutB(0x20, 0x0b);  // read ISR
 			std::uint8_t isr = InB(0x20);
@@ -106,7 +106,7 @@ public:
 				return false; }}
 		return true; }
 
-	int GetISRNum() const {
+	auto GetISRNum() const -> int {
 		return isrNum_; }
 
 	void Disconnect() const {
@@ -120,7 +120,7 @@ public:
 		SetVect(isrNum_, newISR);
 		customISR_ = std::move(newISR); }
 
-	ISRPtr GetISR() const {
+	auto GetISR() const -> ISRPtr {
 		return GetVect(isrNum_); }
 
 	void SaveISR() {

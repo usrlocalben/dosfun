@@ -40,15 +40,19 @@ public:
 	auto BackIdx() const -> int {
 		return Mod(back_); }
 
-	void PushBack() {
-		back_++; }
+	auto PushBack() -> int {
+		int tmp = BackIdx();
+		back_++;
+		return tmp; }
 
 	auto FrontIdx() const -> int {
 		return Mod(front_); }
 
-	void PopFront() {
+	auto PopFront() -> int {
 		assert(Size() > 0);
-		front_++; }
+		int tmp = FrontIdx();
+		front_++;
+		return tmp; }
 
 	void PopFront(int n) {
 		assert(Size() >= n);

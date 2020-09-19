@@ -23,31 +23,34 @@ public:
 		ptr_.pm_offset = (int)func;
 		ptr_.pm_selector = _go32_my_cs();
 		_go32_dpmi_allocate_iret_wrapper(&ptr_); }
-	~PreparedISR() {
-		if (ptr_.pm_offset != 0) {
-			_go32_dpmi_free_iret_wrapper(&ptr_);
-			ptr_.pm_offset = 0; }}
 	PreparedISR(const PreparedISR&) = delete;
-	PreparedISR& operator=(const PreparedISR&) = delete;
-	PreparedISR& operator=(PreparedISR&& other) {
+	auto operator=(const PreparedISR&) -> PreparedISR& = delete;
+	auto operator=(PreparedISR&& other) -> PreparedISR& {
 		std::swap(ptr_, other.ptr_);
 		return *this; }
 	PreparedISR(PreparedISR&& other) {
 		ptr_.pm_offset = 0;
 		std::swap(ptr_, other.ptr_); }
-	const ISRPtr& Ptr() const {
+	~PreparedISR() {
+		if (ptr_.pm_offset != 0) {
+			_go32_dpmi_free_iret_wrapper(&ptr_);
+			ptr_.pm_offset = 0; }}
+	auto Ptr() const -> const ISRPtr& {
 		return ptr_; }};
 
 
-inline void Sleep() {
+inline
+void Sleep() {
 	__asm__ __volatile__("sti; hlt"); }
 
 
-inline void EnableInterrupts() {
+inline
+void EnableInterrupts() {
 	__asm__ __volatile__("sti"); }
 
 
-inline void DisableInterrupts() {
+inline
+void DisableInterrupts() {
 	__asm__ __volatile__("cli"); }
 
 
@@ -60,26 +63,31 @@ public:
 		cscnt++;
 #endif
 		DisableInterrupts(); }
+
+	// non-copyable
+	auto operator=(const CriticalSection&) -> CriticalSection& = delete;
+	CriticalSection(const CriticalSection&) = delete;
+
 	~CriticalSection() {
 #if 0
 		cscnt--;
 #endif
-		EnableInterrupts(); }
-private:
-	CriticalSection& operator=(const CriticalSection&);  // non-copyable
-	CriticalSection(const CriticalSection&); };          // non-copyable
+		EnableInterrupts(); }};
 
 
-inline void SetVect(int isrNum, ISRPtr func) {
+inline
+void SetVect(int isrNum, ISRPtr func) {
 	_go32_dpmi_set_protected_mode_interrupt_vector(isrNum, &func); }
 
 
-inline void SetVect(int isrNum, const PreparedISR& func) {
+inline
+void SetVect(int isrNum, const PreparedISR& func) {
 	_go32_dpmi_seginfo tmp = func.Ptr();
 	_go32_dpmi_set_protected_mode_interrupt_vector(isrNum, &tmp); }
 
 
-inline ISRPtr GetVect(int isrNum) {
+inline
+auto GetVect(int isrNum) -> ISRPtr {
 	ISRPtr out;
 	_go32_dpmi_get_protected_mode_interrupt_vector(isrNum, &out);
 	return out; }

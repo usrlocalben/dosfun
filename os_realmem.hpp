@@ -14,9 +14,11 @@ public:
 	RealMem() {
 		info_.pm_selector = 0; }
 	RealMem(std::uint16_t sizeInBytes);
-	RealMem& operator=(const RealMem& other) = delete;
+	// not copyable
+	auto operator=(const RealMem& other) -> RealMem& = delete;
 	RealMem(const RealMem& other) = delete;
-	RealMem& operator=(RealMem&& other) {
+	// movable
+	auto operator=(RealMem&& other) -> RealMem& {
 		std::swap(other.info_, info_);
 		return *this; }
 	RealMem(RealMem&& other) {
@@ -27,7 +29,7 @@ public:
 			_go32_dpmi_free_dos_memory(&info_);
 			info_.pm_selector = 0; }}
 
-	std::uint32_t GetRealAddr() const {
+	auto Addr() const -> std::uint32_t {
 		return info_.rm_segment * 16; }};
 
 

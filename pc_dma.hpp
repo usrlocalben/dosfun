@@ -13,28 +13,38 @@ namespace rqdq {
 namespace pc {
 
 class DMABuffer {
-public:
+
 	os::RealMem realMem_;
 	std::uint32_t addr_;
 	int sizeInWords_;
 
+public:
 	DMABuffer() :realMem_(), addr_(0), sizeInWords_(0) {}
 	DMABuffer(std::uint16_t sizeInWords);
-	DMABuffer(const DMABuffer& other) = delete;             // not-copyable
-	DMABuffer& operator=(const DMABuffer& other) = delete;  // not-copyable
+	// not-copyable
+	DMABuffer(const DMABuffer& other) = delete;
+	auto operator=(const DMABuffer& other) -> DMABuffer& = delete;
 
-public:
-	std::uint8_t* Ptr() const {
+	auto Ptr() const -> std::uint8_t* {
 		return (std::uint8_t*)addr_; }
 
-	std::uint16_t* Ptr16() const {
+	auto Ptr16() const -> std::uint16_t* {
 		return (std::uint16_t*)addr_; }
 
-	std::uint16_t Page() const {
+	auto Page() const -> std::uint16_t {
 		return addr_ >> 16; }
 
-	std::uint16_t Offset16() const {
+	auto Offset8() const -> std::uint16_t {
+		return addr_ % 65536; }
+
+	auto Offset16() const -> std::uint16_t {
 		return (addr_ >> 1) % 65536; }
+
+	auto Size8() const -> int {
+		return sizeInWords_ * 2; }
+
+	auto Size16() const -> int {
+		return sizeInWords_; }
 
 	void Zero() const {
 		std::memset(Ptr() + __djgpp_conventional_base, 0, sizeInWords_*2); } };

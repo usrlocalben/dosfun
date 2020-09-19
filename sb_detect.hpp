@@ -11,7 +11,7 @@ struct BlasterParams {
 	BlasterParams(int a=-1, int b=-1, int c=-1, int d=-1) :
 		ioAddr(a),irqNum(b), dmaLow(c), dmaHigh(d) {}
 
-	int BestDMA() const {
+	auto BestDMA() const -> int {
 		return dmaHigh != -1 ? dmaHigh : dmaLow; }};
 
 
@@ -25,9 +25,9 @@ public:
 
 public:
 	BlasterSerializer(const char* data=nullptr);
-	BlasterParams Save() const {
+	auto Save() const -> BlasterParams {
 		return params_; }
-	bool IsValid();
+	auto IsValid() -> bool;
 
 private:
 	void Deserialize(const char* text);
@@ -36,10 +36,10 @@ private:
 
 struct BlasterDetectResult {
 	bool found;
-	BlasterParams value;
+	BlasterParams value; };
 
-	BlasterDetectResult(bool a, BlasterParams b) :
-		found(a), value(b) {} };
+//	BlasterDetectResult(bool a, BlasterParams b) :
+//		found(a), value(b) {} };
 
 
 auto DetectBlaster() -> BlasterDetectResult;

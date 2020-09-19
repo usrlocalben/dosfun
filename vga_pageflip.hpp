@@ -22,11 +22,15 @@ class AnimationPage {
 	bool locked_; 
 
 public:
-	AnimationPage() {
-		locked_ = backLocked; }
-private:
-	AnimationPage(const AnimationPage&);             // not copyable
-	AnimationPage& operator=(const AnimationPage&);  // not copyable
+	AnimationPage() :
+		locked_(backLocked) {}
+
+	// not copyable
+	AnimationPage(const AnimationPage&) = delete;
+	auto operator=(const AnimationPage&) -> AnimationPage& = delete;
+
+	~AnimationPage() {
+		Unlock(); }
 
 public:
 	auto Get() const -> const VRAMPage& {
@@ -39,10 +43,7 @@ public:
 		if (locked_) {
 			StartAddr(Get().vgaAddr);
 			locked_ = false;
-			backLocked = false; }}
-
-	~AnimationPage() {
-		Unlock(); }};
+			backLocked = false; }}};
 
 
 inline

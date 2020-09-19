@@ -1,34 +1,28 @@
 #pragma once
-#include <cstdint>
 
 namespace rqdq {
 namespace pc {
 
 constexpr int SC_ESC = 1;
 
-struct Event {
-	int scanCode;
+struct KeyEvent {
+	int code;
 	bool down; };
-
-void InstallKeyboard();
-void UninstallKeyboard();
-auto IsKeyboardDataAvailable() -> bool;
-auto GetKeyboardMessage() -> Event;
 
 
 class Keyboard {
 public:
-	Keyboard() { InstallKeyboard(); }
-	~Keyboard() { UninstallKeyboard(); }
-private:
-	Keyboard& operator=(const Keyboard&);  // not copyable
-	Keyboard(const Keyboard&);             // not copyable
+	Keyboard();
+	~Keyboard();
+	// not copyable
+	auto operator=(const Keyboard&) -> Keyboard& = delete;
+	Keyboard(const Keyboard&) = delete;
+	// movable
+	auto operator=(Keyboard&&) -> Keyboard& = default;
+	Keyboard(Keyboard&&) = default;
 
-public:
-	auto IsDataAvailable() -> bool {
-		return IsKeyboardDataAvailable(); }
-	auto GetMessage() -> Event {
-		return GetKeyboardMessage(); }};
+	auto Loaded() -> bool;
+	auto Pop() -> KeyEvent; };
 
 
 }  // namespace pc

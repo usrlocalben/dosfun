@@ -112,9 +112,9 @@ auto DetectBlaster() -> BlasterDetectResult {
 		BlasterSerializer serializer(/*data=*/blasterStr);
 		if (serializer.IsValid()) {
 // cout << "serializer is valid\n";
-			return BlasterDetectResult( true, serializer.Save() ); }}
+			return BlasterDetectResult{ true, serializer.Save() }; }}
 
-	return BlasterDetectResult( false, BlasterParams() ); }
+	return BlasterDetectResult{ false, BlasterParams() }; }
 
 
 }  // namespace hw

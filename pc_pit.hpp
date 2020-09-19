@@ -34,26 +34,29 @@ auto highbyte(std::uint16_t value) -> std::uint8_t {
 inline
 auto ticksToHz(std::uint16_t value) -> float {
 	// PIT clock speed is (105/88)*1Mhz
-	return 105000000/(88.0*value); }
+	return 105000000/(88.0F*value); }
 
 
 inline
 auto ticksToSeconds(int value) -> float {
-	return (88.0*value)/105000000; }
+	return (88.0F*value)/105000000; }
 
 
-inline void StartCountdown(std::uint16_t period) {
+inline
+void StartCountdown(std::uint16_t period) {
 	// start timer
 	OutB(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE0 | PIT_VALUE_MODE_16_BIT_BINARY);
 	OutB(0x40, lowbyte(period));
 	OutB(0x40, highbyte(period)); }
 
 
-inline void BeginMeasuring() {
+inline
+void BeginMeasuring() {
 	StartCountdown(0); }
 
 
-inline void StartSquareWave(std::uint16_t period) {
+inline
+void StartSquareWave(std::uint16_t period) {
 	OutB(0x43, PIT_CHANNEL_SELECT_CH0 | PIT_ACCESS_MODE_LOW_THEN_HIGH | PIT_MODE3 | PIT_VALUE_MODE_16_BIT_BINARY);
 	OutB(0x40, lowbyte(period));
 	OutB(0x40, highbyte(period)); }

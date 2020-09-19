@@ -73,6 +73,10 @@ public:
 
 		log::info("vga: RetraceIRQ installed"); }
 
+	// non-copyable
+	auto operator=(const RetraceIRQ&) -> RetraceIRQ& = delete;
+	RetraceIRQ(const RetraceIRQ&) = delete;
+
 	/**
 	 * Restore the BIOS timer ISR and interval
 	 */
@@ -80,10 +84,6 @@ public:
 		pc::pitIRQLine.RestoreISR();
 		pc::StartSquareWave(0);
 		log::info("vga: RetraceIRQ uninstalled, PIT restored"); }
-
-private:
-	RetraceIRQ& operator=(const RetraceIRQ&);  // non-copyable
-	RetraceIRQ(const RetraceIRQ&);          // non-copyable
 
 public:
 	auto GetHz() const -> float {

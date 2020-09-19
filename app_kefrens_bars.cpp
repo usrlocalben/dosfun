@@ -15,7 +15,7 @@
 
 #include <sys/nearptr.h>
 
-using std::uint8_t;
+using std::uint8_t, std::uint16_t, std::uint32_t;
 
 namespace rqdq {
 namespace {
@@ -24,7 +24,8 @@ namespace {
  * select bits in a where selector=1 else b
  * out[n] = sel[n] ? a[n] : b[n]
  */
-inline uint32_t Blend(uint32_t a, uint32_t b, uint32_t sel) {
+inline
+auto Blend(uint32_t a, uint32_t b, uint32_t sel) -> uint32_t {
 	// neither clang nor msvc will
 	// optimize this into xor/xor/and
 	// return (a&sel)|(b&~sel);

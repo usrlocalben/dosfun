@@ -50,8 +50,7 @@ void info(const char* fmt, ...) {
 
 	// std::printf("%s\n", buf);
 
-	lines[ring.BackIdx()].assign(buf);
-	ring.PushBack(); }
+	lines[ring.PushBack()].assign(buf); }
 
 
 }  // namespace log

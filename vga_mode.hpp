@@ -29,9 +29,12 @@ void ModeX();
 
 
 class ModeSetter {
+	const int oldMode_;
+	int curMode_;
+
 public:
-	ModeSetter()
-		:oldMode_(bios::Mode()),
+	ModeSetter() :
+		oldMode_(bios::Mode()),
 		curMode_(oldMode_) {}
 
 	void Set(int req) {
@@ -50,11 +53,7 @@ public:
 	~ModeSetter() {
 		if (curMode_ != oldMode_) {
 			log::info("vga: restoring prior mode %02x", oldMode_);
-			Set(oldMode_); }}
-
-private:
-		const int oldMode_;
-		int curMode_; };
+			Set(oldMode_); }}};
 
 
 }  // namespace vga

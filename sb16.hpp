@@ -20,9 +20,9 @@ class Blaster {
 public:
 	Blaster(int baseAddr, int irqNum, int dmaNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
 	Blaster(Blaster&&) = default;
-	Blaster& operator=(Blaster&&) = default;
-	Blaster& operator=(const Blaster&) = delete;
+	auto operator=(Blaster&&) -> Blaster& = default;
 	Blaster(const Blaster&) = delete;
+	auto operator=(const Blaster&) -> Blaster& = delete;
 
 	auto IsGood() const -> bool;
 	void AttachProc(audioproc userProc, void* userPtr);
