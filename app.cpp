@@ -75,6 +75,53 @@ public:
 		modeSetter_() {}
 
 	void Run() {
+
+		{pc::BeginMeasuring();
+		uint8_t* dst = vga::VRAM_ADDR + __djgpp_conventional_base;
+		const int kPasses = 1000;
+		for (int pass=0; pass<kPasses; ++pass) {
+			for (int i=0; i<65536; ++i) {
+				dst[i] = static_cast<uint8_t>(pass); }}
+		int dt = pc::EndMeasuring();
+		pc::StartSquareWave(0);
+		int totalBytes = kPasses * 65536;
+		float totalSeconds = pc::ticksToSeconds(dt);
+		auto rate = static_cast<int>(totalBytes/(1024*1024)/totalSeconds);
+		log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		log::info("bytes written: %d", totalBytes);
+		log::info("8-bit writes to 0xa0000 %d MiB/sec", rate);}
+
+		{pc::BeginMeasuring();
+		uint16_t* dst = reinterpret_cast<uint16_t*>(vga::VRAM_ADDR + __djgpp_conventional_base);
+		const int kPasses = 1000;
+		for (int pass=0; pass<kPasses; ++pass) {
+			for (int i=0; i<65536/2; ++i) {
+				dst[i] = static_cast<uint16_t>(pass); }}
+		int dt = pc::EndMeasuring();
+		pc::StartSquareWave(0);
+		int totalBytes = kPasses * 65536;
+		float totalSeconds = pc::ticksToSeconds(dt);
+		auto rate = static_cast<int>(totalBytes/(1024*1024)/totalSeconds);
+		log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		log::info("bytes written: %d", totalBytes);
+		log::info("16-bit writes to 0xa0000 %d MiB/sec", rate);}
+
+		{pc::BeginMeasuring();
+		uint32_t* dst = reinterpret_cast<uint32_t*>(vga::VRAM_ADDR + __djgpp_conventional_base);
+		const int kPasses = 1000;
+		for (int pass=0; pass<kPasses; ++pass) {
+			for (int i=0; i<65536/4; ++i) {
+				dst[i] = static_cast<uint32_t>(pass); }}
+		int dt = pc::EndMeasuring();
+		pc::StartSquareWave(0);
+		int totalBytes = kPasses * 65536;
+		float totalSeconds = pc::ticksToSeconds(dt);
+		auto rate = static_cast<int>(totalBytes/(1024*1024)/totalSeconds);
+		log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		log::info("bytes written: %d", totalBytes);
+		log::info("32-bit writes to 0xa0000 %d MiB/sec", rate);}
+
+		return;
 		modeSetter_.Set(vga::VM_MODEX);
 		flipPagesIRQ_.emplace();
 		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
