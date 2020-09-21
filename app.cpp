@@ -9,6 +9,7 @@
 #include "sb16.hpp"
 #include "sb_detect.hpp"
 #include "text.hpp"
+#include "vga_bios.hpp"
 #include "vga_irq.hpp"
 #include "vga_mode.hpp"
 #include "vga_pageflip.hpp"
@@ -76,6 +77,7 @@ public:
 
 	void Run() {
 		modeSetter_.Set(vga::VM_MODEX);
+		vga::bios::Border(255);
 		flipPagesIRQ_.emplace();
 		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
 

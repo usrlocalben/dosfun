@@ -10,6 +10,8 @@ void Mode(std::uint8_t modeNum);
 
 auto Mode() -> std::uint8_t;
 
+void Border(std::uint8_t idx);
+
 
 }  // namespace bios
 

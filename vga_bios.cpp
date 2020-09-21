@@ -25,6 +25,13 @@ auto Mode() -> std::uint8_t {
 	return r.h.al; }
 
 
+void Border(uint8_t idx) {
+	__dpmi_regs r;
+	r.x.ax = 0x1001;
+	r.h.bh = idx;
+	__dpmi_int(0x10, &r); }
+
+
 }  // namespace bios
 
 

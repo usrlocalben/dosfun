@@ -31,9 +31,9 @@ app.exe: app_cwsstub.coff
 	cat build-support/PMODSTUB.EXE app_cwsstub.coff > app.exe
 	upx -9 app.exe
 
-app.$(OBJ): app.cpp    ryg.$(LIB) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
+app.$(OBJ): app.cpp    ryg.$(LIB) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB) vga_bios.$(LIB)
 	$(CPP) $<
-app.$(LIB): app.$(OBJ) ryg.$(LIB) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB)
+app.$(LIB): app.$(OBJ) ryg.$(LIB) app_kefrens_bars.$(LIB) app_player_adapter.$(LIB) kb_tinymod.$(LIB) data_ost.$(LIB) pc_kbd.$(LIB) sb16.$(LIB) sb_detect.$(LIB) vga_mode.$(LIB) vga_pageflip.$(LIB) vga_irq.$(LIB) vga_reg.$(LIB) pc_com.$(LIB) log.$(LIB) text.$(LIB) vga_bios.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
