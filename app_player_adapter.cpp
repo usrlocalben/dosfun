@@ -18,9 +18,11 @@ namespace rqdq {
 namespace {
 
 inline int16_t FP16toS16(int x) {
+	return 0;
 	return std::clamp(x>>1, -32768, 32767); }
 
 inline uint8_t FP16toU8(int x) {
+	return 0;
 	return std::clamp((x>>9)+128, 0, 255); }
 
 

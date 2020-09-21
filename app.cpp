@@ -41,26 +41,12 @@ int kSoundBlasterIOBaseAddr = 0x220;
 int kSoundBlasterIRQNum = 7;         // 760eld == 5
 int kSoundBlasterDMAChannelNum = 5;  // 760eld == 1
 
-constexpr char MSG_KBD_DATA_AVAILABLE = 1;
-constexpr char MSG_VGA_CAN_WRITE = 2;
-constexpr char MSG_TTY_DATA_AVAILABLE = 3;
-constexpr char MSG_TTY_CAN_WRITE = 4;
-
-
 class Demo {
 
-	bool quitSoon_{false};
 	std::unique_ptr<kb::Paula> paula_;
 	std::unique_ptr<kb::ModPlayer> player_;
 	std::unique_ptr<PlayerAdapter> adapter_;
-#ifdef TTYCON
-	std::unique_ptr<pc::ComPort> tty_;
-	int llp_{0};
-#endif
-	pc::Keyboard kbd_;
 	vga::ModeSetter modeSetter_;
-	std::unique_ptr<KefrensBars> effect_;
-	std::optional<vga::RetraceIRQ<vga::FlipPages>> flipPagesIRQ_;
 	std::unique_ptr<snd::Blaster> blaster_;
 
 public:
@@ -68,156 +54,111 @@ public:
 		paula_(make_unique<kb::Paula>()),
 		player_(make_unique<kb::ModPlayer>(paula_.get(), data::ost.data())),
 		adapter_(make_unique<PlayerAdapter>(*player_)),
-#ifdef TTYCON
-		tty_(make_unique<pc::ComPort>(0x2f8, 3, 115200, pc::FLOW_NONE)),
-#endif
-		kbd_(),
 		modeSetter_() {}
 
 	void Run() {
 
+		modeSetter_.Set(vga::VM_MODEX);
+
+		const int kPasses = 4;
 		{pc::BeginMeasuring();
 		uint8_t* dst = vga::VRAM_ADDR + __djgpp_conventional_base;
-		const int kPasses = 1000;
 		for (int pass=0; pass<kPasses; ++pass) {
-			for (int i=0; i<65536; ++i) {
+			vga::Planes(1<<(pass%4));
+			for (int i=0; i<16384; ++i) {
 				dst[i] = static_cast<uint8_t>(pass); }}
 		int dt = pc::EndMeasuring();
 		pc::StartSquareWave(0);
-		int totalBytes = kPasses * 65536;
+		int totalBytes = kPasses * 16384;
 		float totalSeconds = pc::ticksToSeconds(dt);
-		auto rate = static_cast<int>(totalBytes/(1024*1024)/totalSeconds);
-		log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
-		log::info("bytes written: %d", totalBytes);
-		log::info("8-bit writes to 0xa0000 %d MiB/sec", rate);}
+		float rate = totalBytes/(1024.0F*1024)/totalSeconds;
+		// log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		// log::info("bytes written: %d", totalBytes);
+		log::info("8-bit writes to 0xa0000 %.4f MiB/sec", rate);}
 
 		{pc::BeginMeasuring();
 		uint16_t* dst = reinterpret_cast<uint16_t*>(vga::VRAM_ADDR + __djgpp_conventional_base);
-		const int kPasses = 1000;
 		for (int pass=0; pass<kPasses; ++pass) {
-			for (int i=0; i<65536/2; ++i) {
+			vga::Planes(1<<(pass%4));
+			for (int i=0; i<16384/2; ++i) {
 				dst[i] = static_cast<uint16_t>(pass); }}
 		int dt = pc::EndMeasuring();
 		pc::StartSquareWave(0);
-		int totalBytes = kPasses * 65536;
+		int totalBytes = kPasses * 16384;
 		float totalSeconds = pc::ticksToSeconds(dt);
-		auto rate = static_cast<int>(totalBytes/(1024*1024)/totalSeconds);
-		log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
-		log::info("bytes written: %d", totalBytes);
-		log::info("16-bit writes to 0xa0000 %d MiB/sec", rate);}
+		float rate = totalBytes/(1024.0F*1024)/totalSeconds;
+		// log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		// log::info("bytes written: %d", totalBytes);
+		log::info("16-bit writes to 0xa0000 %.4f MiB/sec", rate);}
 
 		{pc::BeginMeasuring();
 		uint32_t* dst = reinterpret_cast<uint32_t*>(vga::VRAM_ADDR + __djgpp_conventional_base);
-		const int kPasses = 1000;
 		for (int pass=0; pass<kPasses; ++pass) {
-			for (int i=0; i<65536/4; ++i) {
+			vga::Planes(1<<(pass%4));
+			for (int i=0; i<16384/4; ++i) {
 				dst[i] = static_cast<uint32_t>(pass); }}
 		int dt = pc::EndMeasuring();
 		pc::StartSquareWave(0);
-		int totalBytes = kPasses * 65536;
+		int totalBytes = kPasses * 16384;
 		float totalSeconds = pc::ticksToSeconds(dt);
-		auto rate = static_cast<int>(totalBytes/(1024*1024)/totalSeconds);
-		log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
-		log::info("bytes written: %d", totalBytes);
-		log::info("32-bit writes to 0xa0000 %d MiB/sec", rate);}
+		float rate = totalBytes/(1024.0F*1024)/totalSeconds;
+		// log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		// log::info("bytes written: %d", totalBytes);
+		log::info("32-bit writes to 0xa0000 %.4f MiB/sec", rate);}
 
-		return;
-		modeSetter_.Set(vga::VM_MODEX);
-		flipPagesIRQ_.emplace();
-		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
-
-		effect_ = make_unique<KefrensBars>();
-
+		/*
 		adapter_->Refill();
 		blaster_ = make_unique<snd::Blaster>(kSoundBlasterIOBaseAddr, kSoundBlasterIRQNum, kSoundBlasterDMAChannelNum,
 		                                     kAudioSampleRateInHz, kAudioWidthInChannels, kAudioBufferSizeInSamples);
 		blaster_->AttachProc(PlayerAdapter::BlasterJmp, adapter_.get());
 		blaster_->Start();
+		*/
+		{pc::BeginMeasuring();
+		uint8_t* dst = vga::VRAM_ADDR + __djgpp_conventional_base;
+		for (int pass=0; pass<kPasses; ++pass) {
+			vga::Planes(1<<(pass%4));
+			for (int i=0; i<16384; ++i) {
+				dst[i] = static_cast<uint8_t>(pass); }}
+		int dt = pc::EndMeasuring();
+		pc::StartSquareWave(0);
+		int totalBytes = kPasses * 16384;
+		float totalSeconds = pc::ticksToSeconds(dt);
+		float rate = totalBytes/(1024.0F*1024)/totalSeconds;
+		// log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		// log::info("bytes written: %d", totalBytes);
+		log::info("8-bit writes to 0xa0000 %.4f MiB/sec", rate);}
 
-		log::info("system ready.");
+		{pc::BeginMeasuring();
+		uint16_t* dst = reinterpret_cast<uint16_t*>(vga::VRAM_ADDR + __djgpp_conventional_base);
+		for (int pass=0; pass<kPasses; ++pass) {
+			vga::Planes(1<<(pass%4));
+			for (int i=0; i<16384/2; ++i) {
+				dst[i] = static_cast<uint16_t>(pass); }}
+		int dt = pc::EndMeasuring();
+		pc::StartSquareWave(0);
+		int totalBytes = kPasses * 16384;
+		float totalSeconds = pc::ticksToSeconds(dt);
+		float rate = totalBytes/(1024.0F*1024)/totalSeconds;
+		// log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		// log::info("bytes written: %d", totalBytes);
+		log::info("16-bit writes to 0xa0000 %.4f MiB/sec", rate);}
 
-		std::vector<char> events;
-		while (!quitSoon_) {
-			events.clear();
-			events.push_back(MSG_VGA_CAN_WRITE);
-			events.push_back(MSG_KBD_DATA_AVAILABLE);
-#ifdef TTYCON
-			events.push_back(MSG_TTY_DATA_AVAILABLE);
-			if (log::Loaded()) {
-				events.push_back(MSG_TTY_CAN_WRITE); }
-#endif
+		{pc::BeginMeasuring();
+		uint32_t* dst = reinterpret_cast<uint32_t*>(vga::VRAM_ADDR + __djgpp_conventional_base);
+		for (int pass=0; pass<kPasses; ++pass) {
+			vga::Planes(1<<(pass%4));
+			for (int i=0; i<16384/4; ++i) {
+				dst[i] = static_cast<uint32_t>(pass); }}
+		int dt = pc::EndMeasuring();
+		pc::StartSquareWave(0);
+		int totalBytes = kPasses * 16384;
+		float totalSeconds = pc::ticksToSeconds(dt);
+		float rate = totalBytes/(1024.0F*1024)/totalSeconds;
+		// log::info("elapsed time: %d ticks, %.4f secs", dt, totalSeconds);
+		// log::info("bytes written: %d", totalBytes);
+		log::info("32-bit writes to 0xa0000 %.4f MiB/sec", rate);}
 
-			int idx = WaitForMultipleObjects(events);
-			const auto msg = events[idx];
-
-			if (msg == MSG_KBD_DATA_AVAILABLE) {
-				auto ke = kbd_.Pop();
-				if (ke.down) {
-					OnKeyDown(ke.code); }}
-#ifdef TTYCON
-			else if (msg == MSG_TTY_CAN_WRITE) {
-				static std::string line;
-				line.assign(log::at(log::FrontIdx()));
-				line += "\r\n";
-				std::string_view segment{ line.c_str()+llp_, line.size() - llp_ };
-				int sent = tty_->Write(segment);
-				llp_ += sent;
-				if (llp_ == line.size()) {
-					llp_ = 0;
-					log::PopFront(); }}
-			else if (msg == MSG_TTY_DATA_AVAILABLE) {
-				char tmp[2048];
-				auto seg = tty_->Peek(128);
-				sprintf(tmp, "tty: received %s", text::JsonStringify(seg).data());
-				tty_->Ack(seg);
-				log::info(tmp); }
-#endif
-			else if (msg == MSG_VGA_CAN_WRITE) {
-				vga::AnimationPage animationPage;
-				assert(animationPage.IsLocked());
-				Draw(animationPage.Get()); }}}
-
-private:
-	auto WaitForMultipleObjects(const std::vector<char>& lst) -> int {
-		while (1) {
-			pc::CriticalSection section;
-			for (int idx=0; idx<lst.size(); idx++) {
-				const auto& evt = lst[idx];
-				switch (evt) {
-				case MSG_KBD_DATA_AVAILABLE:
-					if (kbd_.Loaded()) return idx; break;
-				case MSG_VGA_CAN_WRITE:
-					if (vga::backLocked) return idx; break;
-#ifdef TTYCON
-				case MSG_TTY_DATA_AVAILABLE:
-					if (tty_->DataAvailable()) return idx; break;
-				case MSG_TTY_CAN_WRITE:
-					if (tty_->CanWrite()) return idx; break;
-#endif
-				default:
-					throw std::runtime_error("invalid event"); }}
-			pc::Sleep(); }}
-
-private:
-	void Draw(const vga::VRAMPage& vram) {
-		float T = vga::GetTime() / flipPagesIRQ_->GetHz();
-		int patternNum = player_->GetCurrentPos();
-		int rowNum = player_->GetCurrentRow();
-#ifdef SHOW_TIMING
-		vga::Color(255, { 0xc0, 0xc0, 0xc0 });
-#endif
-		pc::Stopwatch drawtime;
-		effect_->Draw(vram, T, patternNum, rowNum);
-#ifdef SHOW_TIMING
-		vga::Color(255, { 0, 0, 0 });
-#endif
-		adapter_->Refill(); }
-
-	void OnKeyDown(int code) {
-		if (code == pc::SC_ESC) {
-			quitSoon_ = true; }
-		else {
-			log::info("key %d %02x", code, code); }}};
+		return; }};
 
 
 }  // namespace app
