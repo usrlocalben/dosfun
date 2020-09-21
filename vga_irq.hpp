@@ -11,7 +11,7 @@
 namespace rqdq {
 namespace vga {
 
-typedef void (*vbifunc)();
+// typedef void (*vbifunc)();
 
 /**
  * Frame/PIT jitter buffer, as a percentage of frame-time.
@@ -30,16 +30,16 @@ typedef void (*vbifunc)();
  * to spin for an entire display period.  Additionally, the
  * wall-clock timer provided by the IRQ would miss a tick.
  */
-constexpr float kJitterPct = 0.010f;
-
-constexpr int kNumVBISamples = 5;
+constexpr int kJitterFactor = 64881;  // 0.99 16:16 fixed-point
 
 extern int irqSleepTimeInTicks;
+
+auto CalibrateFrameTimer() -> int;
 
 template <typename VBIPROC>
 class RetraceIRQ {
 
-	uint16_t frameDurationInTicks_;
+	int frameDurationInTicks_;
 
 public:
 	/**
@@ -50,22 +50,14 @@ public:
 	 * installed and triggered on the following frame.
 	 */
 	RetraceIRQ() :
-		frameDurationInTicks_(0) {
-		int ax = 0;
-		for (int si=0; si<kNumVBISamples; si++) {
-			SpinUntilNextRetraceBegins();
-			pc::BeginMeasuring();
-			SpinUntilNextRetraceBegins();
-			ax += pc::EndMeasuring(); }
-		frameDurationInTicks_ = ax / kNumVBISamples;
-		log::info("vga: measured refresh period = %d ticks", frameDurationInTicks_);
+		frameDurationInTicks_(CalibrateFrameTimer()) {
 
 		irqSleepTimeInTicks =
-			frameDurationInTicks_ * (1.0 - kJitterPct);
+			frameDurationInTicks_ * kJitterFactor >> 16;
 
 		SpinWhileRetracing();
 		pc::pitIRQLine.SaveISR();
-		pc::pitIRQLine.SetISR(RetraceIRQ::vblank_isr);
+		pc::pitIRQLine.SetISR(RetraceIRQ::OnBeforeRetrace);
 		{
 			pc::CriticalSection cs;
 			SpinUntilRetracing();
@@ -102,7 +94,7 @@ public:
 	 * See also kJitterPct
 	 */
 	static
-	void vblank_isr() {
+	void OnBeforeRetrace() {
 		/*
 		 * when execution begins, retrace still hasn't started
 		 */
@@ -110,15 +102,15 @@ public:
 		Color(255, {0xff,0x7f,0xff});
 #endif
 		vga::SpinUntilRetracing();
-#ifdef SHOW_TIMING
-		Color(255, {0,0,0});
-#endif
 
 		/*
 		 * retrace just started.
 		 * reset the timer, then call the user's vbi handler
 		 */
 		pc::StartCountdown(irqSleepTimeInTicks);
+#ifdef SHOW_TIMING
+		Color(255, {0,0,0});
+#endif
 		VBIPROC()();
 		pc::pitIRQLine.SignalEOI(); }};
 
