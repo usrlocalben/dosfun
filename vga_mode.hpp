@@ -12,6 +12,7 @@ namespace vga {
 constexpr int VM_TEXT = 0x03;
 constexpr int VM_MODE13 = 0x13;
 constexpr int VM_MODEX = 0x100;
+constexpr int VM_MODE160 = 0x101;
 
 
 struct VRAMPage {
@@ -22,10 +23,13 @@ struct VRAMPage {
 
 const vga::VRAMPage modeXPages[2] = {
 	{ 0, vga::VRAM_ADDR, 0 },
-	{ 1, vga::VRAM_ADDR + (320*240/4), 320*240/4 } };
+	// { 1, vga::VRAM_ADDR + (320*240/4), 320*240/4 }
+	{ 1, vga::VRAM_ADDR + (160*120), 160*120/4 }
+	};
 
 
 void ModeX();
+void Mode160();
 
 
 class ModeSetter {
@@ -46,6 +50,10 @@ public:
 			vga::ModeX();
 			log::info("vga: set Mode X");
 			curMode_ = VM_MODEX; }
+		else if (req == VM_MODE160) {
+			vga::Mode160();
+			log::info("vga: set Mode 160");
+			curMode_ = VM_MODE160; }
 		else {
 			// xxx throw std::runtime_error("unsupported vga mode");
 			std::exit(1); }}

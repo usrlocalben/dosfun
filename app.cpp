@@ -76,7 +76,7 @@ public:
 		modeSetter_() {}
 
 	void Run() {
-		modeSetter_.Set(vga::VM_MODEX);
+		modeSetter_.Set(vga::VM_MODE160);
 		vga::bios::Border(255);
 		flipPagesIRQ_.emplace();
 		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
