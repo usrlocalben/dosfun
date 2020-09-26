@@ -17,8 +17,8 @@ public:
 private:
 	kb::ModPlayer& player_;
 	alg::RingIndex<capacity> rw_;
-	std::int32_t buf_[capacity*2];
-	int pbuf_[capacity*2];
+	std::int16_t buf_[capacity*2];
+	std::int16_t pbuf_[capacity*2];
 
 public:
 	PlayerAdapter(kb::ModPlayer& p) :player_(p), rw_() {}
@@ -34,16 +34,16 @@ public:
 private:
 	void BlasterProc(void* out, int fmt, int numChannels, int numSamples);
 
-	void PushBack(int l, int r) {
+	void PushBack(std::int16_t l, std::int16_t r) {
 		int idx = rw_.BackIdx();
-		buf_[idx] = l;
-		buf_[idx+capacity] = r;
+		buf_[idx*2+0] = l;
+		buf_[idx*2+1] = r;
 		rw_.PushBack(); }
 
-	void PopFront(int& l, int& r) {
+	void PopFront(std::int16_t& l, std::int16_t& r) {
 		int idx = rw_.FrontIdx();
-		l = buf_[idx];
-		r = buf_[idx+capacity];
+		l = buf_[idx*2+0];
+		r = buf_[idx*2+1];
 		rw_.PopFront(); }};
 
 

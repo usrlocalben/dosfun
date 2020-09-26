@@ -17,17 +17,16 @@ public:
 		char volume_;  // 0 .. 64
 
 		Voice();
-		void Render(int* buffer, int numSamples);
+		void Render(std::int16_t* buffer, int numSamples);
 		void Trigger(std::int8_t* samplePtr, int sampleLen, int loopLen, int offs=0); };
 
 	Voice voice_[4];
-	int out_[4096*2];  // left, right
 	float masterGain_;
 	// float masterSeparation_;
 
 public:
 	Paula();
-	void Render(int* lb, int* rb, int numSamples); };
+	void Render(std::int16_t* buf, int numSamples); };
 
 
 class ModPlayer {
@@ -113,12 +112,12 @@ public:
 	char name_[21];
 
 	ModPlayer(Paula* paula, std::uint8_t* moddata);
-	void Render(int* lb, int* rb, int numSamples);
+	void Render(std::int16_t* buf, int numSamples);
 	int GetCurrentPos() const {
 		return curPos_; }
 	int GetCurrentRow() const {
 		return curRow_; }
-	static void RenderJmp(void* param, int* lb, int* rb, int len); };
+	static void RenderJmp(void* param, std::int16_t* buf, int len); };
 
 
 }  // namespace kb

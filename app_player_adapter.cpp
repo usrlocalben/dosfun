@@ -40,25 +40,42 @@ void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSam
 		if (fmt == 2) {
 			// 16-bit signed PCM
 			int16_t* out = static_cast<int16_t*>(out_);
-			for (int i=0; i<numSamples; i++) {
-				int l, r;
-				PopFront(l, r);
-				if (numChannels == 2) {
-					out[i*2+0] = FP16toS16(l);
-					out[i*2+1] = FP16toS16(r); }
-				else {
-					out[i] = FP16toS16((l+r)/2); }}}
+			if (numChannels == 1) {
+				// mono
+				for (int i=0; i<numSamples; ++i) {
+					int16_t l, r;
+					PopFront(l, r); // :14
+					int m = (int32_t(l) + r); // :15
+					m <<= 1;
+					out[i] = m; }}
+			else {
+				// stereo
+				for (int i=0; i<numSamples; ++i) {
+					int16_t l, r;
+					PopFront(l, r);
+					l <<= 1;
+					r <<= 1; // :15
+					out[i*2+0] = l;
+					out[i*2+1] = r; }}}
 		else {
 			// 8-bit unsigned PCM
 			uint8_t* out = static_cast<uint8_t*>(out_);
-			for (int i=0; i<numSamples; i++) {
-				int l, r;
-				PopFront(l, r);
-				if (numChannels == 2) {
-					out[i*2+0] = FP16toU8(l);
-					out[i*2+1] = FP16toU8(r); }
-				else {
-					out[i] = FP16toU8((l+r)/2); }}}}
+			if (numChannels == 1) {
+				// mono
+				for (int i=0; i<numSamples; ++i) {
+					int16_t l, r;
+					PopFront(l, r); // :14
+					int m = (int32_t(l) + r); // :15
+					m >>= 8;
+					m += 128;
+					out[i] = m; }}
+			else {
+				// stereo
+				for (int i=0; i<numSamples; i++) {
+					int16_t l, r;
+					PopFront(l, r);
+					out[i*2+0] = (l>>7)+128;
+					out[i*2+1] = (r>>7)+128; }}}}
 #ifdef SHOW_TIMING
 //vga::Color(255, { 0, 0, 0 });
 #endif
@@ -72,10 +89,10 @@ vga::Color(255, { 0xc0, 0x40, 0x20 });
 	// int numSamples = std::min(rw_.Available(), 128U);
 	int numSamples = rw_.Available();
 	if (numSamples > 0) {
-		player_.Render(pbuf_, pbuf_+capacity, numSamples);
-		for (int i=0; i<numSamples; i++) {
-			int l = pbuf_[i];
-			int r = pbuf_[i+capacity];
+		player_.Render(pbuf_, numSamples);
+		for (int i=0; i<numSamples; ++i) {
+			auto l = pbuf_[i*2+0];
+			auto r = pbuf_[i*2+1];
 			PushBack(l, r); }}
 #ifdef SHOW_TIMING
 vga::Color(255, { 0, 0, 0 });
