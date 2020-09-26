@@ -22,7 +22,11 @@ struct TrueColorPixel {
 	inline
 	auto Vec3() const -> rml::Vec3 {
 		using ryg::Linear;
-		return { Linear(r), Linear(g), Linear(b) }; }};
+		return { Linear(r), Linear(g), Linear(b) }; }
+
+	inline
+	auto bgr() const -> TrueColorPixel {
+		return TrueColorPixel(b, g, r); } };
 
 
 inline
