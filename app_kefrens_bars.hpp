@@ -1,16 +1,23 @@
 #pragma once
 #include "canvas.hpp"
-#include "vga_mode.hpp"
+#include "vga_pageflip.hpp"
+
+#include <memory>
 
 namespace rqdq {
 namespace app {
 
 class KefrensBars {
-	rgl::IndexCanvas bkg_;
-	std::vector<uint8_t> colorMap_;
+	class impl;
+	std::unique_ptr<impl> impl_;
+
 public:
 	KefrensBars();
-	void Draw(const vga::VRAMPage dst, float T, int patternNum, int rowNum); };
+	~KefrensBars();
+	KefrensBars(const KefrensBars&) = delete;
+	auto operator=(const KefrensBars&) -> KefrensBars& = delete;
+
+	void Draw(vga::DrawContext& dc, float T, int patternNum, int rowNum); };
 
 
 }  // namespace app

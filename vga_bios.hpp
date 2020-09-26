@@ -1,20 +1,25 @@
 #pragma once
+#include "pixel.hpp"
+
+#include <array>
 #include <cstdint>
 
 namespace rqdq {
 namespace vga {
 
-namespace bios {
+extern const std::array<rgl::TrueColorPixel, 256> kBIOSPalette;
 
-void Mode(std::uint8_t modeNum);
+struct BIOSUtil {
 
-auto Mode() -> std::uint8_t;
+	static
+	void Mode(std::uint8_t modeNum);
 
-void Border(std::uint8_t idx);
+	static
+	auto Mode() -> std::uint8_t;
+
+	static
+	void Border(std::uint8_t idx); };
 
 
-}  // namespace bios
-
-
-}  // namespace vga
-}  // namespace rqdq
+}  // close package namespace
+}  // close enterprise namespace

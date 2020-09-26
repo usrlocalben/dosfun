@@ -20,7 +20,7 @@ struct TrueColorPixel {
 	TrueColorPixel(uint8_t rr, uint8_t gg, uint8_t bb) :r(rr), g(gg), b(bb) {}
 
 	inline
-	auto Vec3() const -> rml::Vec3 {
+	auto Linear() const -> rml::Vec3 {
 		using ryg::Linear;
 		return { Linear(r), Linear(g), Linear(b) }; }
 

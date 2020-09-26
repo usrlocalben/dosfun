@@ -76,8 +76,8 @@ public:
 		modeSetter_() {}
 
 	void Run() {
-		modeSetter_.Set(vga::VM_MODEX);
-		vga::bios::Border(255);
+		modeSetter_.Set(320, 240, false);
+		vga::BIOSUtil::Border(255);
 		flipPagesIRQ_.emplace();
 		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
 
@@ -128,9 +128,9 @@ public:
 				log::info(tmp); }
 #endif
 			else if (msg == MSG_VGA_CAN_WRITE) {
-				vga::AnimationPage animationPage;
-				assert(animationPage.IsLocked());
-				Draw(animationPage.Get()); }}}
+				vga::DrawContext drawContext;
+				assert(drawContext.IsLocked());
+				Draw(drawContext); }}}
 
 private:
 	auto WaitForMultipleObjects(const std::vector<char>& lst) -> int {
@@ -154,7 +154,7 @@ private:
 			pc::Sleep(); }}
 
 private:
-	void Draw(const vga::VRAMPage& vram) {
+	void Draw(vga::DrawContext& dc) {
 		float T = vga::GetTime() / flipPagesIRQ_->GetHz();
 		int patternNum = player_->GetCurrentPos();
 		int rowNum = player_->GetCurrentRow();
@@ -162,7 +162,7 @@ private:
 		vga::Color(255, { 0xc0, 0xc0, 0xc0 });
 #endif
 		pc::Stopwatch drawtime;
-		effect_->Draw(vram, T, patternNum, rowNum);
+		effect_->Draw(dc, T, patternNum, rowNum);
 #ifdef SHOW_TIMING
 		vga::Color(255, { 0, 0, 0 });
 #endif

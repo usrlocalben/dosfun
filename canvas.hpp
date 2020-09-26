@@ -49,7 +49,7 @@ void Copy(const IndexCanvas& src, IndexCanvas& dst, rml::IVec2 origin={ 0, 0 });
 
 void PlanarizeLines(IndexCanvas&);
 
-auto Reindex(const TrueColorCanvas&) -> std::pair<IndexCanvas, std::vector<rgl::TrueColorPixel>>;
+auto Indexed(const TrueColorCanvas&) -> std::pair<IndexCanvas, std::vector<rgl::TrueColorPixel>>;
 
 
 }  // namespace rgl

@@ -43,9 +43,9 @@ app_player_adapter.$(LIB): app_player_adapter.$(OBJ)                        kb_t
 	@rm -f $@
 	$(AR) $@ $^
 
-app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_mode.$(LIB) vga_reg.$(LIB) data_amy.$(LIB) canvas.$(LIB)
+app_kefrens_bars.$(OBJ): app_kefrens_bars.cpp    app_kefrens_bars.hpp vga_pageflip.$(LIB) vga_reg.$(LIB) data_amy.$(LIB) canvas.$(LIB) vga_bios.$(LIB)
 	$(CPP) $<
-app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_mode.$(LIB) vga_reg.$(LIB) data_amy.$(LIB) canvas.$(LIB)
+app_kefrens_bars.$(LIB): app_kefrens_bars.$(OBJ)                      vga_pageflip.$(LIB) vga_reg.$(LIB) data_amy.$(LIB) canvas.$(LIB) vga_bios.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 
@@ -79,9 +79,9 @@ vga_reg.$(LIB): vga_reg.$(OBJ)             pc_bus.$(LIB) pc_cpu.$(LIB) pixel.$(L
 	@rm -f $@
 	$(AR) $@ $^
 
-vga_bios.$(OBJ): vga_bios.cpp    vga_bios.hpp pc_bus.$(LIB)
+vga_bios.$(OBJ): vga_bios.cpp    vga_bios.hpp pixel.$(LIB)
 	$(CPP) $<
-vga_bios.$(LIB): vga_bios.$(OBJ)              pc_bus.$(LIB)
+vga_bios.$(LIB): vga_bios.$(OBJ)              pixel.$(LIB)
 	@rm -f $@
 	$(AR) $@ $^
 

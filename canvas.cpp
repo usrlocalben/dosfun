@@ -70,7 +70,7 @@ void Convert(const TrueColorCanvas& src, const std::vector<rml::Vec3>& pal, Inde
 				float minDist = 999999.0f;
 				int minIdx = -1;
 				for (int pi=16; pi<pal.size(); pi++) {
-					if (float dist = Length(pal[pi] - c.Vec3()); dist < minDist) {
+					if (float dist = Length(pal[pi] - c.Linear()); dist < minDist) {
 						minIdx = pi;
 						minDist = dist; }}
 				assert(0 <= minIdx && minIdx < pal.size());
@@ -134,7 +134,7 @@ void PlanarizeLines(IndexCanvas& c) {
  * convert an indexed-color PNG from picopng's truecolor
  * back into indexed color with a palette
  */
-auto Reindex(const TrueColorCanvas& src) -> std::pair<IndexCanvas, std::vector<rgl::TrueColorPixel>> {
+auto Indexed(const TrueColorCanvas& src) -> std::pair<IndexCanvas, std::vector<rgl::TrueColorPixel>> {
 	IndexCanvas out;
 	out.Resize(src.dim);
 

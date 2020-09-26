@@ -6,7 +6,10 @@
 #include "pc_cpu.hpp"
 #include "pixel.hpp"
 
+#include <cassert>
 #include <cstdint>
+
+#include <sys/nearptr.h>
 
 namespace rqdq {
 namespace vga {
@@ -48,6 +51,15 @@ auto Color(int idx) -> rgl::TrueColorPixel {
 	px.g = pc::InB(VP_PALETTE_DATA) << 2;
 	px.b = pc::InB(VP_PALETTE_DATA) << 2;
 	return px; }
+
+
+inline
+auto Color(int start, int len, std::uint8_t *data) {
+	assert(len%3==0);
+	assert(start + (len/3) <= 256);
+	assert(0 <= start && start < 256);
+	pc::OutB(VP_PALETTE_WRITE, start);
+	while (len--) pc::OutB(VP_PALETTE_DATA, *data++); }
 
 
 inline
@@ -132,6 +144,11 @@ public:
 	// non-copyable
 	auto operator=(const SequencerDisabledSection&) -> SequencerDisabledSection& = delete;
 	SequencerDisabledSection(const SequencerDisabledSection&) = delete; };
+
+
+inline
+auto Map(uint32_t vgaAddr) -> void* {
+	return vga::VRAM_ADDR + vgaAddr + __djgpp_conventional_base; }
 
 
 }  // namespace vga

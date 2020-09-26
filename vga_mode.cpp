@@ -1,10 +1,12 @@
 #include "vga_mode.hpp"
 
+#include "log.hpp"
 #include "pc_bus.hpp"
 #include "pc_cpu.hpp"
 #include "vga_bios.hpp"
 #include "vga_reg.hpp"
 
+#include <stdexcept>
 #include <sys/nearptr.h>
 
 using rqdq::pc::InB;
@@ -12,7 +14,9 @@ using rqdq::pc::OutB;
 using rqdq::pc::OutW;
 
 namespace rqdq {
-namespace vga {
+namespace {
+
+using namespace rqdq::vga;
 
 /*
  * ModeX 320x240 initialization
@@ -20,7 +24,7 @@ namespace vga {
  * This is taken directly from M.Abrash's Mode-X .asm code
  */
 void ModeX() {
-	bios::Mode(0x13);
+	BIOSUtil::Mode(0x13);
 	SpinUntilNextRetraceBegins();
 
 	OutW(VP_SEQC, 0x604);  // disable chain4
@@ -53,6 +57,38 @@ void ModeX() {
 	for (int i=0; i<65536; i++) {
 		dst[i] = 0; }}
 
+}  // close unnamed namespace
 
-}  // namespace vga
-}  // namespace rqdq
+namespace vga {
+
+ModeSetter::ModeSetter() :
+	oldMode_(BIOSUtil::Mode()) {}
+
+
+ModeSetter::~ModeSetter() {
+	if (width_ > 0) {
+		log::info("vga: restoring prior mode %02x", oldMode_);
+		BIOSUtil::Mode(oldMode_); }}
+
+
+void ModeSetter::Set(int width, int height, bool linear) {
+	if (width==320 && height==200 && linear) {
+		BIOSUtil::Mode(0x13);
+		log::info("vga: set 320x200x250 linear (via BIOS mode 13h)");
+		width_ = 320;
+		height_ = 200;
+		stride_ = 320;
+		linear_ = true; }
+	else if (width==320 && height==240 && !linear) {
+		ModeX();
+		log::info("vga: set 320x240x256 planar");
+		width_ = 320;
+		height_ = 240;
+		stride_ = 80;
+		linear_ = false; }
+	else {
+		throw std::runtime_error("bad mode!");}}
+
+
+}  // close package namespace
+}  // close enterprise namespace
