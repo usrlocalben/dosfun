@@ -69,7 +69,7 @@ public:
 
 	void Unlock() {
 		if (locked_) {
-			StartAddr(nextStartAddr_);
+			vga::StartAddr(nextStartAddr_);
 			locked_ = false;
 			backLocked = false; }}};
 
