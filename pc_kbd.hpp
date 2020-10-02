@@ -3,7 +3,9 @@
 namespace rqdq {
 namespace pc {
 
-constexpr int SC_ESC = 1;
+constexpr int SC_ESC  = 0x01;
+constexpr int SC_UP   = 0x48;
+constexpr int SC_DOWN = 0x50;
 
 struct KeyEvent {
 	int code;
