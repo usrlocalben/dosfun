@@ -21,29 +21,23 @@ using rqdq::pc::OutB;
 namespace rqdq {
 namespace {
 
-const int kSampleSizeInWords = 1;
+constexpr int kSampleSizeInWords = 1;
 
 // class snd::Blaster::impl* runningInstance = nullptr;
 void* runningInstance = nullptr;
 
 struct Ports {
-	int reset;
-	int read;
-	int write;
-	int poll;
-	int ack16; };
+	const int reset;
+	const int read;
+	const int write;
+	const int poll;
+	const int ack16; };
 
-Ports make_ports(int baseAddr) {
-	Ports out;
-	out.reset = baseAddr + 0x06;
-	out.read  = baseAddr + 0x0a;
-	out.write = baseAddr + 0x0c;
-	out.poll  = baseAddr + 0x0e;
-	out.ack16 = baseAddr + 0x0f;
-	return out; }
+auto make_ports(int base) -> Ports {
+	return { base+0x06, base+0x0a, base+0x0c, base+0x0e, base+0x0f }; }
 
-uint8_t lo(uint16_t value) { return value & 0x00ff; }
-uint8_t hi(uint16_t value) { return value >> 8; }
+auto lo(uint16_t value) -> uint8_t { return value & 0x00ff; }
+auto hi(uint16_t value) -> uint8_t { return value >> 8; }
 
 }  // namespace
 
@@ -64,7 +58,6 @@ class Blaster::impl {
 	const int sampleRateInHz_;
 	const int numChannels_;
 	const int bufferSizeInSamples_;
-	int userBuffer_;
 	int playBuffer_;
 	const pc::DMABuffer dmaBuffer_;
 	bool good_;
@@ -84,7 +77,6 @@ public:
 		sampleRateInHz_(sampleRateInHz),
 		numChannels_(numChannels),
 		bufferSizeInSamples_(bufferSizeInSamples),
-		userBuffer_(1),
 		playBuffer_(0),
 		dmaBuffer_(bufferSizeInSamples_*numChannels_ * (bits_ == 16 ? 2 : 1)),
 		good_(false),
@@ -188,11 +180,9 @@ public:
 		SpinUntilReset(); }
 
 private:
-	inline
 	void SpinUntilReadyForWrite() {
 		while (InB(writePort_) & 0x80); }
 
-	inline
 	void SpinUntilReadyForRead() {
 		while (!(InB(pollPort_) & 0x80)); }
 
@@ -213,8 +203,8 @@ private:
 		while ((RX() != 0xaa) && attempts--);
 		return attempts != 0; }
 
-	inline
 	auto GetUserBuffer() const -> void* {
+		int userBuffer_ = playBuffer_ ^ 1;
 		if (bits_ == 8) {
 			int8_t* dst = (int8_t*)dmaBuffer_.Ptr16();
 			dst += userBuffer_*bufferSizeInSamples_*numChannels_;
@@ -228,7 +218,6 @@ private:
 	void isrJmp() {
 		static_cast<impl*>(runningInstance)->isr(); }
 
-	inline
 	void isr() {
 #ifdef DETECT_SURIOUS_IRQ
 		if (!irqLine_.IsReal()) {
@@ -237,7 +226,7 @@ private:
 #endif
 		pc::EnableInterrupts();
 
-		std::swap(userBuffer_, playBuffer_);
+		playBuffer_ ^= 1;
 		void* dst = (char*)GetUserBuffer() + __djgpp_conventional_base;
 		int fmt = (bits_ == 8 ? 1 : 2);
 		if (userProc_ != nullptr) {
@@ -247,7 +236,6 @@ private:
 		ACK();
 		irqLine_.SignalEOI(); }
 
-	inline
 	void ACK() {
 		InB(ackPort_); }
 
