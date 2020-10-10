@@ -37,7 +37,7 @@ void PlayerAdapter::BlasterProc(void* out_, int fmt, int numChannels, int numSam
 //vga::Color(255, { 0x80, 0xfc, 0x40 });
 #endif
 	if (rw_.Size() >= numSamples) {
-		if (fmt == 2) {
+		if (fmt == 16) {
 			// 16-bit signed PCM
 			int16_t* out = static_cast<int16_t*>(out_);
 			for (int i=0; i<numSamples; i++) {
@@ -69,7 +69,7 @@ void PlayerAdapter::Refill() {
 #ifdef SHOW_TIMING
 vga::Color(255, { 0xc0, 0x40, 0x20 });
 #endif
-	// int numSamples = std::min(rw_.Available(), 128U);
+	// int numSamples = std::min(rw_.Available(), 256U);
 	int numSamples = rw_.Available();
 	if (numSamples > 0) {
 		player_.Render(pbuf_, pbuf_+capacity, numSamples);

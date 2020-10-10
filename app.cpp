@@ -35,12 +35,13 @@ using std::make_unique;
 namespace rqdq {
 namespace app {
 
-constexpr int kAudioBufferSizeInSamples = 128;
-constexpr int kAudioSampleRateInHz = 22050;
-constexpr int kAudioWidthInChannels = 2;
+int kAudioBufferSizeInSamples = 128;
+int kAudioSampleRateInHz = 22050;
+int kAudioWidthInChannels = 2;
 int kSoundBlasterIOBaseAddr = 0x220;
 int kSoundBlasterIRQNum = 7;         // 760eld == 5
-int kSoundBlasterDMAChannelNum = 5;  // 760eld == 1
+int kSoundBlasterDMA8ChannelNum = 1;  // 760eld == 1
+int kSoundBlasterDMA16ChannelNum = 5;  // 760eld == 1
 
 constexpr char MSG_KBD_DATA_AVAILABLE = 1;
 constexpr char MSG_VGA_CAN_WRITE = 2;
@@ -51,9 +52,9 @@ constexpr char MSG_TTY_CAN_WRITE = 4;
 class Demo {
 
 	bool quitSoon_{false};
-	std::unique_ptr<kb::Paula> paula_;
-	std::unique_ptr<kb::ModPlayer> player_;
-	std::unique_ptr<PlayerAdapter> adapter_;
+	std::unique_ptr<kb::Paula> paula_{};
+	std::unique_ptr<kb::ModPlayer> player_{};
+	std::unique_ptr<PlayerAdapter> adapter_{};
 #ifdef TTYCON
 	std::unique_ptr<pc::ComPort> tty_;
 	int llp_{0};
@@ -66,9 +67,6 @@ class Demo {
 
 public:
 	Demo():
-		paula_(make_unique<kb::Paula>()),
-		player_(make_unique<kb::ModPlayer>(paula_.get(), data::ost.data())),
-		adapter_(make_unique<PlayerAdapter>(*player_)),
 #ifdef TTYCON
 		tty_(make_unique<pc::ComPort>(0x2f8, 3, 115200, pc::FLOW_NONE)),
 #endif
@@ -83,9 +81,17 @@ public:
 
 		effect_ = make_unique<KefrensBars>();
 
-		adapter_->Refill();
-		blaster_ = make_unique<snd::Blaster>(kSoundBlasterIOBaseAddr, kSoundBlasterIRQNum, kSoundBlasterDMAChannelNum,
+		auto blasterConfig = snd::BlasterConfig{ kSoundBlasterIOBaseAddr,
+		                                         kSoundBlasterIRQNum,
+		                                         kSoundBlasterDMA8ChannelNum,
+		                                         kSoundBlasterDMA16ChannelNum, };
+		blaster_ = make_unique<snd::Blaster>(blasterConfig,
 		                                     kAudioSampleRateInHz, kAudioWidthInChannels, kAudioBufferSizeInSamples);
+
+		paula_ = make_unique<kb::Paula>();
+		player_ = make_unique<kb::ModPlayer>(paula_.get(), data::ost.data());
+		adapter_ = make_unique<PlayerAdapter>(*player_);
+		adapter_->Refill();
 		blaster_->AttachProc(PlayerAdapter::BlasterJmp, adapter_.get());
 		blaster_->Start();
 
@@ -179,7 +185,7 @@ private:
 }  // namespace rqdq
 
 
-int main() {
+int main(int argc, char **argv) {
 	ryg::Init();
 	rqdq::log::Reserve();
 	const std::uint16_t before = rqdq::pc::GetPICMasks();
@@ -189,14 +195,32 @@ int main() {
 		std::printf("BLASTER not found\n");
 		return 1; }
 
-	rqdq::app::kSoundBlasterIRQNum = bd.value.irqNum;
-	rqdq::app::kSoundBlasterIOBaseAddr = bd.value.ioAddr;
-	rqdq::app::kSoundBlasterDMAChannelNum = bd.value.BestDMA();
+	std::string tmp;
+	int errors = 0;
+	for (int i=1; i<argc; ++i) {
+		tmp.assign(argv[1]);
+		if (rqdq::text::ConsumePrefix(tmp, "audio.rate=")) {
+			rqdq::app::kAudioSampleRateInHz = std::clamp(std::stoi(tmp), 4000, 96000); }
+		else if (rqdq::text::ConsumePrefix(tmp, "audio.buffer=")) {
+			rqdq::app::kAudioBufferSizeInSamples = std::clamp(std::stoi(tmp), 16, 4096); }
+		else if (rqdq::text::ConsumePrefix(tmp, "audio.width=")) {
+			rqdq::app::kAudioWidthInChannels = std::clamp(std::stoi(tmp), 1, 2); }
+		else {
+			std::cerr << "unknown arg \"" << tmp << "\"\n";
+			errors += 1; }}
+	if (errors > 0) {
+		return 1; }
 
-	std::printf("Found BLASTER addr=0x%x irq=%d dma=%d\n",
+	rqdq::app::kSoundBlasterIRQNum = bd.value.irq.value();
+	rqdq::app::kSoundBlasterIOBaseAddr = bd.value.io.value();
+	rqdq::app::kSoundBlasterDMA8ChannelNum = bd.value.dma8.value_or(-1);
+	rqdq::app::kSoundBlasterDMA16ChannelNum = bd.value.dma16.value_or(-1);
+
+	std::printf("Found BLASTER addr=0x%x irq=%d dma8=%d dma16=%d\n",
 	            rqdq::app::kSoundBlasterIOBaseAddr,
 	            rqdq::app::kSoundBlasterIRQNum,
-	            rqdq::app::kSoundBlasterDMAChannelNum);
+	            rqdq::app::kSoundBlasterDMA8ChannelNum,
+	            rqdq::app::kSoundBlasterDMA16ChannelNum);
 
 	if (!__djgpp_nearptr_enable()) {
 		std::printf("can't enable nearptr.\n");

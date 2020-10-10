@@ -20,17 +20,17 @@ inline auto hi(uint16_t value) -> uint8_t { return value >> 8; }
 
 namespace pc {
 
-DMABuffer::DMABuffer(std::uint16_t sizeInWords) :
-	realMem_(sizeInWords*2*2),
-	sizeInWords_(sizeInWords) {
+DMABuffer::DMABuffer(std::uint16_t capacityInBytes) :
+	realMem_(capacityInBytes*2),
+	capacity_(capacityInBytes) {
 
 	uint32_t phy = realMem_.Addr();
-	uint32_t rel = phy % 65536;
-	if ((rel + (sizeInWords*2)) > 65536) {
+	uint32_t rel = phy & 0xffff;
+	if ((rel + capacity_) > 0x10000) {
 		// if the start addr would cross
 		// a 64k page boundary, advance
 		// to the start of the next page
-		phy = (phy+65536) & 0xff0000; }
+		phy = (phy+0x10000) & 0xff0000; }
 
 	addr_ = phy; }
 
