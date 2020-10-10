@@ -16,11 +16,11 @@ class DMABuffer {
 
 	os::RealMem realMem_;
 	std::uint32_t addr_;
-	int sizeInWords_;
+	int capacity_;
 
 public:
-	DMABuffer() :realMem_(), addr_(0), sizeInWords_(0) {}
-	DMABuffer(std::uint16_t sizeInWords);
+	DMABuffer() :realMem_(), addr_(0), capacity_(0) {}
+	DMABuffer(std::uint16_t);
 	// not-copyable
 	DMABuffer(const DMABuffer& other) = delete;
 	auto operator=(const DMABuffer& other) -> DMABuffer& = delete;
@@ -41,13 +41,13 @@ public:
 		return (addr_ >> 1) % 65536; }
 
 	auto Size8() const -> int {
-		return sizeInWords_ * 2; }
+		return capacity_; }
 
 	auto Size16() const -> int {
-		return sizeInWords_; }
+		return capacity_/2; }
 
 	void Zero() const {
-		std::memset(Ptr() + __djgpp_conventional_base, 0, sizeInWords_*2); } };
+		std::memset(Ptr() + __djgpp_conventional_base, 0, capacity_); } };
 
 
 class DMAChannel {
@@ -73,6 +73,9 @@ public:
 	void Setup(const DMABuffer& buf) const;
 
 	void Stop() const;
+
+	auto ChannelNum() const -> int { return channelNum_; }
+
 private:
 	void ClearFlipFlop() const;
 	void SetMode() const;

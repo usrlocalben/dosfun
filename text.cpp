@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdio>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -35,6 +36,13 @@ std::string_view JsonStringify(std::string_view text) {
 	PUSH(0);
 
 	return { buf.data(), std::size_t(end-buf.data()) }; }
+
+
+auto ConsumePrefix(std::string& str, const std::string& prefix) -> bool {
+	if (str.compare(0, prefix.length(), prefix) == 0) {
+		str.erase(0, prefix.length());
+		return true; }
+	return false; }
 
 
 }  // namespace text

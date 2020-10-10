@@ -12,13 +12,19 @@ extern int spuriousIRQCnt;
 
 typedef void (*audioproc)(void* dest, int fmt, int numChannels, int numSamples, void *userPtr);
 
+struct BlasterConfig {
+	int io;
+	int irq;
+	int dma8;
+	int dma16; };
+
 class Blaster {
 	class impl;
 
 	std::unique_ptr<impl> impl_;
 
 public:
-	Blaster(int baseAddr, int irqNum, int dmaNum, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
+	Blaster(BlasterConfig config, int sampleRateInHz, int numChannels, int bufferSizeInSamples);
 	Blaster(Blaster&&) = default;
 	auto operator=(Blaster&&) -> Blaster& = default;
 	Blaster(const Blaster&) = delete;
@@ -29,6 +35,8 @@ public:
 	void DetachProc();
 	void Start();
 	void Stop();
+
+	auto Rate() const -> int;
 
 	~Blaster(); };
 

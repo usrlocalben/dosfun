@@ -1,24 +1,20 @@
 #pragma once
+#include <optional>
+
 namespace rqdq {
 namespace hw {
 
 struct BlasterParams {
-	int ioAddr;
-	int irqNum;
-	int dmaLow;
-	int dmaHigh;
-
-	BlasterParams(int a=-1, int b=-1, int c=-1, int d=-1) :
-		ioAddr(a),irqNum(b), dmaLow(c), dmaHigh(d) {}
-
-	auto BestDMA() const -> int {
-		return dmaHigh != -1 ? dmaHigh : dmaLow; }};
+	std::optional<int> io{};
+	std::optional<int> irq{};
+	std::optional<int> dma8{};
+	std::optional<int> dma16{}; };
 
 
 class BlasterSerializer {
-public:
-	BlasterParams params_;
-	int valid_;
+
+	BlasterParams params_{};
+	std::optional<bool> valid_{};
 	int curField_;
 	int ax_;
 	int base_;
@@ -37,10 +33,6 @@ private:
 struct BlasterDetectResult {
 	bool found;
 	BlasterParams value; };
-
-//	BlasterDetectResult(bool a, BlasterParams b) :
-//		found(a), value(b) {} };
-
 
 auto DetectBlaster() -> BlasterDetectResult;
 
