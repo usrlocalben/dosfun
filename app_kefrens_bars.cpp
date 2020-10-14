@@ -19,6 +19,8 @@
 
 using std::uint8_t, std::uint16_t, std::uint32_t;
 
+#define BACKGROUND_LAYER
+
 namespace rqdq {
 namespace {
 
@@ -53,6 +55,7 @@ namespace app {
 
 class KefrensBars::impl {
 
+	const int effectHeight_;
 	rgl::IndexCanvas bkg_;
 	std::vector<uint8_t> colorMap_;
 	bool paletteFixed_{false};
@@ -60,7 +63,7 @@ class KefrensBars::impl {
 	alignas(16) std::uint8_t palBuf_[256*3];
 
 public:
-	impl() {
+	impl(int eh) : effectHeight_(eh) {
 		std::vector<rml::Vec3> biosPal(256);
 		for (int i=0; i<256; ++i) {
 			biosPal[i] = vga::kBIOSPalette[i].Linear(); }
@@ -110,8 +113,11 @@ public:
 				dc.Palette(0, 256, palBuf_); }}
 
 		std::array<uint8_t, devWidth> rowData, rowMask;
-		//rowData.fill(0);
+#ifndef BACKGROUND_LAYER
+		rowData.fill(0);
+#else
 		rowMask.fill(0);
+#endif
 
 		// int magicIdx = patternNum<<1 | (rowNum>>4&1);
 		int magicIdx = patternNum;
@@ -125,9 +131,12 @@ public:
 		int pageNum = dc.Get();
 		int nextStartAddr = pageNum*devHeight*devStride;
 		auto destRow = static_cast<uint8_t*>(vga::Map(nextStartAddr));
-		for (int yyy=0; yyy<devHeight; yyy++) {
+		for (int yyy=0; yyy<effectHeight_; yyy++) {
 			// animate
 			int pos;
+			// using a single function allows hoisting
+			// pos = SIN((T*2.19343f) + yyy*(SIN(T*0.25f)*0.05f) * 3.14159f * 2.0f) * (SIN(T*1.781234f)*150) + 160;
+
 			switch (patternNum%4) {
 			case 0:
 				pos = SIN((T*2.19343f) + yyy*(SIN(T*0.25f)*0.05f) * 3.14159f * 2.0f) * (SIN(T*1.781234f)*150) + 160;
@@ -149,28 +158,33 @@ public:
 					int plane = ox&3;
 					int ofs = ox>>2;
 					rowData[plane*devStride+ofs] = barImg[wx+4];
-					rowMask[plane*devStride+ofs] = 0xff; }}
+#ifdef BACKGROUND_LAYER
+					rowMask[plane*devStride+ofs] = 0xff;
+#endif
+					}}
 
 			// copy row[] to vram planes
 			for (int p=0; p<4; p++) {
 				vga::Planes(1<<p);
 				for (int rx=0; rx<devStride; rx+=4) {
-					auto bPx = *reinterpret_cast<uint32_t*>(bkg_.buf.data() + (yyy * bkg_.stride) + (p*devStride) + rx);
+#ifndef BACKGROUND_LAYER
 					auto fPx = *reinterpret_cast<uint32_t*>(rowData.data() + (p*devStride) + rx);
+					*reinterpret_cast<uint32_t*>(destRow + rx) = fPx;
+#else // BACKGROUND_LAYER
+					auto fPx = *reinterpret_cast<uint32_t*>(rowData.data() + (p*devStride) + rx);
+					auto bPx = *reinterpret_cast<uint32_t*>(bkg_.buf.data() + (yyy * bkg_.stride) + (p*devStride) + rx);
 					auto mask = *reinterpret_cast<uint32_t*>(rowMask.data() + (p*devStride) + rx);
-					*reinterpret_cast<uint32_t*>(destRow + rx) = Blend(fPx, bPx, mask); }
-#ifdef SHOW_TIMING
-				destRow[79] = 255;
+					*reinterpret_cast<uint32_t*>(destRow + rx) = Blend(fPx, bPx, mask);
 #endif
-				}
+					}}
 
 			destRow += devStride; }
 
 		dc.StartAddr(nextStartAddr); }};
 
 
-KefrensBars::KefrensBars() :
-	impl_(std::make_unique<impl>()) {}
+KefrensBars::KefrensBars(int eh) :
+	impl_(std::make_unique<impl>(eh)) {}
 
 KefrensBars::~KefrensBars() = default;
 

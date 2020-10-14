@@ -1,5 +1,6 @@
 // this is kb/fr's tinymod.cpp without the pwm emulation
 #pragma once
+#include <array>
 #include <cstdint>
 
 namespace kb {
@@ -13,27 +14,30 @@ public:
 		std::int8_t* samplePtr_;
 		int sampleLen_;
 		int loopLen_;
+		int speed_;
 		int period_;  // 124 .. 65535
 		char volume_;  // 0 .. 64
 
 		Voice();
-		void Render(std::int16_t* buffer, int numSamples);
+
+		template <bool LOW_HZ>
+		void Render(std::int32_t* buffer, int numSamples, int hz);
+
 		void Trigger(std::int8_t* samplePtr, int sampleLen, int loopLen, int offs=0); };
 
+	const int rate_;
 	Voice voice_[4];
-	float masterGain_;
+	int masterGain_;
 	// float masterSeparation_;
 
 public:
-	Paula();
-	void Render(std::int16_t* buf, int numSamples); };
+	Paula(int rate);
+	void Render(std::int32_t* buf, int numSamples); };
 
 
 class ModPlayer {
 	Paula *paula_;
-	static int basePTable[5*12 + 1];
-	static int pTable[16][60];
-	static int vibTable[3][15][64];
+
 #pragma pack(1)
 	struct Sample {
 		char name[22];
@@ -45,6 +49,7 @@ class ModPlayer {
 
 		void Prepare();};
 #pragma pack()
+
 	struct Pattern {
 		struct Event {
 			int sampleNum;
@@ -103,6 +108,8 @@ class ModPlayer {
 	int curPos_;
 	int delay_;
 
+	int buf_[4096*2];
+
 	void CalcTickRate(int bpm);
 	void TrigNote(int ch, const Pattern::Event& e);
 	void Reset();
@@ -112,12 +119,15 @@ public:
 	char name_[21];
 
 	ModPlayer(Paula* paula, std::uint8_t* moddata);
-	void Render(std::int16_t* buf, int numSamples);
-	int GetCurrentPos() const {
+
+	static
+	void RenderJmp(void* param, std::int32_t* buf, int len);
+	void Render(std::int32_t* buf, int numSamples);
+
+	auto GetCurrentPos() const -> int {
 		return curPos_; }
-	int GetCurrentRow() const {
-		return curRow_; }
-	static void RenderJmp(void* param, std::int16_t* buf, int len); };
+	auto GetCurrentRow() const -> int {
+		return curRow_; } };
 
 
 }  // namespace kb

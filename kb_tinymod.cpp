@@ -1,6 +1,9 @@
 // this is kb/fr's tinymod.cpp without the pwm emulation
 #include "kb_tinymod.hpp"
 
+#include "log.hpp"
+
+#include <cassert>
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -13,81 +16,141 @@ using std::int32_t;
 using std::uint8_t;
 using std::uint16_t;
 using std::uint32_t;
+using std::clamp;
 
 namespace {
 
 const float kPi = 3.1415926;
 const float kPaulaPalHz = 3546895.0f;
-const int kFPS = 50;  // pal
-const float kOutputFreqInHz = 22050.0;
+const int kPALHz = 50;
 const int kNumVoices = 4;
 
-inline void SwapEndian(uint16_t& v) {
+inline
+void SwapEndian(uint16_t& v) {
 	v = ((v&0xff)<<8)|(v>>8); }
 
-template<typename T>
-inline T Clamp(const T x, const T min, const T max) {
-	return std::max(min, std::min(max, x)); }
+int pTable[16][60];
+int vibTable[3][15][64];
+int basePTable[5*12+1] = { 0,
+  1712,1616,1525,1440,1357,1281,1209,1141,1077,1017, 961, 907,    // c0-b0
+   856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453,    // c1-b1
+   428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226,    // c2-b2
+   214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113,    // c3-b3
+   107, 101,  95,  90,  85,  80,  76,  71,  67,  64,  60,  57, }; // c4-b4
+
+#ifdef VOLTABLE
+int16_t volTable[65][256];
+#endif
+
+struct inittables { inittables() {
+	// calc ptable
+	for (int ft=0; ft<16; ft++) {
+		int rft = -((ft>=8)?ft-16:ft);
+		float fac = std::pow(2.0f, float(rft)/(12.0f*16.0f));
+		for (int i=0; i<60; i++) {
+			pTable[ft][i] = int(float(basePTable[i])*fac+0.5f); }}
+
+	// calc vibtable
+	for (int ampl=0; ampl<15; ampl++) {
+		float scale = ampl + 1.5f;
+		float shift = 0;
+		for (int x=0; x<64; x++) {
+			vibTable[0][ampl][x] = int(scale * std::sin(x*kPi/32.0f)+shift);
+			vibTable[1][ampl][x] = int(scale*((63-x)/31.5f-1.0f)+shift);
+			vibTable[2][ampl][x] = int(scale*((x<32)?1:-1)+shift); }}
+
+#ifdef VOLTABLE
+	for (int vol=0; vol<=64; ++vol) {
+		for (int n=0; n<=255; ++n) {
+			volTable[vol][n] = int(int8_t(n))*vol<<2; }}
+#endif
+
+	}} inittables;
 
 
 }  // namespace
 
 namespace kb {
 
-Paula::Voice::Voice()
-	:pos_(0),
+Paula::Voice::Voice() :
+	pos_(0),
 	samplePtr_(nullptr),
 	sampleLen_(0),
-	loopLen_(1),
+	loopLen_(1<<10),
 	period_(65535),
+	speed_(0),
 	volume_(0) {}
 
 
-void Paula::Voice::Render(int16_t* buffer, int numSamples) {
+template <bool LOW_HZ>
+void Paula::Voice::Render(int32_t* buffer, int numSamples, int hz) {
 	if (samplePtr_ == nullptr) {
 		return; }
+	if (volume_ == 0) {
+		return; }
 
-	int speed = 3546895 / period_ / kOutputFreqInHz * 65536.0f;
+	int volume = volume_;
+#ifndef VOLTABLE
+	volume <<= 2;  // also converts sample to 16-bit
+#endif
+
+	int speed = uint32_t(3546895)*1024 / uint32_t(period_ * hz);
 
 	for (int i=0; i<numSamples; i++) {
-		int16_t s;
-		s = samplePtr_[pos_>>16];  // 8 bits
-		s *= volume_;              // 14
-		//s <<= 2;                 // :16
-		*buffer += s;
-		buffer += 2;
+		int32_t v;
+#ifdef VOLTABLE
+		v = volTable[volume][uint8_t(samplePtr_[pos_>>10])];
+#else
+		v = samplePtr_[pos_>>10];
+		v *= volume;  // v is now 16-bits
+#endif
+		*buffer += v;
+		buffer++;
 
 		pos_ += speed;
-		if (pos_ >= sampleLen_<<16) {
-			pos_ -= loopLen_<<16; }}}
+		if (pos_ >= sampleLen_) {
+			// kb's impl used looplen==1 to disable
+			// loop, which avoids branching here, but
+			// it doesn't work if speed is sufficiently
+			// large, which is the case when the samplerate
+			// is sufficiently low, e.g. 8khz.
+			if constexpr (LOW_HZ) {
+				pos_ -= loopLen_ == 1024 ? speed : loopLen_; }
+			else {
+				pos_ -= loopLen_; }}}}
 
 
 void Paula::Voice::Trigger(int8_t* samplePtr, int sampleLen, int loopLen, int offs) {
 	samplePtr_ = samplePtr;
-	sampleLen_ = sampleLen;
-	loopLen_ = loopLen;
-	pos_ = std::min(offs, sampleLen-1) << 16; }
+	sampleLen_ = sampleLen << 10;
+	loopLen_ = loopLen << 10;
+	pos_ = std::min(offs, sampleLen-1) << 10; }
 
 
-Paula::Paula() :
-	masterGain_(1.00f) {}
+Paula::Paula(int rate) : rate_(rate), masterGain_(0x100) {}
 
 
-void Paula::Render(int16_t* buf, int numSamples) {
+void Paula::Render(int32_t* buf, int numSamples) {
 	// const float pan = 0.5f + 0.5f * masterSeparation_;
 	// const float vm0 = masterGain_ * sqrt(pan);
 	// const float vm1 = masterGain_ * sqrt(1-pan);
-	const int mg = masterGain_ * 256.0f;
 
-	for (int i=0; i<numSamples*2; ++i) {
+	for (int i=0; i<numSamples; ++i) {
 		buf[i] = 0; }
+	for (int i=0; i<numSamples; ++i) {
+		buf[i+2048] = 0; }
 	for (int vi=0; vi<kNumVoices; ++vi) {
 		// 0,3=left, 1,2=right
-		int offset = static_cast<int>(vi==1||vi==2);
-		voice_[vi].Render(buf+offset, numSamples); }
-	if (masterGain_ < 1.0F) {
-		for (int i=0; i<numSamples*2; ++i) {
-			buf[i] = buf[i] * mg >> 8; }}}
+		int offset = static_cast<int>(vi==1||vi==2) * 2048;
+		if (rate_ < 20000) {
+			voice_[vi].Render<true>(buf+offset, numSamples, rate_); }
+		else {
+			voice_[vi].Render<false>(buf+offset, numSamples, rate_); }}
+	if (masterGain_ < 0x100) {
+		for (int i=0; i<numSamples; ++i) {
+			buf[i] = buf[i] * masterGain_ >> 8; }
+		for (int i=0; i<numSamples; ++i) {
+			buf[i+2048] = buf[i+2048] * masterGain_ >> 8; }}}
 
 
 void ModPlayer::Sample::Prepare() {
@@ -131,7 +194,7 @@ int ModPlayer::Chan::GetPeriod(int offs, int fineOffs) {
 	int ft = fineTune + fineOffs;
 	while (ft >  7) { offs++; ft -= 16; }
 	while (ft < -8) { offs--; ft += 16; }
-	return note ? (pTable[ft&0x0f][Clamp(note+offs-1, 0, 59)]) : 0; }
+	return note ? (pTable[ft&0x0f][clamp(note+offs-1, 0, 59)]) : 0; }
 
 
 void ModPlayer::Chan::SetPeriod(int offs, int fineOffs) {
@@ -140,7 +203,7 @@ void ModPlayer::Chan::SetPeriod(int offs, int fineOffs) {
 
 
 void ModPlayer::CalcTickRate(int bpm) {
-	tickRate_ = (125*kOutputFreqInHz)/(bpm*kFPS); }
+	tickRate_ = (125*paula_->rate_)/(bpm*kPALHz); }
 
 
 // float ModPlayer::GetTickDurationInSeconds() {
@@ -213,7 +276,7 @@ void ModPlayer::Tick() {
 				tremVol = vibTable[c.tremWave][(c.tremAmpl)-1][c.tremPos];
 				break;
 			case 12:  // set vol
-				c.volume = Clamp(e.fxParam, 0, 64);
+				c.volume = clamp(e.fxParam, 0, 64);
 				break;
 			case 14:  // special
 				if (fxpl) {
@@ -354,7 +417,7 @@ void ModPlayer::Tick() {
 						TrigNote(ch, e); }
 					break; }
 				break; }}
-		v.volume_ = Clamp(c.volume + tremVol, 0, 64);
+		v.volume_ = clamp(c.volume + tremVol, 0, 64);
 		v.period_ = c.period; }
 
 	curTick_++;
@@ -370,24 +433,8 @@ void ModPlayer::Tick() {
 
 
 ModPlayer::ModPlayer(Paula* p, uint8_t* moddata) :paula_(p) {
-	uint8_t * const xxx = moddata;
 
-	// calc ptable
-	for (int ft=0; ft<16; ft++) {
-		int rft = -((ft>=8)?ft-16:ft);
-		float fac = std::pow(2.0f, float(rft)/(12.0f*16.0f));
-		for (int i=0; i<60; i++) {
-			pTable[ft][i] = int(float(basePTable[i])*fac+0.5f); }}
-
-	// calc vibtable
-	for (int ampl=0; ampl<15; ampl++) {
-		float scale = ampl + 1.5f;
-		float shift = 0;
-		for (int x=0; x<64; x++) {
-			vibTable[0][ampl][x] = int(scale * std::sin(x*kPi/32.0f)+shift);
-			vibTable[1][ampl][x] = int(scale*((63-x)/31.5f-1.0f)+shift);
-			vibTable[2][ampl][x] = int(scale*((x<32)?1:-1)+shift); }}
-
+			
 	// "load" the mod
 	std::memcpy(name_, moddata, 20);
 	name_[20] = 0;
@@ -422,7 +469,7 @@ ModPlayer::ModPlayer(Paula* p, uint8_t* moddata) :paula_(p) {
 
 	patternCount_ = 0;
 	for (int i=0; i<128; i++) {
-		patternCount_ = Clamp(patternCount_, patternList_[i]+1, 128); }
+		patternCount_ = clamp(patternCount_, patternList_[i]+1, 128); }
 
 	for (int i=0; i<patternCount_; i++) {
 		patterns_[i].Load(moddata);
@@ -436,33 +483,19 @@ ModPlayer::ModPlayer(Paula* p, uint8_t* moddata) :paula_(p) {
 	Reset(); }
 
 
-void ModPlayer::Render(std::int16_t* buf, int numSamples) {
+void ModPlayer::RenderJmp(void* param, int32_t* buf, int len) {
+	((ModPlayer*)param)->Render(buf, len); }
+void ModPlayer::Render(int32_t* buf, int numSamples) {
 	while (numSamples) {
 		int todo = std::min(numSamples, trCounter_);
 		if (todo) {
 			paula_->Render(buf, todo);
-			buf += todo*2;
+			buf += todo;
 			numSamples -= todo;
 			trCounter_ -= todo; }
 		else {
 			Tick();
 			trCounter_ = tickRate_; }}}
-
-
-void ModPlayer::RenderJmp(void* param, std::int16_t* buf, int len) {
-	((ModPlayer*)param)->Render(buf, len); }
-
-
-int ModPlayer::basePTable[61] = { 0,
-  1712,1616,1525,1440,1357,1281,1209,1141,1077,1017, 961, 907,    // c0-b0
-   856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453,    // c1-b1
-   428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226,    // c2-b2
-   214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113,    // c3-b3
-   107, 101,  95,  90,  85,  80,  76,  71,  67,  64,  60,  57, }; // c4-b4
-
-int ModPlayer::pTable[16][60];
-
-int ModPlayer::vibTable[3][15][64];
 
 
 }  // namespace kb

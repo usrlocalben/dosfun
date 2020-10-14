@@ -12,7 +12,7 @@ class KefrensBars {
 	std::unique_ptr<impl> impl_;
 
 public:
-	KefrensBars();
+	KefrensBars(int eh);
 	~KefrensBars();
 	KefrensBars(const KefrensBars&) = delete;
 	auto operator=(const KefrensBars&) -> KefrensBars& = delete;

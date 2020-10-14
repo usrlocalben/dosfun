@@ -30,7 +30,7 @@ namespace vga {
  * to spin for an entire display period.  Additionally, the
  * wall-clock timer provided by the IRQ would miss a tick.
  */
-constexpr int kJitterFactor = 64881;  // 0.99 16:16 fixed-point
+constexpr int kJitterFactor = (99<<16)/100;  // 0.99 16:16 fixed-point
 
 extern int irqSleepTimeInTicks;
 
@@ -53,7 +53,7 @@ public:
 		frameDurationInTicks_(CalibrateFrameTimer()) {
 
 		irqSleepTimeInTicks =
-			frameDurationInTicks_ * kJitterFactor >> 16;
+			(frameDurationInTicks_ * kJitterFactor) >> 16;
 
 		SpinWhileRetracing();
 		pc::pitIRQLine.SaveISR();

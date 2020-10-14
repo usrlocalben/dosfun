@@ -268,7 +268,7 @@ public:
 			log::info("sb16: precision: %d bits (wanted 16)", bits_);
 			log::info("sb16:     width: %d channels (wanted %d)", width_, reqWidth);
 			log::info("sb16:      rate: %d hz (wanted %d)", sampleRateInHz_, reqRate);
-			log::info("sb16: using dma channel: %d", dma_.ChannelNum() + bits_==16 ? 4 : 0);
+			log::info("sb16: using dma channel: %d", dma_.ChannelNum() + (bits_==16 ? 4 : 0));
 			log::info("sb16: using transfer mode: %s", highSpeed_ ? "High-Speed" : "Normal"); }
 
 	~impl() {

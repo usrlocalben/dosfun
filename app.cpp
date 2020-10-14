@@ -43,6 +43,8 @@ int kSoundBlasterIRQNum = 7;         // 760eld == 5
 int kSoundBlasterDMA8ChannelNum = 1;  // 760eld == 1
 int kSoundBlasterDMA16ChannelNum = 5;  // 760eld == 1
 
+int kEffectHeight = 240;
+
 constexpr char MSG_KBD_DATA_AVAILABLE = 1;
 constexpr char MSG_VGA_CAN_WRITE = 2;
 constexpr char MSG_TTY_DATA_AVAILABLE = 3;
@@ -79,7 +81,7 @@ public:
 		flipPagesIRQ_.emplace();
 		log::info("refreshRate = %4.2f hz (measured)", flipPagesIRQ_->GetHz());
 
-		effect_ = make_unique<KefrensBars>();
+		effect_ = make_unique<KefrensBars>(kEffectHeight);
 
 		auto blasterConfig = snd::BlasterConfig{ kSoundBlasterIOBaseAddr,
 		                                         kSoundBlasterIRQNum,
@@ -88,7 +90,13 @@ public:
 		blaster_ = make_unique<snd::Blaster>(blasterConfig,
 		                                     kAudioSampleRateInHz, kAudioWidthInChannels, kAudioBufferSizeInSamples);
 
-		paula_ = make_unique<kb::Paula>();
+		int syncBufSizeInSamples = blaster_->Rate() / flipPagesIRQ_->GetHz() + 0.5F;
+		log::info("re-init blaster with buffer of %d (vga sync)", syncBufSizeInSamples);
+		blaster_ = make_unique<snd::Blaster>(blasterConfig,
+		                                     kAudioSampleRateInHz, kAudioWidthInChannels, syncBufSizeInSamples);
+
+
+		paula_ = make_unique<kb::Paula>(blaster_->Rate());
 		player_ = make_unique<kb::ModPlayer>(paula_.get(), data::ost.data());
 		adapter_ = make_unique<PlayerAdapter>(*player_);
 		adapter_->Refill();
@@ -198,13 +206,15 @@ int main(int argc, char **argv) {
 	std::string tmp;
 	int errors = 0;
 	for (int i=1; i<argc; ++i) {
-		tmp.assign(argv[1]);
+		tmp.assign(argv[i]);
 		if (rqdq::text::ConsumePrefix(tmp, "audio.rate=")) {
 			rqdq::app::kAudioSampleRateInHz = std::clamp(std::stoi(tmp), 4000, 96000); }
 		else if (rqdq::text::ConsumePrefix(tmp, "audio.buffer=")) {
 			rqdq::app::kAudioBufferSizeInSamples = std::clamp(std::stoi(tmp), 16, 4096); }
 		else if (rqdq::text::ConsumePrefix(tmp, "audio.width=")) {
 			rqdq::app::kAudioWidthInChannels = std::clamp(std::stoi(tmp), 1, 2); }
+		else if (rqdq::text::ConsumePrefix(tmp, "lines=")) {
+			rqdq::app::kEffectHeight = std::clamp(std::stoi(tmp), 1, 240); }
 		else {
 			std::cerr << "unknown arg \"" << tmp << "\"\n";
 			errors += 1; }}
